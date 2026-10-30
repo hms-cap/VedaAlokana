@@ -7,7 +7,6 @@
 | [VedaWeb](https://vedaweb.uni-koeln.de/) TEI data, University of Cologne ([mirror used](https://github.com/031323/vedaweb-data)) | Ṛgveda: Devanagari with svaras (Eichler), Aufrecht's transliteration, Padapāṭha, Griffith's translation | CC BY-NC-SA 4.0 per source (see the `teiHeader` of `vedaweb_corpus.tei`) |
 | [WSC 2023 Anukramaṇī dataset](https://github.com/mahesh-ak/WSC2023), Krishna et al. | Ṛgveda ṛṣi, devatā and chandas for every ṛk | Apache-2.0 |
 | [DharmicData](https://github.com/bhavykhatri/DharmicData) | Atharvaveda (Śaunaka) and Vājasaneyi Mādhyandina text; Griffith's Sāmaveda | ODbL. Its AV and YV texts were taken from the [Vedic Heritage Portal](https://vedicheritage.gov.in/) (Ministry of Culture), which states no open licence |
-
 | [sanskrit/raw_etexts](https://github.com/sanskrit/raw_etexts) | Taittirīya Saṃhitā, Brāhmaṇa, Āraṇyaka and Upaniṣad; Aitareya Brāhmaṇa and Āraṇyaka; Sāmaveda Kauthuma Saṃhitā; Jaiminīya Upaniṣad Brāhmaṇa; Gopatha Brāhmaṇa; Kena and Muṇḍaka Upaniṣads | No licence stated; texts collected from public e-text sites (sanskritdocuments.org, eBharati Sampat and others) |
 | [GRETIL mirror](https://github.com/sanskrit/gretil-mirror) | Kauṣītaki, Śatapatha and Pañcaviṃśa Brāhmaṇas; Śāṅkhāyana Āraṇyaka; Aitareya, Īśa, Bṛhadāraṇyaka, Kaṭha, Śvetāśvatara, Chāndogya, Māṇḍūkya and Praśna Upaniṣads | "For reference purposes only; copyright as for source file" — research and teaching use |
 
