@@ -194,7 +194,12 @@ async function viewHome() {
   const ris = row[COL.rishi] >= 0 ? rv.facets.rishi[row[COL.rishi]] : null;
   const ref = refOf(meta, row[0], row[1], row[2]);
   const byId = Object.fromEntries(cat.texts.map((x) => [x.id, x]));
+  let last = null;
+  try { last = JSON.parse(localStorage.getItem('vedalokana.last') || 'null'); } catch { /* storage unavailable */ }
   main.innerHTML = `<div class="wide">
+    ${last ? `<a class="continue" href="${esc(last.href)}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5zM13 4h5.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H13z"/></svg>
+      <span class="ci-t"><small>Continue reading</small><b>${esc(last.where)}</b><small>${esc(last.text)}</small></span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>` : ''}
     <section class="today" aria-labelledby="todayH">
       <h1 id="todayH" class="sr">Mantra for today</h1>
       <div class="ref"><a href="#/v/rv/c/${row[0]}/${row[1]}?v=${row[2]}">Ṛgveda ${esc(ref)}</a>${dev ? `, to ${esc(cap(dev[1]))}` : ''}${ris ? `, seen by ${esc(cap(ris[1]))}` : ''}</div>
@@ -214,26 +219,35 @@ async function viewHome() {
   </div>`;
 }
 
-async function viewVedaGroup(vid) {
+async function viewVedaGroup(vid, layerArg) {
   const cat = await catalog();
   const v = cat.vedas.find((x) => x.id === vid);
   if (!v) return notFound();
-  setTitle(v.name);
+  const layer = layerArg && LAYERS[layerArg] ? layerArg : cat.layers.find((l) => v.layers[l].length);
+  setTitle(`${v.name}, ${LAYERS[layer].plural}`);
   const byId = Object.fromEntries(cat.texts.map((x) => [x.id, x]));
-  const card = (t) => `<a class="veda-card" href="#/v/${t.id}">
-      <span class="dv" lang="sa">${esc(t.deva)}</span>
-      <span><span class="nm">${esc(t.name)}</span>${t.shakha ? `<br><span class="sk">${esc(t.shakha)} śākhā</span>` : ''}</span>
+  const card = (t) => `<a class="text-card" href="#/v/${t.id}">
+      <span class="tc-top"><span class="dv" lang="sa">${esc(t.deva)}</span>
+        <svg class="go" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span>
+      <span class="nm">${esc(t.name)}</span>
+      ${t.shakha ? `<span class="sk">${esc(t.shakha)} śākhā</span>` : ''}
+      <span class="ct">${fmt(t.verses)} ${esc(unitName(t))}${t.containers > 1 ? ` in ${fmt(t.containers)} ${esc((t.levels[1] || 'section').toLowerCase())}s` : ''}</span>
       ${badgesHTML(t)}
-      <span class="ct">${fmt(t.verses)} ${esc(unitName(t))} in ${fmt(t.containers)} ${esc((t.levels[1] || 'section').toLowerCase())}s</span>
     </a>`;
+  const blurb = {
+    samhita: 'The collected mantras.',
+    brahmana: 'Prose on the meaning and performance of the ritual.',
+    aranyaka: 'The “forest” texts, on the inner meaning of the rites.',
+    upanishad: 'The philosophical close of each Veda.',
+  }[layer];
   main.innerHTML = `<div class="wide">
     <h1>${esc(v.name)}<span class="h1-deva" lang="sa">${esc(v.deva)}</span></h1>
-    <p class="lede">The ${esc(v.name)} in four layers: the Saṃhitā of mantras, the Brāhmaṇa prose on ritual, the Āraṇyaka for the forest, and the Upaniṣads.</p>
-    ${cat.layers.map((l) => `
-      <h2 class="section-title">${LAYERS[l].plural}<span class="h2-deva" lang="sa">${LAYERS[l].deva}</span></h2>
-      ${v.layers[l].length
-    ? `<div class="vedas">${v.layers[l].map((i) => card(byId[i])).join('')}</div>`
-    : `<p class="note">${esc(v.absent?.[l] || 'No openly licensed digital edition has been found yet.')}</p>`}`).join('')}
+    <nav class="layer-tabs" aria-label="Layers">${cat.layers.map((l) => `<a href="#/veda/${v.id}/${l}"${l === layer ? ' aria-current="page"' : ''}>
+      <span class="lt-l">${LAYERS[l].label}</span><span class="lt-n">${v.layers[l].length || '–'}</span></a>`).join('')}</nav>
+    <p class="lede">${esc(blurb)}</p>
+    ${v.layers[layer].length
+    ? `<div class="text-cards">${v.layers[layer].map((i) => card(byId[i])).join('')}</div>`
+    : `<p class="note">${esc(v.absent?.[layer] || 'No openly licensed digital edition has been found yet.')}</p>`}
   </div>`;
 }
 
@@ -551,6 +565,29 @@ async function viewContainer(id, d1, d2, params) {
     b.parentElement.querySelectorAll('button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
     draw();
   }));
+  try { localStorage.setItem('vedalokana.last', JSON.stringify({ href: `#/v/${id}/c/${d1}/${d2}`, text: meta.name, where: cref ? `${meta.ref} ${cref}` : meta.name })); } catch { /* storage unavailable */ }
+  // phone reader bar: previous · section picker · next
+  const rb = $('#readerbar');
+  rb.hidden = false;
+  rb.innerHTML = `${prev ? `<a class="rb-step" href="#/v/${id}/c/${prev[0]}/${prev[1]}" aria-label="Previous ${esc((meta.levels[1] || 'section').toLowerCase())}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a>` : '<span class="rb-step" aria-hidden="true"></span>'}
+    <button class="rb-pick" aria-haspopup="dialog"><span>${esc(cref ? `${meta.ref} ${cref}` : meta.name)}</span>${CHEV}</button>
+    ${next ? `<a class="rb-step" href="#/v/${id}/c/${next[0]}/${next[1]}" aria-label="Next ${esc((meta.levels[1] || 'section').toLowerCase())}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>` : '<span class="rb-step" aria-hidden="true"></span>'}`;
+  rb.querySelector('.rb-pick').addEventListener('click', async () => {
+    const c2 = currentPath[currentPath.length - 1];
+    if (c2) openSheet({ title: c2.title, items: await c2.items(), layout: c2.layout || 'grid' });
+  });
+  // swipe left/right between sections on touch screens
+  let sx = null; let sy = null;
+  main.ontouchstart = (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; };
+  main.ontouchend = (e) => {
+    if (sx === null) return;
+    const dx = e.changedTouches[0].clientX - sx; const dy = e.changedTouches[0].clientY - sy;
+    sx = null;
+    if (Math.abs(dx) > 80 && Math.abs(dx) > Math.abs(dy) * 2) {
+      const t2 = dx < 0 ? next : prev;
+      if (t2) go(`#/v/${id}/c/${t2[0]}/${t2[1]}`);
+    }
+  };
   // the first verse is already in view; only jump for later ones
   if (hl && hl !== verses[0]?.[0]) requestAnimationFrame(() => document.getElementById(`v${hl}`)?.scrollIntoView({ block: 'start' }));
 }
@@ -663,14 +700,192 @@ function setupSearch() {
   document.addEventListener('click', (e) => { if (!$('#searchForm').contains(e.target)) close(); });
 }
 
-// ---------- drawer ----------
-function setDrawer(open) {
-  rail.classList.toggle('open', open);
-  $('#scrim').hidden = !open;
-  $('#menuBtn').setAttribute('aria-expanded', String(open));
+// ---------- sheets (level switchers) ----------
+const sheetRoot = $('#sheetRoot');
+let lastFocus = null;
+function closeSheet() {
+  if (!sheetRoot.firstChild) return;
+  sheetRoot.innerHTML = '';
+  document.body.classList.remove('sheet-open');
+  lastFocus?.focus?.();
 }
-$('#menuBtn').addEventListener('click', () => setDrawer(!rail.classList.contains('open')));
-$('#scrim').addEventListener('click', () => setDrawer(false));
+function openSheet({ title, items, layout = 'list', note }) {
+  lastFocus = document.activeElement;
+  const body = items.length
+    ? `<div class="sheet-${layout}">${items.map((it) => `<a href="${it.href}"${it.current ? ' aria-current="true"' : ''}${it.disabled ? ' aria-disabled="true"' : ''}>
+        <span class="si-main">${it.deva ? `<span class="dv" lang="sa">${esc(it.deva)}</span>` : ''}<span>${esc(it.label)}</span></span>
+        ${it.sub ? `<span class="si-sub">${esc(it.sub)}</span>` : ''}</a>`).join('')}</div>`
+    : '<p class="empty">Nothing here yet.</p>';
+  sheetRoot.innerHTML = `<div class="sheet-backdrop" data-close></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetT">
+      <div class="sheet-grip" aria-hidden="true"></div>
+      <div class="sheet-head"><h2 id="sheetT">${esc(title)}</h2>
+        <button class="icon-btn" data-close aria-label="Close"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      ${note ? `<p class="sheet-note">${esc(note)}</p>` : ''}
+      <div class="sheet-body">${body}</div>
+    </div>`;
+  document.body.classList.add('sheet-open');
+  sheetRoot.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', closeSheet));
+  sheetRoot.querySelectorAll('.sheet-body a').forEach((a) => a.addEventListener('click', () => setTimeout(closeSheet, 0)));
+  const cur = sheetRoot.querySelector('[aria-current="true"]') || sheetRoot.querySelector('.sheet-body a');
+  cur?.scrollIntoView({ block: 'center' });
+  (cur || sheetRoot.querySelector('[data-close]')).focus({ preventScroll: true });
+}
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
+
+// ---------- where am I: the level path ----------
+async function buildPath(r) {
+  const cat = await catalog();
+  const [a, id, sub, p1, p2] = r.parts;
+  const path = [];
+  let vid; let layer; let meta;
+  if (a === 'veda') { vid = id; layer = sub; }
+  if (a === 'v') { meta = cat.texts.find((t) => t.id === id); if (meta) { vid = meta.veda; layer = meta.layer; } }
+  const v = cat.vedas.find((x) => x.id === vid);
+  if (!v) return path;
+  if (!layer || !v.layers[layer]) layer = cat.layers.find((l) => v.layers[l].length);
+  const byId = Object.fromEntries(cat.texts.map((t) => [t.id, t]));
+  path.push({
+    label: v.name, deva: v.deva, href: `#/veda/${v.id}`, title: 'Choose a Veda',
+    items: async () => cat.vedas.map((x) => ({ label: x.name, deva: x.deva, href: `#/veda/${x.id}`, current: x.id === v.id,
+      sub: cat.layers.reduce((n, l) => n + x.layers[l].length, 0) + ' texts' })),
+  });
+  path.push({
+    label: LAYERS[layer].label, deva: LAYERS[layer].deva, href: `#/veda/${v.id}/${layer}`, title: `${v.name}: choose a layer`,
+    items: async () => cat.layers.map((l) => ({ label: LAYERS[l].plural, deva: LAYERS[l].deva, href: `#/veda/${v.id}/${l}`, current: l === layer,
+      sub: v.layers[l].length ? v.layers[l].map((t) => byId[t].name).join(', ') : (v.absent?.[l] ? 'None' : 'Not available yet') })),
+  });
+  if (!meta) return path;
+  const x = await index(meta.id);
+  path.push({
+    label: meta.name, deva: meta.deva, href: `#/v/${meta.id}`, title: `Texts of the ${v.name}`,
+    items: async () => cat.layers.flatMap((l) => v.layers[l].map((t) => ({ label: byId[t].name, deva: byId[t].deva, href: `#/v/${t}`, current: t === meta.id, sub: LAYERS[l].label }))),
+  });
+  const groupItems = async (cur) => x.groups.map(([g, cs]) => ({ label: groupName(meta, g), href: `#/v/${meta.id}/g/${g}`, current: g === cur, sub: `${cs.length} ${(meta.levels[1] || 'section').toLowerCase()}s` }));
+  const containerItems = (g, cur) => async () => (x.groups.find((e) => e[0] === g)?.[1] || []).map(([d2, n, tt]) => ({
+    label: containerRef(meta, g, d2, tt) || String(d2), href: `#/v/${meta.id}/c/${g}/${d2}`, current: d2 === cur,
+  }));
+  if (sub === 'f' || sub === 'find') {
+    const f = sub === 'f' ? p1 : FKEYS.find((k) => r.params.get(k));
+    const facetItems = async () => meta.facets.map((k) => ({ label: FACETS[k].label, deva: FACETS[k].deva, href: `#/v/${meta.id}/f/${k}`, current: k === f, sub: `${fmt(meta.facetCounts[k])} ${FACETS[k].plural}` }));
+    if (f) path.push({ label: FACETS[f].label, deva: FACETS[f].deva, href: `#/v/${meta.id}/f/${f}`, title: 'Browse by', items: facetItems });
+    if (sub === 'find') path.push({ label: 'Results', href: getHash(), title: 'Browse by', items: facetItems });
+    return path;
+  }
+  if (sub === 'g' || sub === 'c') {
+    const g = p1 !== undefined ? Number(p1) : (x.groups.length === 1 ? x.groups[0][0] : undefined);
+    if (x.groups.length > 1 && g !== undefined) {
+      path.push({ label: groupName(meta, g), href: `#/v/${meta.id}/g/${g}`, title: `${meta.levels[0]}s`, items: () => groupItems(g), layout: 'list' });
+    }
+    if (sub === 'c') {
+      const d2 = Number(p2);
+      const tt = containerTitle(x, g, d2);
+      const cref = containerRef(meta, g, d2, tt);
+      path.push({
+        label: cref ? `${meta.levels[1] || meta.levels[2]} ${cref}` : meta.name, href: `#/v/${meta.id}/c/${g}/${d2}`,
+        title: `${x.groups.length > 1 ? groupName(meta, g) + ': ' : ''}choose a ${(meta.levels[1] || 'section').toLowerCase()}`,
+        items: containerItems(g, d2), layout: 'grid',
+      });
+    }
+  }
+  return path;
+}
+
+const CHEV = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+let currentPath = [];
+function renderChrome(r, path) {
+  currentPath = path;
+  const bar = $('#pathbar');
+  bar.hidden = !path.length;
+  bar.innerHTML = `<ol>${path.map((c, i) => `<li><button class="crumb${i === path.length - 1 ? ' last' : ''}" data-i="${i}" aria-haspopup="dialog">
+    ${c.deva ? `<span class="dv" lang="sa">${esc(c.deva)}</span>` : ''}<span class="cl">${esc(c.label)}</span>${CHEV}</button></li>`).join('<li class="sep" aria-hidden="true">›</li>')}</ol>`;
+  bar.querySelectorAll('.crumb').forEach((b) => b.addEventListener('click', async () => {
+    const c = currentPath[Number(b.dataset.i)];
+    openSheet({ title: c.title, items: await c.items(), layout: c.layout || 'list' });
+  }));
+  bar.scrollLeft = bar.scrollWidth;
+  // back goes up one level
+  const page = r.parts[0] || '';
+  const topLevel = ['', 'library', 'search', 'settings'].includes(page);
+  const parentHref = path.length >= 2 ? path[path.length - 2].href : page === 'about' ? '#/settings' : topLevel ? null : '#/library';
+  const back = $('#backBtn');
+  back.hidden = !parentHref;
+  if (parentHref) back.setAttribute('href', parentHref);
+  $('#brand').classList.toggle('when-back', !!parentHref);
+  const named = { library: 'Library', search: 'Search', settings: 'Settings', about: 'Sources' }[page];
+  $('#topTitle').textContent = path.length ? path[path.length - 1].label : (named || '');
+  // tabs
+  const tab = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 'about' ? 'settings' : page);
+  $('#tabbar').querySelectorAll('[data-tab]').forEach((a) => (a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
+  document.body.classList.toggle('reading', page === 'v' && r.parts[2] === 'c');
+  if (!(page === 'v' && r.parts[2] === 'c')) $('#readerbar').hidden = true;
+}
+
+// ---------- library, search, settings ----------
+async function viewLibrary() {
+  setTitle('Library');
+  const cat = await catalog();
+  const byId = Object.fromEntries(cat.texts.map((t) => [t.id, t]));
+  main.innerHTML = `<div class="col">
+    <h1>Library</h1>
+    <p class="lede">Every text, by Veda and layer.</p>
+    ${cat.vedas.map((v) => `<section class="lib-veda">
+      <a class="lib-head" href="#/veda/${v.id}"><span class="dv" lang="sa">${esc(v.deva)}</span><span class="nm">${esc(v.name)}</span></a>
+      ${cat.layers.map((l) => `<div class="lib-layer"><a class="lib-l" href="#/veda/${v.id}/${l}">${LAYERS[l].label}</a>
+        <div class="lib-texts">${v.layers[l].length ? v.layers[l].map((t) => `<a href="#/v/${t}"><span>${esc(byId[t].name)}</span><small>${fmt(byId[t].verses)}</small></a>`).join('') : `<span class="none">${esc(v.absent?.[l] ? 'None' : 'Not available yet')}</span>`}</div></div>`).join('')}
+    </section>`).join('')}
+  </div>`;
+}
+
+async function viewSearch() {
+  setTitle('Search');
+  main.innerHTML = `<div class="col">
+    <h1 class="sr">Search</h1>
+    <label class="big-search"><span class="sr">Search references, texts and names</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+      <input id="bq" autocomplete="off" placeholder="1.164.46, Kaṭha, Agni, अग्नि…"></label>
+    <div id="bres" class="search-results" aria-live="polite"></div>
+    <div class="search-tips"><h2>Try</h2><div class="chips">
+      ${['1.164.46', 'rv 10.90', 'Kaṭha', 'Chāndogya', 'Agni', 'Vasiṣṭha', 'Gāyatrī'].map((t) => `<button class="chip" data-q="${esc(t)}">${esc(t)}</button>`).join('')}
+    </div><p class="lede">References jump to a mantra in the text you were last reading, or in the Ṛgveda. Prefix a text to change it, as in <b>av 7.1</b> or <b>ts 1.1</b>.</p></div>
+  </div>`;
+  const input = $('#bq'); let token = 0;
+  const run = async () => {
+    const my = ++token; const q = input.value;
+    if (!q.trim()) { $('#bres').innerHTML = ''; return; }
+    const r = await suggestions(q);
+    if (my !== token) return;
+    $('#bres').innerHTML = r.map((it) => `<a href="${it.href}"><span>${esc(it.label)}</span><small>${esc(it.hint)}</small></a>`).join('')
+      || '<p class="empty">No match. Try a reference like 1.1.1, or part of a name.</p>';
+  };
+  input.addEventListener('input', run);
+  main.querySelectorAll('[data-q]').forEach((b) => b.addEventListener('click', () => { input.value = b.dataset.q; run(); input.focus(); }));
+  if (matchMedia('(hover: hover)').matches) input.focus();
+}
+
+async function viewSettings() {
+  setTitle('Settings');
+  const opt = (k, v, l, cls = '') => `<button class="${cls}" data-k="${k}" data-v="${v}" aria-pressed="${String(prefs[k] === v)}">${l}</button>`;
+  main.innerHTML = `<div class="col">
+    <h1>Settings</h1>
+    <section class="set"><h2>Script for Sanskrit text</h2><p>Names, headings and mantras switch together. Svara marks are kept.</p>
+      <div class="seg wide-seg">${opt('lipi', 'deva', 'देवनागरी', 'dvb')}${opt('lipi', 'knda', 'ಕನ್ನಡ', 'knb')}</div></section>
+    <section class="set"><h2>In the reader, show</h2>
+      <div class="seg wide-seg">${opt('script', 'both', 'Both')}${opt('script', 'deva', 'Script only')}${opt('script', 'roman', 'IAST only')}</div></section>
+    <section class="set"><h2>Ṛgveda text</h2>
+      <div class="seg wide-seg">${opt('mode', 'samhita', 'Saṃhitā')}${opt('mode', 'pada', 'Padapāṭha')}</div></section>
+    <section class="set"><h2>Translations</h2>
+      <div class="seg wide-seg">${opt('tr', true, 'Show')}${opt('tr', false, 'Hide')}</div></section>
+    <section class="set"><h2>About</h2><p><a href="#/about">Sources, licences and known gaps</a></p></section>
+  </div>`;
+  main.querySelectorAll('[data-k]').forEach((b) => b.addEventListener('click', () => {
+    const k = b.dataset.k; const raw = b.dataset.v;
+    prefs[k] = raw === 'true' ? true : raw === 'false' ? false : raw;
+    savePrefs();
+    if (k === 'lipi') { applyLipiClass(); route(); return; }
+    b.parentElement.querySelectorAll('button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+  }));
+}
 
 // ---------- router ----------
 function parse() {
@@ -681,14 +896,18 @@ function parse() {
 async function route() {
   const r = parse();
   if (r.veda) activeVeda = r.veda;
-  setDrawer(false);
+  closeSheet();
+  main.ontouchstart = null; main.ontouchend = null;
   main.innerHTML = '<p class="loading">Loading…</p>';
   try {
     await renderRail(r);
     const [a, id, sub, p1, p2] = r.parts;
     if (!a) await viewHome();
     else if (a === 'about') await viewAbout();
-    else if (a === 'veda') await viewVedaGroup(id);
+    else if (a === 'library') await viewLibrary();
+    else if (a === 'search') await viewSearch();
+    else if (a === 'settings') await viewSettings();
+    else if (a === 'veda') await viewVedaGroup(id, sub);
     else if (a === 'v' && !sub) await viewVeda(id);
     else if (a === 'v' && sub === 'g') await viewGroups(id, p1 !== undefined ? Number(p1) : undefined);
     else if (a === 'v' && sub === 'f') await viewFacet(id, p1);
@@ -696,6 +915,7 @@ async function route() {
     else if (a === 'v' && sub === 'c') await viewContainer(id, Number(p1), Number(p2), r.params);
     else notFound();
     await renderRail(r);
+    renderChrome(r, await buildPath(r));
   } catch (err) {
     main.innerHTML = `<div class="col"><h1>Couldn’t load this page</h1><p class="lede">${esc(err.message)}. Check your connection and reload.</p></div>`;
   }
