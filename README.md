@@ -49,7 +49,8 @@ node scripts/build-data.mjs \
 `web/fonts/` holds Noto Serif Devanagari and Noto Serif Kannada subsets with heavier svara marks, built from a checkout of [google/fonts](https://github.com/google/fonts):
 
 ```sh
-python3 scripts/make-fonts.py path/to/google-fonts web/fonts   # needs fontTools
+python3 scripts/make-fonts.py path/to/google-fonts web/fonts --audit /tmp/afonts   # needs fontTools
+node scripts/audit-marks.mjs /tmp/afonts   # anudātta clearance and line extents over all the data (Playwright)
 ```
 
 ## Tests

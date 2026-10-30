@@ -9,6 +9,7 @@
   --indigo-soft: #E8EAF6;
   --fire: #C2410C;
   --deva: 'Vedalokana Devanagari', 'Noto Serif Devanagari', serif;
+  --deva-lh: 2.15;
   --roman: 'Gentium Book Plus', 'Noto Serif', serif;
   --ui: 'IBM Plex Sans', system-ui, sans-serif;
   --rail: 264px;
@@ -99,7 +100,7 @@ h1 { margin: 0; font-size: clamp(28px, 4vw, 40px); line-height: 1.1; font-weight
 .today { margin: 8px 0 0; padding: 0 0 36px; border-bottom: 1px solid var(--line); }
 .today .ref { font-size: 14px; color: var(--muted); }
 .today .ref a { color: var(--muted); }
-.today .mantra-deva { font-size: clamp(26px, 4.6vw, 44px); line-height: 1.7; margin: 10px 0 8px; }
+.today .mantra-deva { font-size: clamp(26px, 4.6vw, 44px); line-height: var(--deva-lh); margin: 10px 0 8px; }
 .today .mantra-roman { font-size: clamp(18px, 2.4vw, 22px); }
 .vedas { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin-top: 16px; }
 .veda-card { display: flex; flex-direction: column; gap: 10px; padding: 18px; background: var(--surface); border: 1px solid var(--line);
@@ -192,7 +193,10 @@ h1 { margin: 0; font-size: clamp(28px, 4vw, 40px); line-height: 1.1; font-weight
 .verse.hl { background: linear-gradient(90deg, var(--indigo-soft), transparent 70%); border-radius: 12px; padding-left: 10px; margin-left: -10px; }
 .vnum { font-variant-numeric: tabular-nums; color: var(--muted); padding-top: 8px; font-size: 14px; }
 .vnum a { color: var(--muted); }
-.deva { font-family: var(--deva); font-size: clamp(21px, 2.6vw, 26px); line-height: 1.85; }
+/* Line height from scripts/audit-marks.mjs: the tallest svarita and the deepest anudātta
+   of the data reach 0.93em + 0.91em (Devanagari) and 1.15em + 0.93em (Kannada), so these
+   values leave about 0.3em between the marks of adjacent lines. */
+.deva { font-family: var(--deva); font-size: clamp(21px, 2.6vw, 26px); line-height: var(--deva-lh); }
 .deva div, .roman div { text-wrap: pretty; }
 .roman { font-family: var(--roman); font-size: 19px; line-height: 1.6; margin-top: 4px; }
 .deva + .roman { color: var(--muted); }
@@ -250,10 +254,12 @@ h1 { margin: 0; font-size: clamp(28px, 4vw, 40px); line-height: 1.1; font-weight
   src: url('fonts/NotoSerifKannada-Vedic.woff') format('woff');
   font-weight: 100 900; font-display: swap;
 }
-body.kn { --deva: 'Vedalokana Kannada', 'Noto Serif Kannada', 'Noto Sans Kannada', serif; }
+/* The Devanagari fonts at the end of the Kannada stacks only ever supply the shared svara
+   marks, if a Kannada font without them is all that loaded: never a box or a "?". */
+body.kn { --deva: 'Vedalokana Kannada', 'Noto Serif Kannada', 'Noto Sans Kannada', 'Vedalokana Devanagari', 'Noto Serif Devanagari', serif; }
 body.svara-std { --deva: 'Noto Serif Devanagari', serif; }
-body.kn.svara-std { --deva: 'Noto Serif Kannada', 'Noto Sans Kannada', serif; }
-body.kn .deva { line-height: 2.05; }
+body.kn.svara-std { --deva: 'Noto Serif Kannada', 'Noto Sans Kannada', 'Noto Serif Devanagari', serif; }
+body.kn { --deva-lh: 2.4; }
 .lipi { display: flex; align-items: center; gap: 4px; margin: 0 6px 18px; padding: 3px; border-radius: 11px; background: var(--line-soft); }
 .lipi span { font-size: 13px; color: var(--muted); padding: 0 8px; }
 .lipi button { flex: 1; height: 34px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; font-size: 14px; }
@@ -418,7 +424,7 @@ span.rb-step { background: transparent; }
 .continue small { color: var(--muted); font-size: 13px; }
 .continue b { font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .continue svg { margin-left: auto; flex: none; }
-.svara-demo { font-family: var(--deva); font-size: 26px; line-height: 1.9; color: var(--ink) !important; margin-top: 12px !important; }
+.svara-demo { font-family: var(--deva); font-size: 26px; line-height: var(--deva-lh); color: var(--ink) !important; margin-top: 12px !important; }
 
 /* one-tap script switch: top bar and reader */
 .lipi-toggle { display: inline-flex; flex: none; gap: 2px; padding: 3px; margin-left: 10px; border-radius: 12px; background: var(--line-soft); }

@@ -60,7 +60,30 @@ function cleanIndic(line) {
   if ((l.match(/[A-Za-z]/g) || []).length >= 2) return '';
   return l;
 }
+// Editors' query marks in the sources. They are not part of the text and showed
+// up as stray "?" in both scripts. Doubtful insertions keep their letters
+// ("यज्ञं (नि?)षेदथुः" → "यज्ञं निषेदथुः"); alternative readings attached to a
+// word are dropped ("जी(जि?)गि॒वाꣳसः" keeps the source's reading); bare "(?)",
+// "[?]", ".?." and "??" placeholders go. Two Śatapatha lines lost a letter to a
+// "?" and are restored (anvāhāryapacana, kṛtānukara).
+const QUERY_FIXES = [['ऽन्वा?आर्यपचनो', 'ऽन्वाहार्यपचनो'], ["'nvā?āryapacano", "'nvāhāryapacano"],
+  ['कृता?उकराम', 'कृतानुकराम'], ['kṛtā?ukarām', 'kṛtānukarām'],
+  // three single-letter typos left by the sources
+  ['tūfaro', 'tūparo'], ['तूfअरो', 'तूपरो'], ['हिHꣳसीः', 'हिꣳसीः'], ['प्या॑यतां॒j', 'प्या॑यतां॒']];
+export function dropQueries(line) {
+  let l = line;
+  for (const [a, b] of QUERY_FIXES) l = l.split(a).join(b);
+  return l
+    .replace(/\s*[([]\?[)\]]/g, '')                    // (?) [?]
+    .replace(/(?<=\s|^)\(([^()?]+)\?\)/g, '$1')        // (नि?)षेदथुः: doubtful letters, kept
+    .replace(/\([^()?]+\?\)/g, '')                      // जी(जि?)गि: alternative reading, dropped
+    .replace(/\.\?\.|\?+/g, '')                          // .?. ?? ? placeholders
+    .replace(/\s+/g, ' ').trim();
+}
+
 function addVerse(V, d1, d2, v, tags, text) {
+  text = { ...text };
+  for (const k of ['deva', 'roman', 'pada']) if (text[k]) text[k] = text[k].map(dropQueries);
   if (text.deva) {
     const deva = text.deva.map(cleanIndic).filter(Boolean);
     // romanisation derived from the Devanagari is redone from the cleaned lines

@@ -1009,3 +1009,21 @@ if (MEMORY) {
 setupSearch();
 document.querySelectorAll('#lipiToggle [data-lipi]').forEach((b) => b.addEventListener('click', () => setLipi(b.dataset.lipi)));
 route();
+
+// The svara fonts normally come from the stylesheet. Where a page embeds the app and
+// blocks stylesheet font URLs, the marks would fall back to a font without them and
+// show as boxes or "?": load the same files directly instead.
+(async function ensureSvaraFonts() {
+  const want = [['Vedalokana Devanagari', 'fonts/NotoSerifDevanagari-Vedic.woff'], ['Vedalokana Kannada', 'fonts/NotoSerifKannada-Vedic.woff']];
+  for (const [family, url] of want) {
+    try { await document.fonts.load(`16px "${family}"`, '॒॑'); } catch { /* checked below */ }
+    const faces = [...document.fonts].filter((f) => f.family.replace(/"/g, '') === family);
+    if (faces.some((f) => f.status === 'loaded')) continue;
+    try {
+      const res = await fetch(new URL(url, document.baseURI));
+      const face = new FontFace(family, await res.arrayBuffer());
+      await face.load();
+      document.fonts.add(face);
+    } catch { /* the Noto fallbacks in the font stack still carry the marks */ }
+  }
+})();
