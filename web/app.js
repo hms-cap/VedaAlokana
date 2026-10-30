@@ -447,7 +447,8 @@ async function viewContainer(id, d1, d2, params) {
     b.parentElement.querySelectorAll('button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
     draw();
   }));
-  if (hl) requestAnimationFrame(() => document.getElementById(`v${hl}`)?.scrollIntoView({ block: 'start' }));
+  // the first verse is already in view; only jump for later ones
+  if (hl && hl !== verses[0]?.[0]) requestAnimationFrame(() => document.getElementById(`v${hl}`)?.scrollIntoView({ block: 'start' }));
 }
 
 async function viewAbout() {
@@ -580,7 +581,7 @@ async function route() {
   } catch (err) {
     main.innerHTML = `<div class="col"><h1>Couldn’t load this page</h1><p class="lede">${esc(err.message)}. Check your connection and reload.</p></div>`;
   }
-  if (!r.params.get('v')) window.scrollTo(0, 0);
+  if (!r.params.get('v') || r.params.get('v') === '1') window.scrollTo(0, 0);
   main.focus({ preventScroll: true });
 }
 if (MEMORY) {
