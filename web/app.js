@@ -1,4 +1,5 @@
-// Vedālokana — a static, client-side browser for the Veda Saṃhitās.
+// Vedālokana — a static, client-side browser for the Vedas: Saṃhitās,
+// Brāhmaṇas, Āraṇyakas and Upaniṣads.
 // Data lives in ./data (built by scripts/build-data.mjs); routing is hash-based.
 
 const FACETS = {
@@ -8,6 +9,16 @@ const FACETS = {
 };
 const FKEYS = Object.keys(FACETS);
 const COL = { d1: 0, d2: 1, v: 2, rishi: 3, devata: 4, chandas: 5 };
+const LAYERS = {
+  samhita: { label: 'Saṃhitā', deva: 'संहिता', plural: 'Saṃhitās' },
+  brahmana: { label: 'Brāhmaṇa', deva: 'ब्राह्मण', plural: 'Brāhmaṇas' },
+  aranyaka: { label: 'Āraṇyaka', deva: 'आरण्यक', plural: 'Āraṇyakas' },
+  upanishad: { label: 'Upaniṣad', deva: 'उपनिषद्', plural: 'Upaniṣads' },
+};
+const LEVEL_DEVA = {
+  Maṇḍala: 'मण्डल', Kāṇḍa: 'काण्ड', Adhyāya: 'अध्याय', Ārcika: 'आर्चिक', Pañcikā: 'पञ्चिका', Āraṇyaka: 'आरण्यक',
+  Prapāṭhaka: 'प्रपाठक', Bhāga: 'भाग', Vallī: 'वल्ली', Khaṇḍa: 'खण्ड', Praśna: 'प्रश्न', Brāhmaṇa: 'ब्राह्मण', Book: 'पुस्तक',
+};
 
 const $ = (s, el = document) => el.querySelector(s);
 const main = $('#main');
@@ -26,10 +37,43 @@ function go(h) {
 // ---------- preferences ----------
 const PREF_KEY = 'vedalokana.prefs';
 const prefs = (() => {
-  const d = { script: 'both', mode: 'samhita', tr: true };
+  const d = { script: 'both', mode: 'samhita', tr: true, lipi: 'deva' };
   try { return { ...d, ...JSON.parse(localStorage.getItem(PREF_KEY) || '{}') }; } catch { return d; }
 })();
 function savePrefs() { try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch { /* storage unavailable */ } }
+
+// ---------- Kannada script ----------
+// Devanagari and Kannada share the ISCII layout, so most letters map by a fixed
+// offset. Svara marks (U+0951/0952 and Vedic Extensions) and dandas are shared.
+const KN_GAPS = new Set([0x0C84, 0x0C8D, 0x0C91, 0x0CA9, 0x0CB4, 0x0CC5, 0x0CC9, 0x0CCE, 0x0CCF]);
+function toKnda(s) {
+  let out = '';
+  for (const ch of s) {
+    const c = ch.codePointAt(0);
+    if (c === 0x0950) { out += 'ಓಂ'; continue; }
+    if ((c >= 0x0901 && c <= 0x094D) || (c >= 0x0960 && c <= 0x0963) || (c >= 0x0966 && c <= 0x096F)) {
+      const k = c + 0x380;
+      out += KN_GAPS.has(k) ? ch : String.fromCodePoint(k);
+    } else out += ch;
+  }
+  return out;
+}
+function convertTree(root) {
+  if (prefs.lipi !== 'knda' || !root.querySelectorAll) return;
+  const els = [...root.querySelectorAll('[lang="sa"], .suggest a span')];
+  if (root.matches?.('[lang="sa"]')) els.push(root);
+  for (const el of els) {
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    let n;
+    while ((n = w.nextNode())) if (/[\u0900-\u097F]/.test(n.nodeValue)) n.nodeValue = toKnda(n.nodeValue);
+    if (el.getAttribute('lang') === 'sa') el.setAttribute('lang', 'sa-Knda');
+  }
+}
+new MutationObserver((ms) => { for (const m of ms) m.addedNodes.forEach((n) => n.nodeType === 1 && convertTree(n)); })
+  .observe(document.body, { childList: true, subtree: true });
+const lipiName = () => (prefs.lipi === 'knda' ? 'ಕನ್ನಡ' : 'देवनागरी');
+function applyLipiClass() { document.body.classList.toggle('kn', prefs.lipi === 'knda'); }
+applyLipiClass();
 
 // ---------- helpers ----------
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -42,7 +86,8 @@ async function json(url) {
   return r.json();
 }
 async function catalog() { return (cache.catalog ||= await json('data/catalog.json')); }
-async function vedaMeta(id) { return (await catalog()).vedas.find((v) => v.id === id); }
+async function vedaMeta(id) { return (await catalog()).texts.find((v) => v.id === id); }
+async function vedaGroup(id) { return (await catalog()).vedas.find((v) => v.id === id); }
 async function index(id) {
   if (!cache.index[id]) {
     const x = await json(`data/${id}/index.json`);
@@ -57,11 +102,17 @@ async function text(id, d1) {
   return (cache.text[k] ||= await json(`data/${id}/t${d1}.json`));
 }
 
-function refOf(meta, d1, d2, v) {
-  const parts = meta.refFmt === 'd2.v' ? [d2, v] : [d1, d2, v];
+function refOf(meta, d1, d2, v, label) {
+  if (meta.refFmt === 'label' && label) return label;
+  const parts = meta.refFmt === 'v' ? [v] : meta.refFmt === 'd2.v' ? [d2, v] : [d1, d2, v];
   return parts.filter((p) => p !== undefined && p !== null).join('.');
 }
-function containerRef(meta, d1, d2) { return meta.refFmt === 'd2.v' ? `${d2}` : `${d1}.${d2}`; }
+function containerRef(meta, d1, d2, title) {
+  if (meta.refFmt === 'label') return title || `${d1}.${d2}`;
+  if (meta.refFmt === 'v') return '';
+  return meta.refFmt === 'd2.v' ? `${d2}` : `${d1}.${d2}`;
+}
+function containerTitle(x, d1, d2) { return x.groups.find((e) => e[0] === d1)?.[1].find((c) => c[0] === d2)?.[2] || null; }
 function groupName(meta, d1) {
   if (meta.groupNames?.[d1]) return meta.groupNames[d1];
   return `${meta.levels[0]} ${d1}`;
@@ -80,38 +131,53 @@ function findHref(id, filters) {
 function setTitle(t) { document.title = t ? `${t} — Vedālokana` : 'Vedālokana — browse Veda mantras'; }
 
 function badgesHTML(meta) {
+  const tagged = meta.layer === 'samhita';
   const has = [
     ['Svara marks', meta.has.svara],
     ['IAST', meta.has.roman],
     ['Padapāṭha', meta.has.pada],
     [meta.has.translation ? `English · ${meta.has.translation}` : 'English', !!meta.has.translation],
-    ['Ṛṣi', meta.facets.includes('rishi')],
-    ['Devatā', meta.facets.includes('devata')],
-    ['Chandas', meta.facets.includes('chandas')],
-  ];
+    ...(tagged ? [
+      ['Ṛṣi', meta.facets.includes('rishi')],
+      ['Devatā', meta.facets.includes('devata')],
+      ['Chandas', meta.facets.includes('chandas')],
+    ] : []),
+  ].filter(([l, ok]) => ok || tagged || !/Padap|English/.test(l));
   return `<div class="badges">${has.map(([l, ok]) => `<span class="badge${ok ? '' : ' no'}">${esc(l)}</span>`).join('')}</div>`;
 }
 
 // ---------- rail ----------
-async function renderRail(route) {
+async function renderRail(rt) {
   const cat = await catalog();
-  const id = route.veda;
-  const meta = id && cat.vedas.find((v) => v.id === id);
+  const id = rt.veda;
+  const meta = id && cat.texts.find((v) => v.id === id);
+  const vid = meta ? meta.veda : rt.group;
   const cur = (href) => (getHash() === href || getHash().startsWith(`${href}?`) ? ' aria-current="page"' : '');
-  let h = `<h2>Saṃhitās</h2>`;
+  let h = `<div class="lipi" role="group" aria-label="Script for Sanskrit text"><span>Script</span>
+    <button data-lipi="deva" aria-pressed="${prefs.lipi === 'deva'}">देवनागरी</button><button data-lipi="knda" aria-pressed="${prefs.lipi === 'knda'}">ಕನ್ನಡ</button></div>`;
+  h += `<h2>Vedas</h2>`;
   for (const v of cat.vedas) {
-    h += `<a href="#/v/${v.id}"${v.id === id && !route.sub ? ' aria-current="page"' : ''}><span>${esc(v.name)}</span><span class="dv" lang="sa">${esc(v.deva)}</span></a>`;
+    h += `<a href="#/veda/${v.id}"${v.id === vid && !id ? ' aria-current="page"' : ''}><span>${esc(v.name)}</span><span class="dv" lang="sa">${esc(v.deva)}</span></a>`;
+    if (v.id === vid) {
+      for (const l of cat.layers) for (const t of v.layers[l]) {
+        const tm = cat.texts.find((x) => x.id === t);
+        h += `<a class="sub" href="#/v/${t}"${t === id && !rt.sub ? ' aria-current="page"' : ''}><span>${esc(tm.name)}</span><span class="n">${esc(LAYERS[l].label)}</span></a>`;
+      }
+    }
   }
   if (meta) {
     h += `<h2>Browse ${esc(meta.name)}</h2>`;
     h += `<a href="#/v/${id}/g"${cur(`#/v/${id}/g`)}><span>Structure</span><span class="n">${fmt(meta.containers)}</span></a>`;
     for (const f of FKEYS) {
       if (meta.facets.includes(f)) h += `<a href="#/v/${id}/f/${f}"${cur(`#/v/${id}/f/${f}`)}><span>${FACETS[f].label}</span><span class="n">${fmt(meta.facetCounts[f])}</span></a>`;
-      else h += `<div class="off">${FACETS[f].label}: not tagged in the source</div>`;
     }
   }
   h += `<h2>Project</h2><a href="#/about"${cur('#/about')}><span>Sources and licences</span></a>`;
   rail.innerHTML = h;
+  rail.querySelectorAll('[data-lipi]').forEach((b) => b.addEventListener('click', () => {
+    if (prefs.lipi === b.dataset.lipi) return;
+    prefs.lipi = b.dataset.lipi; savePrefs(); applyLipiClass(); route();
+  }));
 }
 
 // ---------- views ----------
@@ -119,7 +185,7 @@ async function viewHome() {
   setTitle('');
   const cat = await catalog();
   const rv = await index('rv');
-  const meta = cat.vedas.find((v) => v.id === 'rv');
+  const meta = cat.texts.find((v) => v.id === 'rv');
   const day = Math.floor(Date.now() / 86400000);
   const row = rv.rows[(day * 7919) % rv.rows.length];
   const t = await text('rv', row[0]);
@@ -127,6 +193,7 @@ async function viewHome() {
   const dev = row[COL.devata] >= 0 ? rv.facets.devata[row[COL.devata]] : null;
   const ris = row[COL.rishi] >= 0 ? rv.facets.rishi[row[COL.rishi]] : null;
   const ref = refOf(meta, row[0], row[1], row[2]);
+  const byId = Object.fromEntries(cat.texts.map((x) => [x.id, x]));
   main.innerHTML = `<div class="wide">
     <section class="today" aria-labelledby="todayH">
       <h1 id="todayH" class="sr">Mantra for today</h1>
@@ -135,54 +202,90 @@ async function viewHome() {
       <div class="roman mantra-roman" lang="sa-Latn">${verse[2].map((l) => `<div>${esc(l)}</div>`).join('')}</div>
       ${verse[4] ? `<p class="tr">${esc(verse[4])}</p>` : ''}
     </section>
-    <h2 class="section-title">Choose a Saṃhitā</h2>
+    <h2 class="section-title">Choose a Veda</h2>
     <div class="vedas">${cat.vedas.map((v) => `
-      <a class="veda-card" href="#/v/${v.id}">
+      <a class="veda-card" href="#/veda/${v.id}">
         <span class="dv" lang="sa">${esc(v.deva)}</span>
-        <span><span class="nm">${esc(v.name)}</span><br><span class="sk">${esc(v.shakha)} śākhā</span></span>
-        ${badgesHTML(v)}
-        <span class="ct">${fmt(v.verses)} ${v.id === 'rv' ? 'ṛks' : 'mantras'} in ${fmt(v.containers)} ${esc(v.levels[1].toLowerCase())}s</span>
+        <span class="nm">${esc(v.name)}</span>
+        <span class="layers">${cat.layers.map((l) => `<span class="lrow"><span class="lk">${LAYERS[l].label}</span><span class="lv">${
+          v.layers[l].length ? esc(v.layers[l].map((i) => byId[i].name).join(', ')) : `<span class="none">${v.absent?.[l] ? 'None' : 'Not yet'}</span>`}</span></span>`).join('')}</span>
       </a>`).join('')}</div>
-    <p class="lede" style="margin-top:28px">Struck-through badges mark what the open sources don't include yet. <a href="#/about">See where the data comes from.</a></p>
+    <p class="lede" style="margin-top:28px">Every text comes from an openly published digital edition. <a href="#/about">See the sources and what is still missing.</a></p>
   </div>`;
+}
+
+async function viewVedaGroup(vid) {
+  const cat = await catalog();
+  const v = cat.vedas.find((x) => x.id === vid);
+  if (!v) return notFound();
+  setTitle(v.name);
+  const byId = Object.fromEntries(cat.texts.map((x) => [x.id, x]));
+  const card = (t) => `<a class="veda-card" href="#/v/${t.id}">
+      <span class="dv" lang="sa">${esc(t.deva)}</span>
+      <span><span class="nm">${esc(t.name)}</span>${t.shakha ? `<br><span class="sk">${esc(t.shakha)} śākhā</span>` : ''}</span>
+      ${badgesHTML(t)}
+      <span class="ct">${fmt(t.verses)} ${esc(unitName(t))} in ${fmt(t.containers)} ${esc((t.levels[1] || 'section').toLowerCase())}s</span>
+    </a>`;
+  main.innerHTML = `<div class="wide">
+    <h1>${esc(v.name)}<span class="h1-deva" lang="sa">${esc(v.deva)}</span></h1>
+    <p class="lede">The ${esc(v.name)} in four layers: the Saṃhitā of mantras, the Brāhmaṇa prose on ritual, the Āraṇyaka for the forest, and the Upaniṣads.</p>
+    ${cat.layers.map((l) => `
+      <h2 class="section-title">${LAYERS[l].plural}<span class="h2-deva" lang="sa">${LAYERS[l].deva}</span></h2>
+      ${v.layers[l].length
+    ? `<div class="vedas">${v.layers[l].map((i) => card(byId[i])).join('')}</div>`
+    : `<p class="note">${esc(v.absent?.[l] || 'No openly licensed digital edition has been found yet.')}</p>`}`).join('')}
+  </div>`;
+}
+
+function unitName(t) {
+  if (t.id === 'rv') return 'ṛks';
+  const u = (t.levels[2] || 'section').toLowerCase();
+  return u.endsWith('s') ? u : `${u}s`;
 }
 
 async function viewVeda(id) {
   const meta = await vedaMeta(id);
   if (!meta) return notFound();
   setTitle(meta.name);
+  const cat = await catalog();
+  const vg = cat.vedas.find((v) => v.id === meta.veda);
   const x = await index(id);
+  const lvl = meta.levels.find((l) => LEVEL_DEVA[l]);
+  const single = x.groups.length === 1 && x.groups[0][1].length === 1;
   const tiles = [
-    `<a class="tile" href="#/v/${id}/g"><span class="dv" lang="sa">${{ rv: 'मण्डल', av: 'काण्ड', yv: 'अध्याय', sv: 'आर्चिक' }[id] || ''}</span><span><span class="t">Structure</span><br><span class="s">${esc(meta.levels.filter(Boolean).join(' › '))}</span></span></a>`,
-    ...FKEYS.map((f) => (meta.facets.includes(f)
+    `<a class="tile" href="${single ? `#/v/${id}/c/${x.groups[0][0]}/${x.groups[0][1][0][0]}` : `#/v/${id}/g`}"><span class="dv" lang="sa">${LEVEL_DEVA[lvl] || esc(meta.deva)}</span><span><span class="t">${single ? 'Read the text' : 'Structure'}</span><br><span class="s">${esc(meta.levels.filter(Boolean).join(' › '))}</span></span></a>`,
+    ...FKEYS.filter((f) => meta.layer === 'samhita').map((f) => (meta.facets.includes(f)
       ? `<a class="tile" href="#/v/${id}/f/${f}"><span class="dv" lang="sa">${FACETS[f].deva}</span><span><span class="t">${FACETS[f].label}</span><br><span class="s">${fmt(meta.facetCounts[f])} ${FACETS[f].plural}</span></span></a>`
       : `<span class="tile" aria-disabled="true"><span class="dv" lang="sa">${FACETS[f].deva}</span><span><span class="t">${FACETS[f].label}</span><br><span class="s">Not in the open source yet</span></span></span>`)),
   ].join('');
   const tagNote = {
     verse: 'Ṛṣi, devatā and chandas are tagged for every ṛk, from the Sarvānukramaṇī.',
     sukta: 'Tags come from each sūkta’s Anukramaṇī header, so every mantra in a sūkta carries its main ṛṣi, devatā and chandas. Kāṇḍa 20 has no headers in the source.',
-    hymn: 'Only Griffith’s English translation is open so far; devatā comes from his hymn headings. The Sanskrit text is not in the source yet.',
-  }[meta.tagLevel] || 'The open text has no ṛṣi, devatā or chandas tags yet, so it can be browsed by adhyāya only.';
+    hymn: 'This is Griffith’s English translation; devatā comes from his hymn headings.',
+  }[meta.tagLevel] || (meta.layer === 'samhita' ? 'The open text has no ṛṣi, devatā or chandas index yet, so it is browsed by structure.' : '');
+  const lede = [meta.shakha ? `${meta.shakha} śākhā.` : '', tagNote, meta.note || ''].filter(Boolean).join(' ');
+  const unit = unitName(meta);
   main.innerHTML = `<div class="wide">
+    <div class="crumbs"><a href="#/veda/${vg.id}">${esc(vg.name)}</a><span aria-hidden="true">/</span><span>${LAYERS[meta.layer].label}</span></div>
     <h1>${esc(meta.name)}<span class="h1-deva" lang="sa">${esc(meta.deva)}</span></h1>
-    <p class="lede">${esc(meta.shakha)} śākhā. ${esc(tagNote)}</p>
+    ${lede ? `<p class="lede">${esc(lede)}</p>` : ''}
     <div class="stats">
       ${x.groups.length > 1 ? `<span><b>${x.groups.length}</b> ${esc(meta.levels[0].toLowerCase())}s</span>` : ''}
-      <span><b>${fmt(meta.containers)}</b> ${esc(meta.levels[1].toLowerCase())}s</span>
-      <span><b>${fmt(meta.verses)}</b> ${esc(meta.levels[2].toLowerCase())}s</span>
+      ${!single ? `<span><b>${fmt(meta.containers)}</b> ${esc((meta.levels[1] || 'section').toLowerCase())}s</span>` : ''}
+      <span><b>${fmt(meta.verses)}</b> ${esc(unit)}</span>
     </div>
     <div style="margin-top:14px">${badgesHTML(meta)}</div>
     <h2 class="section-title">Browse by</h2>
     <div class="tiles">${tiles}</div>
-    <h2 class="section-title">${x.groups.length > 1 ? `${esc(meta.levels[0])}s` : `${esc(meta.levels[1])}s`}</h2>
+    ${single ? '' : `<h2 class="section-title">${x.groups.length > 1 ? `${esc(meta.levels[0])}s` : `${esc(meta.levels[1])}s`}</h2>
     ${x.groups.length > 1
-    ? `<div class="groups">${x.groups.map(([d1, cs]) => `<a class="group" href="#/v/${id}/g/${d1}"><b>${esc(groupName(meta, d1))}</b><small>${cs.length} ${esc(meta.levels[1].toLowerCase())}s, ${fmt(cs.reduce((a, c) => a + c[1], 0))} ${esc(meta.levels[2].toLowerCase())}s</small></a>`).join('')}</div>`
-    : containerGrid(meta, x.groups[0][0], x.groups[0][1])}
+    ? `<div class="groups">${x.groups.map(([d1, cs]) => `<a class="group" href="#/v/${id}/g/${d1}"><b>${esc(groupName(meta, d1))}</b><small>${cs.length} ${esc(meta.levels[1].toLowerCase())}s, ${fmt(cs.reduce((a, c) => a + c[1], 0))} ${esc(unit)}</small></a>`).join('')}</div>`
+    : containerGrid(meta, x.groups[0][0], x.groups[0][1])}`}
   </div>`;
 }
 
 function containerGrid(meta, d1, cs) {
-  return `<div class="containers">${cs.map(([d2, n]) => `<a href="#/v/${meta.id}/c/${d1}/${d2}" title="${n} ${esc(meta.levels[2].toLowerCase())}s">${esc(containerRef(meta, d1, d2))}</a>`).join('')}</div>`;
+  return `<div class="containers${meta.refFmt === 'label' ? ' wide-cells' : ''}">${cs.map(([d2, n, title]) => `<a href="#/v/${meta.id}/c/${d1}/${d2}" title="${n} ${esc(unitName(meta))}">${esc(containerRef(meta, d1, d2, title) || d2)}</a>`).join('')}</div>`;
 }
 
 function primaryTag(x, rows, f) {
@@ -215,16 +318,17 @@ async function viewGroups(id, d1) {
     const rs = byC.get(d2) || [];
     const dv = primaryTag(x, rs, 'devata');
     const rs2 = primaryTag(x, rs, 'rishi');
-    const label = [dv && cap(dv[1]), rs2 && cap(rs2[1])].filter(Boolean).join(', ') || title || '';
-    return `<a href="#/v/${id}/c/${d1}/${d2}"><b>${esc(containerRef(meta, d1, d2))}</b><span>${esc(label)}</span><span style="margin-left:auto;color:var(--muted);font-size:14px;font-family:var(--ui)">${n}</span></a>`;
+    const label = [dv && cap(dv[1]), rs2 && cap(rs2[1])].filter(Boolean).join(', ') || (meta.refFmt === 'label' ? '' : title) || '';
+    return `<a href="#/v/${id}/c/${d1}/${d2}"><b>${esc(containerRef(meta, d1, d2, title))}</b><span>${esc(label)}</span><span style="margin-left:auto;color:var(--muted);font-size:14px;font-family:var(--ui)">${n}</span></a>`;
   }).join('');
   const idx = x.groups.findIndex((e) => e[0] === d1);
   const prev = x.groups[idx - 1]; const next = x.groups[idx + 1];
+  const plain = !meta.facets.length && !g[1].some((c) => c[2] && meta.refFmt !== 'label');
   main.innerHTML = `<div class="col">
     <div class="crumbs"><a href="#/v/${id}">${esc(meta.name)}</a>${x.groups.length > 1 ? `<span aria-hidden="true">/</span><a href="#/v/${id}/g">Structure</a>` : ''}</div>
     <h1>${esc(x.groups.length > 1 ? groupName(meta, d1) : `${meta.levels[1]}s`)}</h1>
-    <p class="lede">${g[1].length} ${esc(meta.levels[1].toLowerCase())}s, with their main ${meta.facets.includes('devata') ? 'devatā and ṛṣi' : 'heading'} and number of ${esc(meta.levels[2].toLowerCase())}s.</p>
-    <div class="titled" style="margin-top:18px">${items}</div>
+    <p class="lede">${g[1].length} ${esc(meta.levels[1].toLowerCase())}s${plain ? '' : `, with their main ${meta.facets.includes('devata') ? 'devatā and ṛṣi' : 'heading'} and number of ${esc(unitName(meta))}`}.</p>
+    ${plain ? `<div style="margin-top:18px">${containerGrid(meta, d1, g[1])}</div>` : `<div class="titled" style="margin-top:18px">${items}</div>`}
     <div class="pager">${prev ? `<a href="#/v/${id}/g/${prev[0]}">‹ ${esc(groupName(meta, prev[0]))}</a>` : '<span></span>'}${next ? `<a href="#/v/${id}/g/${next[0]}">${esc(groupName(meta, next[0]))} ›</a>` : ''}</div>
   </div>`;
 }
@@ -371,8 +475,8 @@ async function viewContainer(id, d1, d2, params) {
   const verses = t[d2] || [];
   const rows = x.rows.filter((r) => r[0] === d1 && r[1] === d2);
   const rowOf = new Map(rows.map((r) => [r[2], r]));
-  const cref = containerRef(meta, d1, d2);
-  setTitle(`${meta.ref} ${cref}`);
+  const cref = containerRef(meta, d1, d2, c[2]);
+  setTitle(cref ? `${meta.ref} ${cref}` : meta.name);
   const hasDeva = verses.some((v) => v[1].length);
   const hasRoman = verses.some((v) => v[2].length);
   const hasPada = verses.some((v) => v[3].length);
@@ -380,30 +484,30 @@ async function viewContainer(id, d1, d2, params) {
   const hl = Number(params.get('v')) || null;
 
   // neighbours across groups
-  const flat = x.groups.flatMap(([a, cs]) => cs.map(([b]) => [a, b]));
+  const flat = x.groups.flatMap(([a, cs]) => cs.map(([b, , tt]) => [a, b, tt]));
   const pos = flat.findIndex(([a, b]) => a === d1 && b === d2);
   const prev = flat[pos - 1]; const next = flat[pos + 1];
 
   const summary = FKEYS.map((f) => [f, primaryTag(x, rows, f)]).filter(([, e]) => e);
   const seg = (name, opts) => `<div class="seg" role="group" aria-label="${esc(name)}">${opts.map(([k, v, l, dis]) => `<button data-p="${k}" data-v="${v}" aria-pressed="${String(prefs[k] === v)}"${dis ? ' disabled' : ''}>${esc(l)}</button>`).join('')}</div>`;
   const controls = [
-    hasDeva && hasRoman ? seg('Script', [['script', 'both', 'Both'], ['script', 'deva', 'देवनागरी'], ['script', 'roman', 'IAST']]) : '',
+    hasDeva && hasRoman ? seg('Script', [['script', 'both', 'Both'], ['script', 'deva', lipiName()], ['script', 'roman', 'IAST']]) : '',
     hasPada ? seg('Text', [['mode', 'samhita', 'Saṃhitā'], ['mode', 'pada', 'Padapāṭha']]) : '',
     hasTr && (hasDeva || hasRoman) ? seg('Translation', [['tr', true, 'Translation'], ['tr', false, 'Hide']]) : '',
   ].join('');
 
   main.innerHTML = `<article class="col">
-    <div class="crumbs"><a href="#/v/${id}">${esc(meta.name)}</a><span aria-hidden="true">/</span><a href="#/v/${id}/g/${d1}">${esc(x.groups.length > 1 ? groupName(meta, d1) : `${meta.levels[1]}s`)}</a></div>
+    <div class="crumbs"><a href="#/v/${id}">${esc(meta.name)}</a>${x.groups.length > 1 ? `<span aria-hidden="true">/</span><a href="#/v/${id}/g/${d1}">${esc(groupName(meta, d1))}</a>` : ''}</div>
     <div class="reader-head"><div>
-      <h1>${esc(meta.levels[1])} ${esc(cref)}</h1>
-      ${c[2] ? `<div class="ctitle" lang="sa">${esc(c[2])}</div>` : ''}
+      <h1>${cref ? `${esc(meta.levels[1] || meta.levels[2])} ${esc(cref)}` : esc(meta.name)}</h1>
+      ${c[2] && meta.refFmt !== 'label' ? `<div class="ctitle" lang="sa">${esc(c[2])}</div>` : ''}
     </div></div>
     ${summary.length ? `<div class="tags">${summary.map(([f, e]) => `<a class="tag" href="${findHref(id, { [f]: e[0] })}"><em>${FACETS[f].label}</em>${e[2] ? `<span class="dv" lang="sa">${esc(e[2])}</span>` : ''}<span>${esc(cap(e[1]))}</span></a>`).join('')}</div>` : ''}
     ${controls ? `<div class="controls">${controls}</div>` : ''}
     <div id="verses"></div>
     <nav class="pager" aria-label="Neighbouring ${esc(meta.levels[1].toLowerCase())}s">
-      ${prev ? `<a href="#/v/${id}/c/${prev[0]}/${prev[1]}">‹ ${esc(meta.ref)} ${esc(containerRef(meta, prev[0], prev[1]))}</a>` : '<span></span>'}
-      ${next ? `<a href="#/v/${id}/c/${next[0]}/${next[1]}">${esc(meta.ref)} ${esc(containerRef(meta, next[0], next[1]))} ›</a>` : ''}
+      ${prev ? `<a href="#/v/${id}/c/${prev[0]}/${prev[1]}">‹ ${esc(meta.ref)} ${esc(containerRef(meta, prev[0], prev[1], prev[2]))}</a>` : '<span></span>'}
+      ${next ? `<a href="#/v/${id}/c/${next[0]}/${next[1]}">${esc(meta.ref)} ${esc(containerRef(meta, next[0], next[1], next[2]))} ›</a>` : ''}
     </nav>
   </article>`;
 
@@ -417,7 +521,7 @@ async function viewContainer(id, d1, d2, params) {
         const e = x.facets[f][r[COL[f]]];
         return `<a class="tag" href="${findHref(id, { [f]: e[0] })}"><em>${FACETS[f].label}</em><span>${esc(cap(e[1]))}</span></a>`;
       }).join('') : '';
-      const ref = refOf(meta, d1, d2, v);
+      const ref = refOf(meta, d1, d2, v, label);
       let body = '';
       if (pada) {
         body += `<div class="pada" lang="sa-Latn">${pd.map((w) => `<span>${esc(w)}</span>`).join('<span aria-hidden="true">|</span>')}</div>`;
@@ -428,14 +532,14 @@ async function viewContainer(id, d1, d2, params) {
       if (tr && (prefs.tr || (!hasDeva && !hasRoman))) body += `<p class="tr" lang="en">${esc(tr)}</p>`;
       return `<section class="verse${v === hl ? ' hl' : ''}" id="v${v}" aria-label="${esc(meta.ref)} ${esc(ref)}">
         <div class="vnum"><a href="#/v/${id}/c/${d1}/${d2}?v=${v}">${esc(ref)}</a></div>
-        <div>${label ? `<div class="vlabel">${esc(label)}</div>` : ''}${body}${tags ? `<div class="tags">${tags}</div>` : ''}</div>
+        <div>${label && meta.refFmt !== 'label' ? `<div class="vlabel">${esc(label)}</div>` : ''}${body}${tags ? `<div class="tags">${tags}</div>` : ''}</div>
         <button class="icon-btn copy" data-copy="${v}" aria-label="Copy ${esc(meta.ref)} ${esc(ref)}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/></svg></button>
       </section>`;
     }).join('');
     main.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', async () => {
       const v = Number(b.dataset.copy);
       const vs = verses.find((e) => e[0] === v);
-      const txt = [...vs[1], ...vs[2], vs[4], `— ${meta.ref} ${refOf(meta, d1, d2, v)}`].filter(Boolean).join('\n');
+      const txt = [...vs[1].map((l) => (prefs.lipi === 'knda' ? toKnda(l) : l)), ...vs[2], vs[4], `— ${meta.ref} ${refOf(meta, d1, d2, v, vs[5])}`].filter(Boolean).join('\n');
       try { await navigator.clipboard.writeText(txt); b.setAttribute('aria-label', 'Copied'); b.style.color = 'var(--indigo)'; } catch { /* clipboard blocked */ }
     }));
   };
@@ -451,24 +555,30 @@ async function viewContainer(id, d1, d2, params) {
   if (hl && hl !== verses[0]?.[0]) requestAnimationFrame(() => document.getElementById(`v${hl}`)?.scrollIntoView({ block: 'start' }));
 }
 
+const SOURCES = {
+  vedaweb: 'VedaWeb, University of Cologne (CC BY-NC-SA 4.0)',
+  anukramani: 'Digitised Sarvānukramaṇī, WSC 2023 (Apache-2.0)',
+  dharmic: 'DharmicData (ODbL), text from the Vedic Heritage Portal',
+  raw: 'sanskrit/raw_etexts on GitHub, collected from public e-text sites',
+  gretil: 'GRETIL, Göttingen (reference and research use)',
+};
 async function viewAbout() {
   setTitle('Sources and licences');
   const cat = await catalog();
+  const byId = Object.fromEntries(cat.texts.map((x) => [x.id, x]));
+  const rows = cat.vedas.flatMap((v) => cat.layers.flatMap((l) => v.layers[l].map((i) => byId[i])
+    .map((t) => `<tr><td>${esc(v.name)}</td><td>${LAYERS[l].label}</td><td><a href="#/v/${t.id}">${esc(t.name)}</a></td><td>${t.sources.map((k) => esc(SOURCES[k] || k)).join('; ')}</td></tr>`))).join('');
   main.innerHTML = `<div class="prose">
     <h1>Sources and licences</h1>
-    <p class="lede">Vedālokana is a non-commercial browser built entirely from openly published data. Text and tags are shown as the sources give them; corrections belong upstream.</p>
-    <h2>What each Saṃhitā draws on</h2>
-    <div class="table-wrap"><table class="src-table"><thead><tr><th>Saṃhitā</th><th>Text</th><th>Ṛṣi, devatā, chandas</th></tr></thead><tbody>
-      <tr><td>Ṛgveda (Śākala)</td><td>VedaWeb, University of Cologne: Devanagari with svaras (Eichler), Aufrecht’s transliteration, Padapāṭha, Griffith’s translation. CC BY-NC-SA 4.0 for the texts.</td><td>Digitised Sarvānukramaṇī per ṛk, from Krishna et al., WSC 2023. Apache-2.0.</td></tr>
-      <tr><td>Atharvaveda (Śaunaka)</td><td>DharmicData (ODbL), which takes its text from the Vedic Heritage Portal, Ministry of Culture.</td><td>Parsed from each sūkta’s Anukramaṇī header in the same text.</td></tr>
-      <tr><td>Śukla Yajurveda (Mādhyandina)</td><td>DharmicData (ODbL), from the Vedic Heritage Portal.</td><td>Not available yet.</td></tr>
-      <tr><td>Sāmaveda (Kauthuma)</td><td>Griffith’s English translation (1895, public domain), via DharmicData.</td><td>Devatā from Griffith’s hymn headings.</td></tr>
-    </tbody></table></div>
+    <p class="lede">Vedālokana is a non-commercial browser built from openly published digital texts. Text and tags are shown as the sources give them; corrections belong upstream.</p>
+    <h2>Texts and where they come from</h2>
+    <div class="table-wrap"><table class="src-table"><thead><tr><th>Veda</th><th>Layer</th><th>Text</th><th>Source</th></tr></thead><tbody>${rows}</tbody></table></div>
     <h2>Known gaps</h2>
     <ul>
-      <li>The Sanskrit text of the Sāmaveda, and any Kṛṣṇa Yajurveda Saṃhitā, are not yet in an openly licensed digital edition we can use.</li>
-      <li>Atharvaveda kāṇḍa 20 has no Anukramaṇī headers in the source, so its mantras carry no tags.</li>
-      <li>18 ṛks of the Ṛgveda have no entry in the digitised Anukramaṇī.</li>
+      <li>Ṛṣi, devatā and chandas are indexed only for the Ṛgveda (per ṛk) and the Atharvaveda (per sūkta).</li>
+      <li>Texts from GRETIL are in transliteration; the Devanagari shown for them is converted and carries no svara marks.</li>
+      <li>Some sources skip sections: Śatapatha kāṇḍa 12, Śāṅkhāyana Āraṇyaka adhyāyas 3–6, Taittirīya Āraṇyaka prapāṭhakas 5–6.</li>
+      <li>Not found in an open edition yet: Maitrāyaṇī and Kāṭhaka texts beyond the Saṃhitā, Taittirīya numbering by anuvāka, the Kauṣītaki Upaniṣad.</li>
       <li>Audio recitation is not included: the Vedic Heritage Portal’s recordings need permission to reuse.</li>
     </ul>
     <h2>Data build</h2>
@@ -478,11 +588,11 @@ async function viewAbout() {
 
 function notFound() {
   setTitle('Not found');
-  main.innerHTML = `<div class="col"><h1>That page doesn’t exist</h1><p class="lede">The link may point to a sūkta or name that isn’t in this Saṃhitā. <a href="#/">Go to the start page</a>.</p></div>`;
+  main.innerHTML = `<div class="col"><h1>That page doesn’t exist</h1><p class="lede">The link may point to a section or name that isn’t in this text. <a href="#/">Go to the start page</a>.</p></div>`;
 }
 
 // ---------- search ----------
-const REF_PREFIX = { rv: 'rv', ṛv: 'rv', av: 'av', avś: 'av', vs: 'yv', yv: 'yv', sv: 'sv' };
+const REF_PREFIX = { rv: 'rv', ṛv: 'rv', av: 'av', avś: 'av', vs: 'yv', yv: 'yv', ts: 'ts', tb: 'tb', ab: 'ab', kb: 'kb', pb: 'pb', gb: 'gb', chu: 'chu', bu: 'bu' };
 let activeVeda = 'rv';
 async function suggestions(q) {
   const out = [];
@@ -490,16 +600,23 @@ async function suggestions(q) {
   const cat = await catalog();
   if (m) {
     const id = REF_PREFIX[m[1]] || activeVeda;
-    const meta = cat.vedas.find((v) => v.id === id);
+    const meta = cat.texts.find((v) => v.id === id);
     const x = await index(id);
     const nums = [m[2], m[3], m[4]].filter(Boolean).map(Number);
     let d1; let d2; let v;
-    if (meta.refFmt === 'd2.v') { d1 = x.groups[0][0]; [d2, v] = nums; } else [d1, d2, v] = nums;
+    if (meta.refFmt === 'v') { d1 = x.groups[0][0]; d2 = x.groups[0][1][0][0]; [v] = nums; }
+    else if (meta.refFmt === 'd2.v') { d1 = x.groups[0][0]; [d2, v] = nums; } else [d1, d2, v] = nums;
     const g = x.groups.find((e) => e[0] === d1);
     if (g && d2 === undefined) out.push({ href: x.groups.length > 1 ? `#/v/${id}/g/${d1}` : `#/v/${id}/c/${d1}/${d1}`, label: `${meta.name}, ${groupName(meta, d1)}`, hint: 'Open' });
-    else if (g && g[1].some((c) => c[0] === d2)) out.push({ href: `#/v/${id}/c/${d1}/${d2}${v ? `?v=${v}` : ''}`, label: `${meta.ref} ${refOf(meta, d1, d2, v)}`, hint: meta.name });
+    else if (meta.refFmt !== 'label' && g && g[1].some((c) => c[0] === d2)) out.push({ href: `#/v/${id}/c/${d1}/${d2}${v ? `?v=${v}` : ''}`, label: `${meta.ref} ${refOf(meta, d1, d2, v)}`, hint: meta.name });
   }
   const ql = q.trim().toLowerCase();
+  if (ql.length >= 2 && !m) {
+    for (const t of cat.texts) {
+      if (t.name.toLowerCase().includes(ql) || t.deva.includes(q.trim())) out.push({ href: `#/v/${t.id}`, label: `${t.name} · ${t.deva}`, hint: LAYERS[t.layer].label });
+      if (out.length >= 4) break;
+    }
+  }
   if (ql.length >= 2) {
     const x = await index(activeVeda);
     const hits = [];
@@ -559,7 +676,7 @@ $('#scrim').addEventListener('click', () => setDrawer(false));
 function parse() {
   const [path, qs] = getHash().replace(/^#/, '').split('?');
   const parts = path.split('/').filter(Boolean);
-  return { parts, params: new URLSearchParams(qs || ''), veda: parts[0] === 'v' ? parts[1] : null, sub: parts[2] || null };
+  return { parts, params: new URLSearchParams(qs || ''), veda: parts[0] === 'v' ? parts[1] : null, group: parts[0] === 'veda' ? parts[1] : null, sub: parts[2] || null };
 }
 async function route() {
   const r = parse();
@@ -571,6 +688,7 @@ async function route() {
     const [a, id, sub, p1, p2] = r.parts;
     if (!a) await viewHome();
     else if (a === 'about') await viewAbout();
+    else if (a === 'veda') await viewVedaGroup(id);
     else if (a === 'v' && !sub) await viewVeda(id);
     else if (a === 'v' && sub === 'g') await viewGroups(id, p1 !== undefined ? Number(p1) : undefined);
     else if (a === 'v' && sub === 'f') await viewFacet(id, p1);

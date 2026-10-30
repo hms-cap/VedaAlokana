@@ -233,3 +233,23 @@ h1 { margin: 0; font-size: clamp(28px, 4vw, 40px); line-height: 1.1; font-weight
   .deva { font-size: 22px; }
   .vnum { padding-top: 8px; }
 }
+
+/* ---- Kannada script ---- */
+body.kn { --deva: 'Tiro Kannada', 'Noto Serif Kannada', 'Noto Sans Kannada', 'Noto Serif Devanagari', serif; }
+.lipi { display: flex; align-items: center; gap: 4px; margin: 0 6px 18px; padding: 3px; border-radius: 11px; background: var(--line-soft); }
+.lipi span { font-size: 13px; color: var(--muted); padding: 0 8px; }
+.lipi button { flex: 1; height: 34px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; font-size: 14px; }
+.lipi button[data-lipi="deva"] { font-family: 'Noto Serif Devanagari', serif; }
+.lipi button[data-lipi="knda"] { font-family: 'Tiro Kannada', 'Noto Serif Kannada', serif; }
+.lipi button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+
+/* ---- Veda → layers ---- */
+.rail a.sub { padding: 7px 10px 7px 22px; font-size: 14px; }
+.rail a.sub .n { font-size: 12px; }
+.h2-deva { font-family: var(--deva); font-weight: 500; color: var(--muted); margin-left: 10px; font-size: 16px; }
+.veda-card .layers { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
+.veda-card .lrow { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 8px; font-size: 14px; line-height: 1.4; }
+.veda-card .lk { color: var(--muted); }
+.veda-card .lv { min-width: 0; }
+.veda-card .none { color: var(--muted); font-style: italic; }
+.containers.wide-cells { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }

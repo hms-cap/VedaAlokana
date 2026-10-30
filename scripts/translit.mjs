@@ -77,7 +77,9 @@ const D_CONS = Object.fromEntries(CONSONANTS.filter(([, d]) => d.length === 1).m
 D_CONS['ळ'] = 'ḷ';
 
 export function devaToIast(input) {
-  const s = input.normalize('NFC').replace(SVARA, '').replace(/ᳵ|ᳶ/g, '');
+  const s = input.normalize('NFC')
+    .replace(/[ᳵᳶ]/g, 'ः').replace(/ꣳ/g, 'ं') // jihvāmūlīya/upadhmānīya, Vedic anusvāra
+    .replace(SVARA, '');
   let out = '';
   for (let i = 0; i < s.length; i++) {
     const ch = s[i];

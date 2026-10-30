@@ -1,9 +1,125 @@
 {
  "built": "2026-10-30",
+ "layers": [
+  "samhita",
+  "brahmana",
+  "aranyaka",
+  "upanishad"
+ ],
  "vedas": [
   {
+   "id": "rv",
    "name": "Ṛgveda",
    "deva": "ऋग्वेद",
+   "layers": {
+    "samhita": [
+     "rv"
+    ],
+    "brahmana": [
+     "ab",
+     "kb"
+    ],
+    "aranyaka": [
+     "aa",
+     "sa"
+    ],
+    "upanishad": [
+     "aiu"
+    ]
+   }
+  },
+  {
+   "id": "syv",
+   "name": "Śukla Yajurveda",
+   "deva": "शुक्ल यजुर्वेद",
+   "absent": {
+    "aranyaka": "Its Āraṇyaka is the Bṛhadāraṇyaka, listed under Upaniṣads."
+   },
+   "layers": {
+    "samhita": [
+     "yv"
+    ],
+    "brahmana": [
+     "sb"
+    ],
+    "aranyaka": [],
+    "upanishad": [
+     "isu",
+     "bu"
+    ]
+   }
+  },
+  {
+   "id": "kyv",
+   "name": "Kṛṣṇa Yajurveda",
+   "deva": "कृष्ण यजुर्वेद",
+   "layers": {
+    "samhita": [
+     "ts"
+    ],
+    "brahmana": [
+     "tb"
+    ],
+    "aranyaka": [
+     "ta"
+    ],
+    "upanishad": [
+     "tu",
+     "kathu",
+     "svu"
+    ]
+   }
+  },
+  {
+   "id": "sv",
+   "name": "Sāmaveda",
+   "deva": "सामवेद",
+   "layers": {
+    "samhita": [
+     "sv",
+     "svs"
+    ],
+    "brahmana": [
+     "pb"
+    ],
+    "aranyaka": [
+     "jub"
+    ],
+    "upanishad": [
+     "chu",
+     "keu"
+    ]
+   }
+  },
+  {
+   "id": "av",
+   "name": "Atharvaveda",
+   "deva": "अथर्ववेद",
+   "absent": {
+    "aranyaka": "The Atharvaveda has no Āraṇyaka."
+   },
+   "layers": {
+    "samhita": [
+     "av"
+    ],
+    "brahmana": [
+     "gb"
+    ],
+    "aranyaka": [],
+    "upanishad": [
+     "mu",
+     "mau",
+     "pru"
+    ]
+   }
+  }
+ ],
+ "texts": [
+  {
+   "veda": "rv",
+   "layer": "samhita",
+   "name": "Ṛgveda Saṃhitā",
+   "deva": "ऋग्वेद संहिता",
    "shakha": "Śākala",
    "levels": [
     "Maṇḍala",
@@ -38,9 +154,11 @@
    }
   },
   {
-   "name": "Śukla Yajurveda",
-   "deva": "शुक्ल यजुर्वेद",
-   "shakha": "Vājasaneyi Mādhyandina",
+   "veda": "syv",
+   "layer": "samhita",
+   "name": "Vājasaneyi Saṃhitā",
+   "deva": "वाजसनेयि संहिता",
+   "shakha": "Mādhyandina",
    "levels": [
     "",
     "Adhyāya",
@@ -69,8 +187,10 @@
    }
   },
   {
-   "name": "Sāmaveda",
-   "deva": "सामवेद",
+   "veda": "sv",
+   "layer": "samhita",
+   "name": "Sāmaveda, Griffith’s translation",
+   "deva": "सामवेद (अनुवाद)",
    "shakha": "Kauthuma",
    "levels": [
     "Ārcika",
@@ -106,8 +226,10 @@
    }
   },
   {
-   "name": "Atharvaveda",
-   "deva": "अथर्ववेद",
+   "veda": "av",
+   "layer": "samhita",
+   "name": "Atharvaveda Saṃhitā",
+   "deva": "अथर्ववेद संहिता",
    "shakha": "Śaunaka",
    "levels": [
     "Kāṇḍa",
@@ -138,6 +260,796 @@
     "rishi": 92,
     "devata": 247,
     "chandas": 87
+   }
+  },
+  {
+   "veda": "rv",
+   "layer": "brahmana",
+   "name": "Aitareya Brāhmaṇa",
+   "deva": "ऐतरेय ब्राह्मण",
+   "shakha": null,
+   "levels": [
+    "Pañcikā",
+    "Adhyāya",
+    "Khaṇḍa"
+   ],
+   "ref": "AB",
+   "refFmt": "d1.d2.v",
+   "has": {
+    "svara": false,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": null,
+   "sources": [
+    "raw"
+   ],
+   "id": "ab",
+   "containers": 40,
+   "verses": 340,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "rv",
+   "layer": "brahmana",
+   "name": "Kauṣītaki Brāhmaṇa",
+   "deva": "कौषीतकि ब्राह्मण",
+   "shakha": null,
+   "levels": [
+    "",
+    "Adhyāya",
+    "Khaṇḍa"
+   ],
+   "ref": "KB",
+   "refFmt": "d2.v",
+   "has": {
+    "svara": false,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": null,
+   "sources": [
+    "gretil"
+   ],
+   "id": "kb",
+   "containers": 30,
+   "verses": 271,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "rv",
+   "layer": "aranyaka",
+   "name": "Aitareya Āraṇyaka",
+   "deva": "ऐतरेय आरण्यक",
+   "shakha": null,
+   "levels": [
+    "Āraṇyaka",
+    "Adhyāya",
+    "Khaṇḍa"
+   ],
+   "ref": "AĀ",
+   "refFmt": "d1.d2.v",
+   "has": {
+    "svara": false,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": null,
+   "sources": [
+    "raw"
+   ],
+   "id": "aa",
+   "containers": 18,
+   "verses": 91,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "rv",
+   "layer": "aranyaka",
+   "name": "Śāṅkhāyana Āraṇyaka",
+   "deva": "शाङ्खायन आरण्यक",
+   "shakha": null,
+   "levels": [
+    "",
+    "Adhyāya",
+    "Khaṇḍa"
+   ],
+   "ref": "ŚĀ",
+   "refFmt": "d2.v",
+   "has": {
+    "svara": false,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": "Adhyāyas 3–6 have no section references in the GRETIL source and are not included yet.",
+   "sources": [
+    "gretil"
+   ],
+   "id": "sa",
+   "containers": 11,
+   "verses": 96,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "rv",
+   "layer": "upanishad",
+   "name": "Aitareya Upaniṣad",
+   "deva": "ऐतरेय उपनिषद्",
+   "shakha": null,
+   "levels": [
+    "Adhyāya",
+    "Khaṇḍa",
+    "Mantra"
+   ],
+   "ref": "AiU",
+   "refFmt": "d1.d2.v",
+   "has": {
+    "svara": false,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": null,
+   "sources": [
+    "gretil"
+   ],
+   "id": "aiu",
+   "containers": 5,
+   "verses": 33,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "syv",
+   "layer": "brahmana",
+   "name": "Śatapatha Brāhmaṇa",
+   "deva": "शतपथ ब्राह्मण",
+   "shakha": null,
+   "levels": [
+    "Kāṇḍa",
+    "Brāhmaṇa",
+    "Kaṇḍikā"
+   ],
+   "ref": "ŚB",
+   "refFmt": "label",
+   "has": {
+    "svara": false,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": "Kāṇḍa 12 is missing from the GRETIL source.",
+   "sources": [
+    "gretil"
+   ],
+   "id": "sb",
+   "containers": 394,
+   "verses": 7089,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "syv",
+   "layer": "upanishad",
+   "name": "Īśa Upaniṣad",
+   "deva": "ईश उपनिषद्",
+   "shakha": null,
+   "levels": [
+    "",
+    "",
+    "Mantra"
+   ],
+   "ref": "ĪU",
+   "refFmt": "v",
+   "has": {
+    "svara": false,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": null,
+   "sources": [
+    "gretil"
+   ],
+   "id": "isu",
+   "containers": 1,
+   "verses": 18,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "syv",
+   "layer": "upanishad",
+   "name": "Bṛhadāraṇyaka Upaniṣad",
+   "deva": "बृहदारण्यक उपनिषद्",
+   "shakha": null,
+   "levels": [
+    "Adhyāya",
+    "Brāhmaṇa",
+    "Kaṇḍikā"
+   ],
+   "ref": "BĀU",
+   "refFmt": "d1.d2.v",
+   "has": {
+    "svara": false,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": "Also the Āraṇyaka of the Śukla Yajurveda (Śatapatha Brāhmaṇa 14.4–9).",
+   "sources": [
+    "gretil"
+   ],
+   "id": "bu",
+   "containers": 47,
+   "verses": 432,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "kyv",
+   "layer": "samhita",
+   "name": "Taittirīya Saṃhitā",
+   "deva": "तैत्तिरीय संहिता",
+   "shakha": "Taittirīya",
+   "levels": [
+    "Kāṇḍa",
+    "Prapāṭhaka",
+    "Pañcāśat"
+   ],
+   "ref": "TS",
+   "refFmt": "d1.d2.v",
+   "has": {
+    "svara": true,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": null,
+   "sources": [
+    "raw"
+   ],
+   "id": "ts",
+   "containers": 44,
+   "verses": 2064,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "kyv",
+   "layer": "brahmana",
+   "name": "Taittirīya Brāhmaṇa",
+   "deva": "तैत्तिरीय ब्राह्मण",
+   "shakha": null,
+   "levels": [
+    "Kāṇḍa",
+    "Prapāṭhaka",
+    "Pañcāśat"
+   ],
+   "ref": "TB",
+   "refFmt": "d1.d2.v",
+   "has": {
+    "svara": true,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": null,
+   "sources": [
+    "raw"
+   ],
+   "id": "tb",
+   "containers": 25,
+   "verses": 1661,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "kyv",
+   "layer": "aranyaka",
+   "name": "Taittirīya Āraṇyaka",
+   "deva": "तैत्तिरीय आरण्यक",
+   "shakha": null,
+   "levels": [
+    "",
+    "Prapāṭhaka",
+    "Section"
+   ],
+   "ref": "TĀ",
+   "refFmt": "d2.v",
+   "has": {
+    "svara": true,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": "Drāviḍa pāṭha, numbered as in the source files; prapāṭhakas 5 and 6 are not in the source.",
+   "sources": [
+    "raw"
+   ],
+   "id": "ta",
+   "containers": 8,
+   "verses": 554,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "kyv",
+   "layer": "upanishad",
+   "name": "Taittirīya Upaniṣad",
+   "deva": "तैत्तिरीय उपनिषद्",
+   "shakha": null,
+   "levels": [
+    "",
+    "",
+    "Section"
+   ],
+   "ref": "TU",
+   "refFmt": "v",
+   "has": {
+    "svara": true,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": "Taken from the Taittirīya Āraṇyaka source (Śīkṣā, Brahmānanda and Bhṛgu vallīs), one section per line.",
+   "sources": [
+    "raw"
+   ],
+   "id": "tu",
+   "containers": 1,
+   "verses": 42,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "kyv",
+   "layer": "upanishad",
+   "name": "Kaṭha Upaniṣad",
+   "deva": "कठ उपनिषद्",
+   "shakha": null,
+   "levels": [
+    "",
+    "Vallī",
+    "Mantra"
+   ],
+   "ref": "KaU",
+   "refFmt": "d2.v",
+   "has": {
+    "svara": false,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": null,
+   "sources": [
+    "gretil"
+   ],
+   "id": "kathu",
+   "containers": 6,
+   "verses": 119,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "kyv",
+   "layer": "upanishad",
+   "name": "Śvetāśvatara Upaniṣad",
+   "deva": "श्वेताश्वतर उपनिषद्",
+   "shakha": null,
+   "levels": [
+    "",
+    "Adhyāya",
+    "Mantra"
+   ],
+   "ref": "ŚvU",
+   "refFmt": "d2.v",
+   "has": {
+    "svara": false,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": null,
+   "sources": [
+    "gretil"
+   ],
+   "id": "svu",
+   "containers": 6,
+   "verses": 113,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "sv",
+   "layer": "samhita",
+   "name": "Sāmaveda Saṃhitā",
+   "deva": "सामवेद संहिता",
+   "shakha": "Kauthuma",
+   "levels": [
+    "Ārcika",
+    "Verses",
+    "Verse"
+   ],
+   "ref": "SV",
+   "refFmt": "label",
+   "groupNames": {
+    "1": "Pūrvārcika",
+    "2": "Uttarārcika"
+   },
+   "has": {
+    "svara": false,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": "Pūrvārcika verses are numbered straight through and shown ten at a time; Uttarārcika verses are numbered within each sūkta. Digits inside verses are the Sāmaveda’s own svara notation. Where the source skips a number, two verses can appear as one.",
+   "sources": [
+    "raw"
+   ],
+   "id": "svs",
+   "containers": 417,
+   "verses": 1390,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "sv",
+   "layer": "brahmana",
+   "name": "Pañcaviṃśa Brāhmaṇa",
+   "deva": "पञ्चविंश ब्राह्मण",
+   "shakha": null,
+   "levels": [
+    "Adhyāya",
+    "Khaṇḍa",
+    "Mantra"
+   ],
+   "ref": "PB",
+   "refFmt": "d1.d2.v",
+   "has": {
+    "svara": false,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": "Also called the Tāṇḍya Mahābrāhmaṇa.",
+   "sources": [
+    "gretil"
+   ],
+   "id": "pb",
+   "containers": 347,
+   "verses": 7118,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "sv",
+   "layer": "aranyaka",
+   "name": "Jaiminīya Upaniṣad Brāhmaṇa",
+   "deva": "जैमिनीय उपनिषद् ब्राह्मण",
+   "shakha": null,
+   "levels": [
+    "Adhyāya",
+    "Anuvāka",
+    "Section"
+   ],
+   "ref": "JUB",
+   "refFmt": "d1.d2.v",
+   "has": {
+    "svara": false,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": "Also known as the Talavakāra Āraṇyaka; the Kena Upaniṣad is part of it.",
+   "sources": [
+    "raw"
+   ],
+   "id": "jub",
+   "containers": 42,
+   "verses": 1314,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "sv",
+   "layer": "upanishad",
+   "name": "Chāndogya Upaniṣad",
+   "deva": "छान्दोग्य उपनिषद्",
+   "shakha": null,
+   "levels": [
+    "Prapāṭhaka",
+    "Khaṇḍa",
+    "Mantra"
+   ],
+   "ref": "ChU",
+   "refFmt": "d1.d2.v",
+   "has": {
+    "svara": false,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": null,
+   "sources": [
+    "gretil"
+   ],
+   "id": "chu",
+   "containers": 154,
+   "verses": 622,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "sv",
+   "layer": "upanishad",
+   "name": "Kena Upaniṣad",
+   "deva": "केन उपनिषद्",
+   "shakha": null,
+   "levels": [
+    "",
+    "Khaṇḍa",
+    "Mantra"
+   ],
+   "ref": "KeU",
+   "refFmt": "d2.v",
+   "has": {
+    "svara": false,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": null,
+   "sources": [
+    "raw"
+   ],
+   "id": "keu",
+   "containers": 4,
+   "verses": 36,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "av",
+   "layer": "brahmana",
+   "name": "Gopatha Brāhmaṇa",
+   "deva": "गोपथ ब्राह्मण",
+   "shakha": null,
+   "levels": [
+    "Bhāga",
+    "Prapāṭhaka",
+    "Kaṇḍikā"
+   ],
+   "ref": "GB",
+   "refFmt": "d1.d2.v",
+   "groupNames": {
+    "1": "Pūrvabhāga",
+    "2": "Uttarabhāga"
+   },
+   "has": {
+    "svara": false,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": null,
+   "sources": [
+    "raw"
+   ],
+   "id": "gb",
+   "containers": 11,
+   "verses": 258,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "av",
+   "layer": "upanishad",
+   "name": "Muṇḍaka Upaniṣad",
+   "deva": "मुण्डक उपनिषद्",
+   "shakha": null,
+   "levels": [
+    "",
+    "Khaṇḍa",
+    "Mantra"
+   ],
+   "ref": "MuU",
+   "refFmt": "d2.v",
+   "has": {
+    "svara": false,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": "Mūla text taken from an edition with commentary; khaṇḍas 1–6 are Muṇḍakas 1.1 to 3.2.",
+   "sources": [
+    "raw"
+   ],
+   "id": "mu",
+   "containers": 6,
+   "verses": 64,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "av",
+   "layer": "upanishad",
+   "name": "Māṇḍūkya Upaniṣad",
+   "deva": "माण्डूक्य उपनिषद्",
+   "shakha": null,
+   "levels": [
+    "",
+    "",
+    "Mantra"
+   ],
+   "ref": "MāU",
+   "refFmt": "v",
+   "has": {
+    "svara": false,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": null,
+   "sources": [
+    "gretil"
+   ],
+   "id": "mau",
+   "containers": 1,
+   "verses": 12,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "av",
+   "layer": "upanishad",
+   "name": "Praśna Upaniṣad",
+   "deva": "प्रश्न उपनिषद्",
+   "shakha": null,
+   "levels": [
+    "",
+    "Praśna",
+    "Mantra"
+   ],
+   "ref": "PrU",
+   "refFmt": "d2.v",
+   "has": {
+    "svara": false,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": null,
+   "sources": [
+    "gretil"
+   ],
+   "id": "pru",
+   "containers": 6,
+   "verses": 67,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
    }
   }
  ]

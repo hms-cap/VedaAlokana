@@ -2,18 +2,20 @@
 // Builds the static JSON data the web app reads, from open sources.
 // Usage:
 //   node scripts/build-data.mjs --vedaweb <vedaweb-data dir> \
-//        --anukramani <WSC2023/Anukramani dir> --dharmic <DharmicData dir> [--out web/data]
+//        --anukramani <WSC2023/Anukramani dir> --dharmic <DharmicData dir> \
+//        --raw <sanskrit/raw_etexts dir> --gretil <sanskrit/gretil-mirror dir> [--out web/data]
 // See docs/DATA_SOURCES.md for where each source comes from and its licence.
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { iastToDeva, devaToIast, isoToIast, stripRomanAccents, nameKey } from './translit.mjs';
+import { extraTexts } from './texts.mjs';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, all) => {
   if (a.startsWith('--')) acc.push([a.slice(2), all[i + 1]]);
   return acc;
 }, []));
-for (const k of ['vedaweb', 'anukramani', 'dharmic']) {
+for (const k of ['vedaweb', 'anukramani', 'dharmic', 'raw', 'gretil']) {
   if (!args[k]) { console.error(`missing --${k}`); process.exit(1); }
 }
 const OUT = args.out || 'web/data';
@@ -155,7 +157,7 @@ function buildRigveda() {
   }
   console.log(`rv: ${V.rows.length} ṛks, ${missing} without Anukramaṇī tags`);
   return writeVeda('rv', V, {
-    name: 'Ṛgveda', deva: 'ऋग्वेद', shakha: 'Śākala', levels: ['Maṇḍala', 'Sūkta', 'Ṛk'], ref: 'RV', refFmt: 'd1.d2.v',
+    veda: 'rv', layer: 'samhita', name: 'Ṛgveda Saṃhitā', deva: 'ऋग्वेद संहिता', shakha: 'Śākala', levels: ['Maṇḍala', 'Sūkta', 'Ṛk'], ref: 'RV', refFmt: 'd1.d2.v',
     has: { svara: true, roman: true, pada: true, translation: 'Griffith (1896)' },
     tagLevel: 'verse',
     sources: ['vedaweb', 'anukramani'],
@@ -232,7 +234,7 @@ function buildAtharvaveda() {
   }
   console.log(`av: ${V.rows.length} mantras, ${headerless} sūktas without header`);
   return writeVeda('av', V, {
-    name: 'Atharvaveda', deva: 'अथर्ववेद', shakha: 'Śaunaka', levels: ['Kāṇḍa', 'Sūkta', 'Mantra'], ref: 'AVŚ', refFmt: 'd1.d2.v',
+    veda: 'av', layer: 'samhita', name: 'Atharvaveda Saṃhitā', deva: 'अथर्ववेद संहिता', shakha: 'Śaunaka', levels: ['Kāṇḍa', 'Sūkta', 'Mantra'], ref: 'AVŚ', refFmt: 'd1.d2.v',
     has: { svara: true, roman: true, pada: false, translation: null },
     tagLevel: 'sukta',
     sources: ['dharmic'],
@@ -251,7 +253,7 @@ function buildYajurveda() {
   }
   console.log(`yv: ${V.rows.length} mantras`);
   return writeVeda('yv', V, {
-    name: 'Śukla Yajurveda', deva: 'शुक्ल यजुर्वेद', shakha: 'Vājasaneyi Mādhyandina', levels: ['', 'Adhyāya', 'Mantra'], ref: 'VS', refFmt: 'd2.v',
+    veda: 'syv', layer: 'samhita', name: 'Vājasaneyi Saṃhitā', deva: 'वाजसनेयि संहिता', shakha: 'Mādhyandina', levels: ['', 'Adhyāya', 'Mantra'], ref: 'VS', refFmt: 'd2.v',
     has: { svara: true, roman: true, pada: false, translation: null },
     tagLevel: null,
     sources: ['dharmic'],
@@ -295,7 +297,7 @@ function buildSamaveda() {
   }
   console.log(`sv: ${V.rows.length} verses (translation only)`);
   return writeVeda('sv', V, {
-    name: 'Sāmaveda', deva: 'सामवेद', shakha: 'Kauthuma', levels: ['Ārcika', 'Book', 'Verse'], ref: 'SV', refFmt: 'd1.d2.v',
+    veda: 'sv', layer: 'samhita', name: 'Sāmaveda, Griffith’s translation', deva: 'सामवेद (अनुवाद)', shakha: 'Kauthuma', levels: ['Ārcika', 'Book', 'Verse'], ref: 'SV', refFmt: 'd1.d2.v',
     groupNames: { 1: 'Pūrvārcika', 2: 'Uttarārcika' },
     has: { svara: false, roman: false, pada: false, translation: 'Griffith (1895)' },
     tagLevel: 'hymn',
@@ -303,7 +305,45 @@ function buildSamaveda() {
   });
 }
 
+// ---- Brāhmaṇas, Āraṇyakas, Upaniṣads and extra Saṃhitās ----------------
+const REF = {
+  ab: 'AB', kb: 'KB', aa: 'AĀ', sa: 'ŚĀ', aiu: 'AiU', sb: 'ŚB', isu: 'ĪU', bu: 'BĀU', ts: 'TS', tb: 'TB', ta: 'TĀ', tu: 'TU',
+  kathu: 'KaU', svu: 'ŚvU', svs: 'SV', pb: 'PB', jub: 'JUB', chu: 'ChU', keu: 'KeU', gb: 'GB', mu: 'MuU', mau: 'MāU', pru: 'PrU',
+};
+function buildExtra(def) {
+  const V = makeVeda();
+  const units = def.units();
+  for (const u of units) addVerse(V, u.d1, u.d2, u.v, {}, { deva: u.deva, roman: u.roman, label: u.label || '', ctitle: u.ctitle || null });
+  const oneD1 = units.every((u) => u.d1 === units[0].d1);
+  const oneC = oneD1 && units.every((u) => u.d2 === units[0].d2);
+  const refFmt = def.refFmt || (oneC ? 'v' : oneD1 ? 'd2.v' : 'd1.d2.v');
+  console.log(`${def.id}: ${units.length} units in ${V.containers.size} sections`);
+  return writeVeda(def.id, V, {
+    veda: def.veda, layer: def.layer, name: def.name, deva: def.deva, shakha: def.shakha || null,
+    levels: def.levels, ref: REF[def.id] || def.id.toUpperCase(), refFmt, groupNames: def.groupNames,
+    has: { svara: !!def.svara, roman: true, pada: false, translation: null },
+    tagLevel: null, note: def.note || null, sources: [def.src],
+  });
+}
+
+const VEDAS = [
+  { id: 'rv', name: 'Ṛgveda', deva: 'ऋग्वेद' },
+  { id: 'syv', name: 'Śukla Yajurveda', deva: 'शुक्ल यजुर्वेद' },
+  { id: 'kyv', name: 'Kṛṣṇa Yajurveda', deva: 'कृष्ण यजुर्वेद' },
+  { id: 'sv', name: 'Sāmaveda', deva: 'सामवेद' },
+  { id: 'av', name: 'Atharvaveda', deva: 'अथर्ववेद', absent: { aranyaka: 'The Atharvaveda has no Āraṇyaka.' } },
+];
+VEDAS[1].absent = { aranyaka: 'Its Āraṇyaka is the Bṛhadāraṇyaka, listed under Upaniṣads.' };
+const LAYERS = ['samhita', 'brahmana', 'aranyaka', 'upanishad'];
+
 fs.mkdirSync(OUT, { recursive: true });
-const catalog = [buildRigveda(), buildYajurveda(), buildSamaveda(), buildAtharvaveda()];
-fs.writeFileSync(path.join(OUT, 'catalog.json'), JSON.stringify({ built: new Date().toISOString().slice(0, 10), vedas: catalog }, null, 1));
+const texts = [buildRigveda(), buildYajurveda(), buildSamaveda(), buildAtharvaveda()];
+for (const def of extraTexts({ raw: args.raw, gretil: args.gretil })) texts.push(buildExtra(def));
+// the Sanskrit Sāmaveda first, its translation after
+texts.sort((a, b) => (a.id === 'sv' && b.id === 'svs' ? 1 : a.id === 'svs' && b.id === 'sv' ? -1 : 0));
+const vedas = VEDAS.map((v) => ({
+  ...v,
+  layers: Object.fromEntries(LAYERS.map((l) => [l, texts.filter((t) => t.veda === v.id && t.layer === l).map((t) => t.id)])),
+}));
+fs.writeFileSync(path.join(OUT, 'catalog.json'), JSON.stringify({ built: new Date().toISOString().slice(0, 10), layers: LAYERS, vedas, texts }, null, 1));
 console.log('wrote', OUT);
