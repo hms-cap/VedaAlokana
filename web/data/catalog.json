@@ -1,0 +1,144 @@
+{
+ "built": "2026-10-30",
+ "vedas": [
+  {
+   "name": "Ṛgveda",
+   "deva": "ऋग्वेद",
+   "shakha": "Śākala",
+   "levels": [
+    "Maṇḍala",
+    "Sūkta",
+    "Ṛk"
+   ],
+   "ref": "RV",
+   "refFmt": "d1.d2.v",
+   "has": {
+    "svara": true,
+    "roman": true,
+    "pada": true,
+    "translation": "Griffith (1896)"
+   },
+   "tagLevel": "verse",
+   "sources": [
+    "vedaweb",
+    "anukramani"
+   ],
+   "id": "rv",
+   "containers": 1028,
+   "verses": 10552,
+   "facets": [
+    "rishi",
+    "devata",
+    "chandas"
+   ],
+   "facetCounts": {
+    "rishi": 364,
+    "devata": 209,
+    "chandas": 35
+   }
+  },
+  {
+   "name": "Śukla Yajurveda",
+   "deva": "शुक्ल यजुर्वेद",
+   "shakha": "Vājasaneyi Mādhyandina",
+   "levels": [
+    "",
+    "Adhyāya",
+    "Mantra"
+   ],
+   "ref": "VS",
+   "refFmt": "d2.v",
+   "has": {
+    "svara": true,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "sources": [
+    "dharmic"
+   ],
+   "id": "yv",
+   "containers": 40,
+   "verses": 1966,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "name": "Sāmaveda",
+   "deva": "सामवेद",
+   "shakha": "Kauthuma",
+   "levels": [
+    "Ārcika",
+    "Book",
+    "Verse"
+   ],
+   "ref": "SV",
+   "refFmt": "d1.d2.v",
+   "groupNames": {
+    "1": "Pūrvārcika",
+    "2": "Uttarārcika"
+   },
+   "has": {
+    "svara": false,
+    "roman": false,
+    "pada": false,
+    "translation": "Griffith (1895)"
+   },
+   "tagLevel": "hymn",
+   "sources": [
+    "dharmic"
+   ],
+   "id": "sv",
+   "containers": 15,
+   "verses": 1794,
+   "facets": [
+    "devata"
+   ],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 37,
+    "chandas": 0
+   }
+  },
+  {
+   "name": "Atharvaveda",
+   "deva": "अथर्ववेद",
+   "shakha": "Śaunaka",
+   "levels": [
+    "Kāṇḍa",
+    "Sūkta",
+    "Mantra"
+   ],
+   "ref": "AVŚ",
+   "refFmt": "d1.d2.v",
+   "has": {
+    "svara": true,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": "sukta",
+   "sources": [
+    "dharmic"
+   ],
+   "id": "av",
+   "containers": 734,
+   "verses": 6128,
+   "facets": [
+    "rishi",
+    "devata",
+    "chandas"
+   ],
+   "facetCounts": {
+    "rishi": 92,
+    "devata": 247,
+    "chandas": 87
+   }
+  }
+ ]
+}
