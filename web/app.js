@@ -14,6 +14,15 @@ const main = $('#main');
 const rail = $('#rail');
 const cache = { catalog: null, index: {}, text: {} };
 
+// Routing: the URL hash by default; an in-memory route when embedded where
+// path-like hashes can't be used (set window.VEDA_MEMORY_ROUTER before loading).
+const MEMORY = !!window.VEDA_MEMORY_ROUTER;
+let memHash = '';
+const getHash = () => (MEMORY ? memHash : location.hash);
+function go(h) {
+  if (MEMORY) { memHash = h; route(); } else location.hash = h;
+}
+
 // ---------- preferences ----------
 const PREF_KEY = 'vedalokana.prefs';
 const prefs = (() => {
@@ -88,7 +97,7 @@ async function renderRail(route) {
   const cat = await catalog();
   const id = route.veda;
   const meta = id && cat.vedas.find((v) => v.id === id);
-  const cur = (href) => (location.hash === href || location.hash.startsWith(`${href}?`) ? ' aria-current="page"' : '');
+  const cur = (href) => (getHash() === href || getHash().startsWith(`${href}?`) ? ' aria-current="page"' : '');
   let h = `<h2>Saṃhitās</h2>`;
   for (const v of cat.vedas) {
     h += `<a href="#/v/${v.id}"${v.id === id && !route.sub ? ' aria-current="page"' : ''}><span>${esc(v.name)}</span><span class="dv" lang="sa">${esc(v.deva)}</span></a>`;
@@ -335,10 +344,10 @@ async function viewFind(id, params) {
     $('#rm')?.addEventListener('click', () => { shown += 50; draw(); });
   };
   draw();
-  main.querySelectorAll('.pill button').forEach((b) => b.addEventListener('click', () => { location.hash = b.dataset.href; }));
+  main.querySelectorAll('.pill button').forEach((b) => b.addEventListener('click', () => { go(b.dataset.href); }));
   main.querySelectorAll('select[data-f]').forEach((s) => s.addEventListener('change', () => {
     if (!s.value) return;
-    location.hash = findHref(id, { ...cur, [s.dataset.f]: s.value });
+    go(findHref(id, { ...cur, [s.dataset.f]: s.value }));
   }));
 }
 
@@ -530,7 +539,7 @@ function setupSearch() {
   });
   $('#searchForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    if (items[sel]) { location.hash = items[sel].href; input.value = ''; close(); input.blur(); }
+    if (items[sel]) { go(items[sel].href); input.value = ''; close(); input.blur(); }
   });
   box.addEventListener('click', () => { input.value = ''; close(); });
   document.addEventListener('click', (e) => { if (!$('#searchForm').contains(e.target)) close(); });
@@ -547,7 +556,7 @@ $('#scrim').addEventListener('click', () => setDrawer(false));
 
 // ---------- router ----------
 function parse() {
-  const [path, qs] = location.hash.replace(/^#/, '').split('?');
+  const [path, qs] = getHash().replace(/^#/, '').split('?');
   const parts = path.split('/').filter(Boolean);
   return { parts, params: new URLSearchParams(qs || ''), veda: parts[0] === 'v' ? parts[1] : null, sub: parts[2] || null };
 }
@@ -574,6 +583,13 @@ async function route() {
   if (!r.params.get('v')) window.scrollTo(0, 0);
   main.focus({ preventScroll: true });
 }
-window.addEventListener('hashchange', route);
+if (MEMORY) {
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href^="#/"]');
+    if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey) return;
+    e.preventDefault();
+    go(a.getAttribute('href'));
+  });
+} else window.addEventListener('hashchange', route);
 setupSearch();
 route();

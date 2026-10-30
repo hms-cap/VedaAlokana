@@ -18,7 +18,13 @@
   :root:not([data-theme="light"]) {
     --ground: #121416; --surface: #1A1D20; --ink: #ECEDEB; --muted: #A2A8AD;
     --line: #2E3236; --line-soft: #24282B; --indigo: #A9B4F5; --indigo-soft: #23284A; --fire: #F08A4B;
+    color-scheme: dark;
   }
+}
+:root[data-theme="dark"] {
+    --ground: #121416; --surface: #1A1D20; --ink: #ECEDEB; --muted: #A2A8AD;
+    --line: #2E3236; --line-soft: #24282B; --indigo: #A9B4F5; --indigo-soft: #23284A; --fire: #F08A4B;
+  color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -32,7 +38,7 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 button { font: inherit; color: inherit; }
 
 /* ---- top bar ---- */
-.topbar { position: sticky; top: 0; z-index: 30; height: var(--top); display: flex; align-items: center; gap: 12px;
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; height: var(--top); display: flex; align-items: center; gap: 12px;
   padding: 0 16px; background: color-mix(in srgb, var(--ground) 92%, transparent); backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--line-soft); }
 .brand { display: flex; align-items: center; gap: 8px; color: var(--ink); font-weight: 600; font-size: 17px; letter-spacing: -0.01em; }
