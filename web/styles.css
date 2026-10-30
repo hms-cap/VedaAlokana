@@ -235,12 +235,21 @@ h1 { margin: 0; font-size: clamp(28px, 4vw, 40px); line-height: 1.1; font-weight
 }
 
 /* ---- Kannada script ---- */
-body.kn { --deva: 'Tiro Kannada', 'Noto Serif Kannada', 'Noto Sans Kannada', 'Noto Serif Devanagari', serif; }
+/* Noto Serif Kannada, self-hosted with its Vedic marks: in testing it was the
+   font that kept every svara on the right syllable, including clusters with
+   subscript consonants (ottu) and arkavattu. */
+@font-face {
+  font-family: 'Vedalokana Kannada';
+  src: url('fonts/NotoSerifKannada-Vedic.woff') format('woff');
+  font-weight: 100 900; font-display: swap;
+}
+body.kn { --deva: 'Vedalokana Kannada', 'Noto Serif Kannada', 'Noto Sans Kannada', serif; }
+body.kn .deva { line-height: 2.05; }
 .lipi { display: flex; align-items: center; gap: 4px; margin: 0 6px 18px; padding: 3px; border-radius: 11px; background: var(--line-soft); }
 .lipi span { font-size: 13px; color: var(--muted); padding: 0 8px; }
 .lipi button { flex: 1; height: 34px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; font-size: 14px; }
 .lipi button[data-lipi="deva"] { font-family: 'Noto Serif Devanagari', serif; }
-.lipi button[data-lipi="knda"] { font-family: 'Tiro Kannada', 'Noto Serif Kannada', serif; }
+.lipi button[data-lipi="knda"] { font-family: 'Vedalokana Kannada', 'Noto Serif Kannada', serif; }
 .lipi button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
 
 /* ---- Veda → layers ---- */
@@ -351,7 +360,7 @@ body.sheet-open { overflow: hidden; }
 .wide-seg { display: flex; width: 100%; max-width: 480px; }
 .wide-seg button { flex: 1; height: 42px; font-size: 15px; }
 .wide-seg .dvb { font-family: 'Noto Serif Devanagari', serif; }
-.wide-seg .knb { font-family: 'Tiro Kannada', 'Noto Serif Kannada', serif; }
+.wide-seg .knb { font-family: 'Vedalokana Kannada', 'Noto Serif Kannada', serif; }
 
 /* ---------- phones: native-app layout ---------- */
 @media (max-width: 899px) {

@@ -12,7 +12,17 @@
 
 Griffith's translations (1895, 1896) are in the public domain.
 
-Kannada is produced in the browser from the Devanagari (the two scripts share one layout); svara marks are kept. GRETIL texts are romanised, so their Devanagari and Kannada are converted and carry no svara marks.
+## Kannada script
+
+Kannada is produced in the browser from the Devanagari by `web/lipi.js`; it is not taken from a printed Kannada edition.
+
+- Letters, vowel signs, virama, anusvāra, visarga, avagraha and digits map one-to-one (the two scripts share the ISCII layout).
+- Svara marks (॒ anudātta, ॑ svarita, ᳚ double svarita) and the dandas are shared by both scripts and are kept exactly where the source puts them.
+- Vedic signs with no Kannada glyph are written as Kannada Vedic books write them: ꣳ and ᳪ (the "gum" anusvāra) as **ಗ್ಂ**, ꣵ (the doubled form after a short vowel) as **ಗ್ಗ್ಂ**, jihvāmūlīya ᳵ as **ೱ** and upadhmānīya ᳶ as **ೲ**, ॐ as **ಓಂ**. Some websites write ಗ್‍ಮ್ instead of ಗ್ಂ.
+- Font: Noto Serif Kannada (SIL OFL), self-hosted as a subset in `web/fonts/` that keeps the Vedic marks and all positioning tables. In a side-by-side test of Tiro Kannada, Noto Serif Kannada and Noto Sans Kannada on clusters with subscript consonants and arkavattu (ಯ॒ಜ್ಞ, ಊರ್ಜ॒, ಶ್ರೇಷ್ಠ॑, ಸೂರ್ಯ॑, ಕರ್ಮ॑ಣ), only the Noto fonts kept every mark on the correct syllable; Tiro dropped the mark on ಊರ್ಜ॒ and ಶ್ರೇಷ್ಠ॑.
+- `node scripts/test-lipi.mjs` checks known words and converts every line of the data, reporting any character that is not valid Kannada or a shared mark.
+
+GRETIL texts are romanised, so their Devanagari and Kannada are converted and carry no svara marks.
 
 ## Before a public launch
 
@@ -29,5 +39,6 @@ Kannada is produced in the browser from the Devanagari (the two scripts share on
 - Yajurveda ṛṣi/devatā/chandas: no open per-mantra index found.
 - Atharvaveda: tags are per sūkta, from the header's main entry; verse-level exceptions in the header are dropped. Kāṇḍa 20 has no headers.
 - Ṛgveda: 18 ṛks lack an Anukramaṇī entry in the dataset; minor spelling variants in metre names are merged in `scripts/build-data.mjs` (`CANON`).
+- Source debris removed during the build: ITRANS letters left in Devanagari (`j`/`k` for the "gum" anusvāra, `H` for visarga), backticks for avagraha, editorial notes in brackets, file headers. Two isolated typos remain (one each in the Śatapatha Brāhmaṇa and Taittirīya Āraṇyaka).
 - Mantra counts differ slightly from traditional totals (e.g. YV 1,966 vs 1,975) where the source splits verses differently.
 - The Atharvaveda has no Āraṇyaka; the Śukla Yajurveda's Āraṇyaka is the Bṛhadāraṇyaka, listed under Upaniṣads.

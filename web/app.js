@@ -2,6 +2,8 @@
 // Brāhmaṇas, Āraṇyakas and Upaniṣads.
 // Data lives in ./data (built by scripts/build-data.mjs); routing is hash-based.
 
+import { toKnda } from './lipi.js';
+
 const FACETS = {
   rishi: { label: 'Ṛṣi', deva: 'ऋषि', plural: 'seers', one: 'seer' },
   devata: { label: 'Devatā', deva: 'देवता', plural: 'deities', one: 'deity' },
@@ -42,25 +44,10 @@ const prefs = (() => {
 })();
 function savePrefs() { try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch { /* storage unavailable */ } }
 
-// ---------- Kannada script ----------
-// Devanagari and Kannada share the ISCII layout, so most letters map by a fixed
-// offset. Svara marks (U+0951/0952 and Vedic Extensions) and dandas are shared.
-const KN_GAPS = new Set([0x0C84, 0x0C8D, 0x0C91, 0x0CA9, 0x0CB4, 0x0CC5, 0x0CC9, 0x0CCE, 0x0CCF]);
-function toKnda(s) {
-  let out = '';
-  for (const ch of s) {
-    const c = ch.codePointAt(0);
-    if (c === 0x0950) { out += 'ಓಂ'; continue; }
-    if ((c >= 0x0901 && c <= 0x094D) || (c >= 0x0960 && c <= 0x0963) || (c >= 0x0966 && c <= 0x096F)) {
-      const k = c + 0x380;
-      out += KN_GAPS.has(k) ? ch : String.fromCodePoint(k);
-    } else out += ch;
-  }
-  return out;
-}
+// ---------- Kannada script (conversion lives in lipi.js) ----------
 function convertTree(root) {
   if (prefs.lipi !== 'knda' || !root.querySelectorAll) return;
-  const els = [...root.querySelectorAll('[lang="sa"], .suggest a span')];
+  const els = [...root.querySelectorAll('[lang="sa"], .suggest a span, .search-results a span')];
   if (root.matches?.('[lang="sa"]')) els.push(root);
   for (const el of els) {
     const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);

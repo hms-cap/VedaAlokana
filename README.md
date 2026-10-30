@@ -44,10 +44,16 @@ node scripts/build-data.mjs \
   --out web/data
 ```
 
+## Tests
+
+```sh
+node scripts/test-lipi.mjs   # Devanagari → Kannada: word checks + every line of the data
+```
+
 ## Layout
 
 ```
-web/            the app (index.html, app.js, styles.css) and its data/
+web/            the app (index.html, app.js, lipi.js, styles.css), fonts/ and data/
 scripts/        data pipeline, per-text parsers, Devanagari ⇄ IAST transliterator
 docs/           data sources, licences, gaps
 ```

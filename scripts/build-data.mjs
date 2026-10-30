@@ -41,7 +41,30 @@ function register(iastRaw, devaRaw) {
 function makeVeda() {
   return { containers: new Map(), rows: [], facets: Object.fromEntries(FACETS.map((f) => [f, new Map()])), text: new Map() };
 }
+// Remove encoding debris from Indic text lines: C1 controls, private-use
+// characters, stray Latin-1 symbols, editorial notes in square brackets and
+// lines that are really file headers (several Latin letters).
+function cleanIndic(line) {
+  let l = line.normalize('NFC')
+    .replace(/[\u0080-\u009F\uE000-\uF8FF\u00AC\u00E8\u00F0\u017D]/g, '')
+    .replace(/\[[^\]]*\]>?/g, '')
+    .replace(/\([^()]*[A-Za-z][^()]*\)/g, '')                       // editorial notes in English
+    .replace(/\b\d+ \d+ \d+ \d+[a-z]\b/g, '')                       // stray verse-index numbers
+    .replace(/(?<=[\u0900-\u097F][\u0951\u0952]?)[jk](?=[\u0900-\u097F\s])/g, 'ᳪ') // ITRANS leak for the "gum" anusvāra
+    .replace(/(?<=[\u0900-\u097F][\u0951\u0952]?)H(?=[\s।॥]|$)/g, 'ः')   // ITRANS leak for visarga
+    .replace(/`/g, 'ऽ')
+    .replace(/[<>\\!@]/g, '')
+    .replace(/([\u0900-\u097F])o(?=[\s,।|]|$)/g, '$1॰') // "o" used as an abbreviation mark
+    .replace(/\s+/g, ' ').trim();
+  if ((l.match(/[A-Za-z]/g) || []).length >= 2) return '';
+  return l;
+}
 function addVerse(V, d1, d2, v, tags, text) {
+  if (text.deva) {
+    const deva = text.deva.map(cleanIndic).filter(Boolean);
+    // romanisation derived from the Devanagari is redone from the cleaned lines
+    text = { ...text, deva, roman: text.romanAuto ? deva.map(devaToIast) : text.roman };
+  }
   const cid = `${d1}.${d2}`;
   if (!V.containers.has(cid)) V.containers.set(cid, { d1, d2, verses: 0, title: text.ctitle || null });
   V.containers.get(cid).verses += 1;
@@ -227,7 +250,7 @@ function buildAtharvaveda() {
       } else headerless++;
       for (const { n, lines: vl } of splitVerses(body)) {
         addVerse(V, Number(e.kaanda), Number(e.sukta), n, tg, {
-          deva: vl, roman: vl.map(devaToIast), ctitle: title ? `${title} · ${devaToIast(title)}` : null,
+          deva: vl, roman: vl.map(devaToIast), romanAuto: true, ctitle: title ? `${title} · ${devaToIast(title)}` : null,
         });
       }
     }
@@ -248,7 +271,7 @@ function buildYajurveda() {
   for (const e of entries) {
     const lines = e.text.normalize('NFC').split('\n').map((l) => l.trim()).filter((l) => l && !/ध्यायः\s*।?$/.test(l));
     for (const { n, lines: vl } of splitVerses(lines)) {
-      addVerse(V, 1, Number(e.adhyaya), n, {}, { deva: vl, roman: vl.map(devaToIast) });
+      addVerse(V, 1, Number(e.adhyaya), n, {}, { deva: vl, roman: vl.map(devaToIast), romanAuto: true });
     }
   }
   console.log(`yv: ${V.rows.length} mantras`);
@@ -313,7 +336,7 @@ const REF = {
 function buildExtra(def) {
   const V = makeVeda();
   const units = def.units();
-  for (const u of units) addVerse(V, u.d1, u.d2, u.v, {}, { deva: u.deva, roman: u.roman, label: u.label || '', ctitle: u.ctitle || null });
+  for (const u of units) addVerse(V, u.d1, u.d2, u.v, {}, { deva: u.deva, roman: u.roman, romanAuto: !!u.romanAuto, label: u.label || '', ctitle: u.ctitle || null });
   const oneD1 = units.every((u) => u.d1 === units[0].d1);
   const oneC = oneD1 && units.every((u) => u.d2 === units[0].d2);
   const refFmt = def.refFmt || (oneC ? 'v' : oneD1 ? 'd2.v' : 'd1.d2.v');

@@ -70,7 +70,8 @@ function gretilPrefix(file, re, map) {
     const n = m.slice(1).filter((x) => x !== undefined).map(Number);
     const u = map(n);
     const key = `${u.d1}.${u.d2}.${u.v}`;
-    const text = line.slice(m[0].length).replace(/\./g, ' ').replace(/\(\w+\)\s*$/, '').trim();
+    // KB writes words joined by dots and ends some lines with a rite name in brackets
+    const text = line.slice(m[0].length).replace(/\./g, ' ').replace(/\s*\([^()]*\)\s*$/, '').trim();
     if (!cur || cur.key !== key) { if (cur) out.push(cur); cur = { key, ...u, lines: [] }; }
     if (text) cur.lines.push(text);
   }
@@ -118,7 +119,7 @@ function devaLines(body) {
 }
 function devaUnit(body) {
   const deva = devaLines(body);
-  return { deva, roman: deva.map(devaToIast) };
+  return { deva, roman: deva.map(devaToIast), romanAuto: true };
 }
 
 // Files laid out as <dir>/<d1>/<d2>.md, units numbered inside
@@ -174,7 +175,7 @@ function gopatha(file) {
     if (txt) cur.lines.push(txt);
   }
   if (cur) out.push(cur);
-  return out.map(({ key, lines, ...u }) => ({ ...u, deva: lines, roman: lines.map(devaToIast) }));
+  return out.map(({ key, lines, ...u }) => ({ ...u, deva: lines, roman: lines.map(devaToIast), romanAuto: true }));
 }
 
 // Jaiminīya Upaniṣad Brāhmaṇa: sentences end with a bare Devanagari numeral
@@ -187,7 +188,7 @@ function jub(dir) {
       while ((m = re.exec(t))) {
         const body = t.slice(last, m.index).trim();
         last = re.lastIndex - 1;
-        if (body.length > 3) out.push({ d1: Number(d1), d2: parseInt(f, 10), v: num(m[1]), deva: [body], roman: [devaToIast(body)] });
+        if (body.length > 3) out.push({ d1: Number(d1), d2: parseInt(f, 10), v: num(m[1]), deva: [body], roman: [devaToIast(body)], romanAuto: true });
       }
     }
   }
