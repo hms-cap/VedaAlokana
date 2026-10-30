@@ -39,7 +39,7 @@ function go(h) {
 // ---------- preferences ----------
 const PREF_KEY = 'vedalokana.prefs';
 const prefs = (() => {
-  const d = { script: 'both', mode: 'samhita', tr: true, lipi: 'deva', svara: 'bold' };
+  const d = { script: 'both', mode: 'samhita', tr: true, lipi: 'deva', svara: 'bold', suktaBy: 'veda' };
   try { return { ...d, ...JSON.parse(localStorage.getItem(PREF_KEY) || '{}') }; } catch { return d; }
 })();
 function savePrefs() { try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch { /* storage unavailable */ } }
@@ -164,6 +164,7 @@ async function renderRail(rt) {
   const cur = (href) => (getHash() === href || getHash().startsWith(`${href}?`) ? ' aria-current="page"' : '');
   let h = `<div class="lipi" role="group" aria-label="Script for Sanskrit text"><span>Script</span>
     <button data-lipi="deva" aria-pressed="${prefs.lipi === 'deva'}">देवनागरी</button><button data-lipi="knda" aria-pressed="${prefs.lipi === 'knda'}">ಕನ್ನಡ</button></div>`;
+  h += `<a href="#/suktas"${rt.parts[0] === 'suktas' ? ' aria-current="page"' : ''}><span>Famous sūktas</span><span class="dv" lang="sa">सूक्तानि</span></a>`;
   h += `<h2>Vedas</h2>`;
   for (const v of cat.vedas) {
     h += `<a href="#/veda/${v.id}"${v.id === vid && !id ? ' aria-current="page"' : ''}><span>${esc(v.name)}</span><span class="dv" lang="sa">${esc(v.deva)}</span></a>`;
@@ -817,13 +818,13 @@ function renderChrome(r, path) {
   bar.scrollLeft = bar.scrollWidth;
   // back goes up one level
   const page = r.parts[0] || '';
-  const topLevel = ['', 'library', 'search', 'settings'].includes(page);
+  const topLevel = ['', 'library', 'suktas', 'search', 'settings'].includes(page);
   const parentHref = path.length >= 2 ? path[path.length - 2].href : page === 'about' ? '#/settings' : topLevel ? null : '#/library';
   const back = $('#backBtn');
   back.hidden = !parentHref;
   if (parentHref) back.setAttribute('href', parentHref);
   $('#brand').classList.toggle('when-back', !!parentHref);
-  const named = { library: 'Library', search: 'Search', settings: 'Settings', about: 'Sources' }[page];
+  const named = { library: 'Library', suktas: 'Sūktas', search: 'Search', settings: 'Settings', about: 'Sources' }[page];
   $('#topTitle').textContent = path.length ? path[path.length - 1].label : (named || '');
   // tabs
   const tab = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 'about' ? 'settings' : page);
@@ -846,6 +847,56 @@ async function viewLibrary() {
         <div class="lib-texts">${v.layers[l].length ? v.layers[l].map((t) => `<a href="#/v/${t}"><span>${esc(byId[t].name)}</span><small>${fmt(byId[t].verses)}</small></a>`).join('') : `<span class="none">${esc(v.absent?.[l] ? 'None' : 'Not available yet')}</span>`}</div></div>`).join('')}
     </section>`).join('')}
   </div>`;
+}
+
+const VEDA_SHORT = { rv: 'Ṛgveda', syv: 'Śukla Yajurveda', kyv: 'Kṛṣṇa Yajurveda', sv: 'Sāmaveda', av: 'Atharvaveda' };
+const foldName = (x) => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+async function viewSuktas(params) {
+  setTitle('Famous sūktas');
+  const all = (cache.suktas ||= await json('data/suktas.json'));
+  const cat = await catalog();
+  const vedaF = params.get('veda') && VEDA_SHORT[params.get('veda')] ? params.get('veda') : '';
+  const by = ['veda', 'devata', 'az'].includes(params.get('by')) ? params.get('by') : prefs.suktaBy;
+  const list = all.filter((e) => !vedaF || e.veda === vedaF);
+  const href = (o) => { const q = new URLSearchParams({ ...(vedaF ? { veda: vedaF } : {}), by, ...o }); for (const [k, v] of [...q]) if (!v) q.delete(k); return `#/suktas${q.toString() ? `?${q}` : ''}`; };
+
+  // group
+  let groups;
+  if (by === 'veda') {
+    groups = cat.vedas.map((v) => ({ key: v.id, title: v.name, deva: v.deva, items: list.filter((e) => e.veda === v.id) })).filter((g) => g.items.length);
+  } else if (by === 'devata') {
+    const m = new Map();
+    for (const e of list) { if (!m.has(e.devata)) m.set(e.devata, { key: e.devata, title: e.devata, deva: e.devataDeva, items: [] }); m.get(e.devata).items.push(e); }
+    groups = [...m.values()].sort((a, b) => b.items.length - a.items.length || foldName(a.title).localeCompare(foldName(b.title)));
+  } else {
+    const m = new Map();
+    for (const e of [...list].sort((a, b) => foldName(a.name).localeCompare(foldName(b.name)))) {
+      const k = foldName(e.name).charAt(0).toUpperCase();
+      if (!m.has(k)) m.set(k, { key: k, title: k, items: [] });
+      m.get(k).items.push(e);
+    }
+    groups = [...m.values()];
+  }
+  const row = (e) => `<a class="sk-row" href="${e.href}">
+      <span class="sk-top"><span class="sk-name"><span class="dv" lang="sa">${esc(e.deva)}</span><span class="ia">${esc(e.name)}</span></span><span class="sk-ref">${esc(e.ref)}</span></span>
+      <span class="sk-line" lang="sa">${esc(e.line)}</span>
+      <span class="sk-meta">${by !== 'devata' ? `<span><em>Devatā</em> ${esc(e.devata)}</span>` : ''}${by !== 'veda' ? `<span>${esc(VEDA_SHORT[e.veda])}</span>` : ''}<span>${e.kind === 'mantra' ? 'Mantra' : `${fmt(e.count)} ${e.count === 1 ? 'verse' : 'verses'}`}</span></span>
+    </a>`;
+  const counts = Object.fromEntries(Object.keys(VEDA_SHORT).map((k) => [k, all.filter((e) => e.veda === k).length]));
+  main.innerHTML = `<div class="col">
+    <h1>Famous sūktas<span class="h1-deva" lang="sa">सूक्तानि</span></h1>
+    <p class="lede">Well-known sūktas and mantras from every Veda. Each opens at its first verse.</p>
+    <nav class="chips sk-filter" aria-label="Veda">
+      <a class="chip" href="${href({ veda: '' })}"${!vedaF ? ' aria-current="true"' : ''}>All <small>${all.length}</small></a>
+      ${Object.entries(VEDA_SHORT).filter(([k]) => counts[k]).map(([k, n]) => `<a class="chip" href="${href({ veda: k })}"${vedaF === k ? ' aria-current="true"' : ''}>${esc(n)} <small>${counts[k]}</small></a>`).join('')}
+    </nav>
+    <div class="seg sk-sort" role="group" aria-label="List by">
+      ${[['veda', 'By Veda'], ['devata', 'By devatā'], ['az', 'A–Z']].map(([k, l]) => `<a href="${href({ by: k })}" data-by="${k}" aria-pressed="${by === k}">${l}</a>`).join('')}
+    </div>
+    ${groups.map((g) => `<section class="sk-group"><h2>${esc(g.title)}${g.deva ? `<span class="h2-deva" lang="sa">${esc(g.deva)}</span>` : ''}<small>${g.items.length}</small></h2>
+      <div class="sk-list">${g.items.map(row).join('')}</div></section>`).join('')}
+  </div>`;
+  main.querySelectorAll('[data-by]').forEach((a) => a.addEventListener('click', () => { prefs.suktaBy = a.dataset.by; savePrefs(); }));
 }
 
 async function viewSearch() {
@@ -920,6 +971,7 @@ async function route() {
     if (!a) await viewHome();
     else if (a === 'about') await viewAbout();
     else if (a === 'library') await viewLibrary();
+    else if (a === 'suktas') await viewSuktas(r.params);
     else if (a === 'search') await viewSearch();
     else if (a === 'settings') await viewSettings();
     else if (a === 'veda') await viewVedaGroup(id, sub);
