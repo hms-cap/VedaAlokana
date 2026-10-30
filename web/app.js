@@ -39,8 +39,14 @@ function go(h) {
 // ---------- preferences ----------
 const PREF_KEY = 'vedalokana.prefs';
 const prefs = (() => {
-  const d = { script: 'both', mode: 'samhita', tr: true, lipi: 'deva', svara: 'bold', suktaBy: 'veda' };
-  try { return { ...d, ...JSON.parse(localStorage.getItem(PREF_KEY) || '{}') }; } catch { return d; }
+  // Default view is made for chanting: the text in script only, no romanisation or translation.
+  // `v` is bumped when defaults change, so an earlier saved reading view moves to the new one once.
+  const d = { v: 2, script: 'deva', mode: 'samhita', tr: false, lipi: 'deva', svara: 'bold', suktaBy: 'veda' };
+  try {
+    const saved = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
+    if ((saved.v || 1) < 2) { delete saved.script; delete saved.tr; delete saved.mode; }
+    return { ...d, ...saved, v: 2 };
+  } catch { return d; }
 })();
 function savePrefs() { try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch { /* storage unavailable */ } }
 
