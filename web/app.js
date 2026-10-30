@@ -59,6 +59,25 @@ function convertTree(root) {
 new MutationObserver((ms) => { for (const m of ms) m.addedNodes.forEach((n) => n.nodeType === 1 && convertTree(n)); })
   .observe(document.body, { childList: true, subtree: true });
 const lipiName = () => (prefs.lipi === 'knda' ? 'ಕನ್ನಡ' : 'देवनागरी');
+// Switch script from anywhere, keeping the reader's place on the page.
+let keepScrollY = null;
+let keepAnchor = null;
+function setLipi(l) {
+  if (prefs.lipi === l) return;
+  // remember which verse is at the top of the screen, not just the pixel offset,
+  // because the two scripts wrap lines differently; measure before the font changes
+  const head = $('.topbar').getBoundingClientRect().bottom + ($('#pathbar').hidden ? 0 : $('#pathbar').offsetHeight);
+  const verses = [...document.querySelectorAll('.verse[id]')];
+  const anchor = verses.find((el) => el.getBoundingClientRect().top >= head - 4)
+    || verses.find((el) => el.getBoundingClientRect().bottom > head + 8);
+  keepScrollY = window.scrollY;
+  keepAnchor = anchor ? { id: anchor.id, top: anchor.getBoundingClientRect().top } : null;
+  prefs.lipi = l; savePrefs(); applyLipiClass();
+  route();
+}
+function paintLipiToggle() {
+  document.querySelectorAll('#lipiToggle [data-lipi]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lipi === prefs.lipi)));
+}
 function applyLipiClass() {
   document.body.classList.toggle('kn', prefs.lipi === 'knda');
   document.body.classList.toggle('svara-std', prefs.svara === 'std');
@@ -166,7 +185,7 @@ async function renderRail(rt) {
   rail.innerHTML = h;
   rail.querySelectorAll('[data-lipi]').forEach((b) => b.addEventListener('click', () => {
     if (prefs.lipi === b.dataset.lipi) return;
-    prefs.lipi = b.dataset.lipi; savePrefs(); applyLipiClass(); route();
+    setLipi(b.dataset.lipi);
   }));
 }
 
@@ -495,7 +514,8 @@ async function viewContainer(id, d1, d2, params) {
   const summary = FKEYS.map((f) => [f, primaryTag(x, rows, f)]).filter(([, e]) => e);
   const seg = (name, opts) => `<div class="seg" role="group" aria-label="${esc(name)}">${opts.map(([k, v, l, dis]) => `<button data-p="${k}" data-v="${v}" aria-pressed="${String(prefs[k] === v)}"${dis ? ' disabled' : ''}>${esc(l)}</button>`).join('')}</div>`;
   const controls = [
-    hasDeva && hasRoman ? seg('Script', [['script', 'both', 'Both'], ['script', 'deva', lipiName()], ['script', 'roman', 'IAST']]) : '',
+    hasDeva ? seg('Script', [['lipi', 'deva', 'देवनागरी'], ['lipi', 'knda', 'ಕನ್ನಡ']]).replace('class="seg"', 'class="seg lipi-seg"') : '',
+    hasDeva && hasRoman ? seg('Show', [['script', 'both', 'Both'], ['script', 'deva', 'Script'], ['script', 'roman', 'IAST']]) : '',
     hasPada ? seg('Text', [['mode', 'samhita', 'Saṃhitā'], ['mode', 'pada', 'Padapāṭha']]) : '',
     hasTr && (hasDeva || hasRoman) ? seg('Translation', [['tr', true, 'Translation'], ['tr', false, 'Hide']]) : '',
   ].join('');
@@ -550,6 +570,7 @@ async function viewContainer(id, d1, d2, params) {
   draw();
   main.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => {
     const k = b.dataset.p; const raw = b.dataset.v;
+    if (k === 'lipi') { setLipi(raw); return; }
     prefs[k] = raw === 'true' ? true : raw === 'false' ? false : raw;
     savePrefs();
     b.parentElement.querySelectorAll('button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
@@ -579,7 +600,7 @@ async function viewContainer(id, d1, d2, params) {
     }
   };
   // the first verse is already in view; only jump for later ones
-  if (hl && hl !== verses[0]?.[0]) requestAnimationFrame(() => document.getElementById(`v${hl}`)?.scrollIntoView({ block: 'start' }));
+  if (keepScrollY === null && hl && hl !== verses[0]?.[0]) requestAnimationFrame(() => document.getElementById(`v${hl}`)?.scrollIntoView({ block: 'start' }));
 }
 
 const SOURCES = {
@@ -873,9 +894,9 @@ async function viewSettings() {
   </div>`;
   main.querySelectorAll('[data-k]').forEach((b) => b.addEventListener('click', () => {
     const k = b.dataset.k; const raw = b.dataset.v;
+    if (k === 'lipi') { setLipi(raw); return; }
     prefs[k] = raw === 'true' ? true : raw === 'false' ? false : raw;
     savePrefs();
-    if (k === 'lipi') { applyLipiClass(); route(); return; }
     if (k === 'svara') applyLipiClass();
     b.parentElement.querySelectorAll('button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
   }));
@@ -913,7 +934,16 @@ async function route() {
   } catch (err) {
     main.innerHTML = `<div class="col"><h1>Couldn’t load this page</h1><p class="lede">${esc(err.message)}. Check your connection and reload.</p></div>`;
   }
-  if (!r.params.get('v') || r.params.get('v') === '1') window.scrollTo(0, 0);
+  if (keepScrollY !== null) {
+    const y = keepScrollY; const a = keepAnchor; keepScrollY = null; keepAnchor = null;
+    // wait for the newly needed font so the layout is final before restoring
+    document.fonts.ready.then(() => requestAnimationFrame(() => {
+      const el = a && document.getElementById(a.id);
+      window.scrollTo(0, el ? window.scrollY + el.getBoundingClientRect().top - a.top : y);
+    }));
+  }
+  else if (!r.params.get('v') || r.params.get('v') === '1') window.scrollTo(0, 0);
+  paintLipiToggle();
   main.focus({ preventScroll: true });
 }
 if (MEMORY) {
@@ -925,4 +955,5 @@ if (MEMORY) {
   });
 } else window.addEventListener('hashchange', route);
 setupSearch();
+document.querySelectorAll('#lipiToggle [data-lipi]').forEach((b) => b.addEventListener('click', () => setLipi(b.dataset.lipi)));
 route();
