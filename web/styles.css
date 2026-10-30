@@ -8,7 +8,7 @@
   --indigo: #2B3990;
   --indigo-soft: #E8EAF6;
   --fire: #C2410C;
-  --deva: 'Noto Serif Devanagari', serif;
+  --deva: 'Vedalokana Devanagari', 'Noto Serif Devanagari', serif;
   --roman: 'Gentium Book Plus', 'Noto Serif', serif;
   --ui: 'IBM Plex Sans', system-ui, sans-serif;
   --rail: 264px;
@@ -238,12 +238,21 @@ h1 { margin: 0; font-size: clamp(28px, 4vw, 40px); line-height: 1.1; font-weight
 /* Noto Serif Kannada, self-hosted with its Vedic marks: in testing it was the
    font that kept every svara on the right syllable, including clusters with
    subscript consonants (ottu) and arkavattu. */
+/* Both fonts are built by scripts/make-fonts.py with heavier svara marks
+   (॑ ॒ ᳚); "Standard marks" in Settings switches back to the stock fonts. */
+@font-face {
+  font-family: 'Vedalokana Devanagari';
+  src: url('fonts/NotoSerifDevanagari-Vedic.woff') format('woff');
+  font-weight: 100 900; font-display: swap;
+}
 @font-face {
   font-family: 'Vedalokana Kannada';
   src: url('fonts/NotoSerifKannada-Vedic.woff') format('woff');
   font-weight: 100 900; font-display: swap;
 }
 body.kn { --deva: 'Vedalokana Kannada', 'Noto Serif Kannada', 'Noto Sans Kannada', serif; }
+body.svara-std { --deva: 'Noto Serif Devanagari', serif; }
+body.kn.svara-std { --deva: 'Noto Serif Kannada', 'Noto Sans Kannada', serif; }
 body.kn .deva { line-height: 2.05; }
 .lipi { display: flex; align-items: center; gap: 4px; margin: 0 6px 18px; padding: 3px; border-radius: 11px; background: var(--line-soft); }
 .lipi span { font-size: 13px; color: var(--muted); padding: 0 8px; }
@@ -409,3 +418,4 @@ span.rb-step { background: transparent; }
 .continue small { color: var(--muted); font-size: 13px; }
 .continue b { font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .continue svg { margin-left: auto; flex: none; }
+.svara-demo { font-family: var(--deva); font-size: 26px; line-height: 1.9; color: var(--ink) !important; margin-top: 12px !important; }

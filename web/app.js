@@ -39,7 +39,7 @@ function go(h) {
 // ---------- preferences ----------
 const PREF_KEY = 'vedalokana.prefs';
 const prefs = (() => {
-  const d = { script: 'both', mode: 'samhita', tr: true, lipi: 'deva' };
+  const d = { script: 'both', mode: 'samhita', tr: true, lipi: 'deva', svara: 'bold' };
   try { return { ...d, ...JSON.parse(localStorage.getItem(PREF_KEY) || '{}') }; } catch { return d; }
 })();
 function savePrefs() { try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch { /* storage unavailable */ } }
@@ -59,7 +59,10 @@ function convertTree(root) {
 new MutationObserver((ms) => { for (const m of ms) m.addedNodes.forEach((n) => n.nodeType === 1 && convertTree(n)); })
   .observe(document.body, { childList: true, subtree: true });
 const lipiName = () => (prefs.lipi === 'knda' ? 'ಕನ್ನಡ' : 'देवनागरी');
-function applyLipiClass() { document.body.classList.toggle('kn', prefs.lipi === 'knda'); }
+function applyLipiClass() {
+  document.body.classList.toggle('kn', prefs.lipi === 'knda');
+  document.body.classList.toggle('svara-std', prefs.svara === 'std');
+}
 applyLipiClass();
 
 // ---------- helpers ----------
@@ -857,6 +860,9 @@ async function viewSettings() {
     <h1>Settings</h1>
     <section class="set"><h2>Script for Sanskrit text</h2><p>Names, headings and mantras switch together. Svara marks are kept.</p>
       <div class="seg wide-seg">${opt('lipi', 'deva', 'देवनागरी', 'dvb')}${opt('lipi', 'knda', 'ಕನ್ನಡ', 'knb')}</div></section>
+    <section class="set"><h2>Svara marks</h2><p>Bold marks are drawn heavier so ॑ and ॒ stand out at reading size.</p>
+      <div class="seg wide-seg">${opt('svara', 'bold', 'Bold')}${opt('svara', 'std', 'Standard')}</div>
+      <p class="svara-demo" lang="sa">अ॒ग्निमी॑ळे पु॒रोहि॑तं य॒ज्ञस्य॑ दे॒वमृ॒त्विज॑म्</p></section>
     <section class="set"><h2>In the reader, show</h2>
       <div class="seg wide-seg">${opt('script', 'both', 'Both')}${opt('script', 'deva', 'Script only')}${opt('script', 'roman', 'IAST only')}</div></section>
     <section class="set"><h2>Ṛgveda text</h2>
@@ -870,6 +876,7 @@ async function viewSettings() {
     prefs[k] = raw === 'true' ? true : raw === 'false' ? false : raw;
     savePrefs();
     if (k === 'lipi') { applyLipiClass(); route(); return; }
+    if (k === 'svara') applyLipiClass();
     b.parentElement.querySelectorAll('button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
   }));
 }
