@@ -2,6 +2,9 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.5.0 — 2026-10-31
+- Renamed from Vedālokana to Vedāvalokanam. Storage keys and cache names are unchanged, so settings, reading place and downloaded texts carry over.
+
 ## 1.4.1 — 2026-10-31
 - Check for updates: falls back to a plain request, then to the service worker itself, when the first request is refused, and shows the reason (HTTP status or network error) on failure.
 
@@ -24,7 +27,7 @@ Versions follow [semantic versioning](https://semver.org). The version lives in 
 - An **En** button beside the अ/ಅ switch in the top bar, and Settings → Menus and labels, switch back to English menus.
 
 ## 1.0.0 — 2026-10-31
-- Install Vedālokana as an app; it opens and works without a connection (service worker, web app manifest, icons).
+- Install Vedāvalokanam as an app; it opens and works without a connection (service worker, web app manifest, icons).
 - Download each Veda, and the Sāyaṇa bhāṣya, for offline reading from Settings → Offline.
 - All fonts are bundled (IBM Plex Sans, Gentium Book Plus, stock Noto Serif subsets), so offline looks the same as online.
 - About page with the version, data build date, what's new and an update check.

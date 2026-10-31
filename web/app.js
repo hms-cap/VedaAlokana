@@ -1,4 +1,4 @@
-// Vedālokana — a static, client-side browser for the Vedas: Saṃhitās,
+// Vedāvalokanam — a static, client-side browser for the Vedas: Saṃhitās,
 // Brāhmaṇas, Āraṇyakas and Upaniṣads.
 // Data lives in ./data (built by scripts/build-data.mjs); routing is hash-based.
 
@@ -144,7 +144,7 @@ function applyMenu() {
     const en = { home: 'Home', library: 'Library', suktas: 'Sūktas', search: 'Search', settings: 'Settings' }[k];
     span.innerHTML = T(en, MENU_SA[k]);
   });
-  $('#brand span').innerHTML = T('Vedālokana', 'वेदालोकनम्');
+  $('#brand span').innerHTML = T('Vedāvalokanam', 'वेदावलोकनम्');
   const b = $('#menuBtn');
   if (b) { b.setAttribute('aria-pressed', String(!SA())); b.title = SA() ? 'Show menus in English' : 'Show menus in the reading script'; }
 }
@@ -181,6 +181,8 @@ applyTheme();
 // ---------- version, installing and offline ----------
 const APP = self.VEDALOKANA || { version: '0.0.0', released: '' };
 const CHANGES = [
+  ['1.5.0', '2026-10-31', [
+    'The app is now called Vedāvalokanam (previously Vedālokana). Your settings, place and offline downloads are kept.']],
   ['1.4.1', '2026-10-31', [
     'Check for updates tries several ways to reach the server and says why when it can’t, instead of a bare “couldn’t reach the server”.']],
   ['1.4.0', '2026-10-31', [
@@ -196,7 +198,7 @@ const CHANGES = [
     'Menus and labels follow the reading script: tabs, Veda and level names, ṛṣi · devatā · chandas, references and numbers in Sanskrit, in Devanagari or Kannada.',
     'An En button beside the script switch, and a setting, bring back English menus at any time.']],
   ['1.0.0', '2026-10-31', [
-    'Install Vedālokana as an app; it opens and works without a connection.',
+    'Install Vedāvalokanam as an app; it opens and works without a connection.',
     'Download each Veda, and the Sāyaṇa bhāṣya, for offline reading from Settings.',
     'All fonts are now part of the app, so offline looks the same as online.',
     'About page with the version, what’s new and an update check.']],
@@ -237,7 +239,7 @@ if (swOK) {
   navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => { /* not available in this view */ });
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!hadController || document.getElementById('updOut')?.textContent.includes('ready')) return;  // first install, or About already offers it
-    const t = toast('A new version of Vedālokana is ready. <button type="button">Reload</button>', 0);
+    const t = toast('A new version of Vedāvalokanam is ready. <button type="button">Reload</button>', 0);
     t.querySelector('button').addEventListener('click', () => location.reload());
   });
 }
@@ -447,7 +449,7 @@ function findHref(id, filters) {
   const q = new URLSearchParams(Object.entries(filters).filter(([, v]) => v));
   return `#/v/${id}/find?${q}`;
 }
-function setTitle(t) { document.title = t ? `${t} — Vedālokana` : 'Vedālokana — browse Veda mantras'; }
+function setTitle(t) { document.title = t ? `${t} — Vedāvalokanam` : 'Vedāvalokanam — browse Veda mantras'; }
 
 function badgesHTML(meta) {
   const tagged = meta.layer === 'samhita';
@@ -566,7 +568,7 @@ async function viewHome() {
   }).join('')}</div>
     ${chips.length ? `<div class="sec-h"><h2>${T('Sūktas', 'सूक्तानि')}</h2><a href="#/suktas">${SA() ? `<span lang="sa">सर्वाणि ${dg(suk.length)}</span>` : `All ${suk.length}`}</a></div>
     <div class="schips">${chips.map((s) => `<a class="schip" href="${esc(s.href)}${s.v ? `?v=${s.v}` : ''}"><span lang="sa">${esc(s.deva)}</span><small>${SA() ? `<span lang="sa">${esc(refSa({ id: s.text, deva: '' }, s.ref.replace(/^\S+\s/, '')))}</span>` : esc(s.ref)}</small></a>`).join('')}</div>` : ''}
-    <p class="lede home-foot">Every text comes from an openly published digital edition. <a href="#/about">About Vedālokana ${esc(APP.version)}: sources and what’s new.</a></p>
+    <p class="lede home-foot">Every text comes from an openly published digital edition. <a href="#/about">About Vedāvalokanam ${esc(APP.version)}: sources and what’s new.</a></p>
   </div>`;
   renderPanchanga();
 }
@@ -1128,14 +1130,14 @@ async function viewAbout() {
   main.innerHTML = `<div class="prose about">
     <section class="app-card">
       <img src="icons/icon.svg" alt="" width="72" height="72">
-      <div class="app-id"><h1>Vedālokana</h1>
+      <div class="app-id"><h1>Vedāvalokanam</h1>
         <p class="app-v">Version <b>${esc(APP.version)}</b>${APP.released ? ` · ${esc(fmtDay(APP.released))}` : ''}</p>
         <p class="app-v">Texts built ${esc(fmtDay(cat.built))}</p></div>
       <div class="app-state" id="appState"><span class="dot"></span><span>Checking offline readiness…</span></div>
       <div class="app-acts"><button type="button" class="off-btn ghost" id="chkUpd">Check for updates</button><a class="off-btn ghost" href="#/settings?s=offline">Offline downloads</a></div>
       <p class="upd-out" id="updOut" role="status" aria-live="polite"></p>
     </section>
-    <p class="lede">Vedālokana is a non-commercial browser for the Vedas, built from openly published digital texts. Text and tags are shown as the sources give them; corrections belong upstream.</p>
+    <p class="lede">Vedāvalokanam is a non-commercial browser for the Vedas, built from openly published digital texts. Text and tags are shown as the sources give them; corrections belong upstream.</p>
     <h2>What’s new</h2>
     <ol class="changes">${CHANGES.map(([v, d, items], i) => `<li${i ? '' : ' class="cur"'}><div class="ch-h"><b>${esc(v)}</b><span>${esc(fmtDay(d))}</span>${i ? '' : '<em>This version</em>'}</div>
       <ul>${items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></li>`).join('')}</ol>
@@ -1488,7 +1490,7 @@ async function viewSettings() {
       <div class="seg wide-seg">${opt('tags', true, 'Show')}${opt('tags', false, 'Hide')}</div></section>
     <section class="set" id="offline"><h2>Offline</h2><p>Once installed, the app opens without a connection, and every text you have read stays available. Download a whole Veda to have all of it ready.</p>
       <div class="off" id="offList"><p class="loading">Checking what is stored…</p></div></section>
-    <section class="set"><h2>About</h2><a class="about-link" href="#/about"><img src="icons/icon.svg" alt="" width="40" height="40"><span><b>Vedālokana</b><small>Version ${esc(APP.version)} · sources, licences, what’s new</small></span>
+    <section class="set"><h2>About</h2><a class="about-link" href="#/about"><img src="icons/icon.svg" alt="" width="40" height="40"><span><b>Vedāvalokanam</b><small>Version ${esc(APP.version)} · sources, licences, what’s new</small></span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a></section>
   </div>`;
   renderOffline(document.getElementById('offList'));

@@ -1,4 +1,4 @@
-/* Vedālokana service worker: makes the installed app work without a connection.
+/* Vedāvalokanam service worker: makes the installed app work without a connection.
    - The app shell (code, styles, fonts, icons) is stored on install, per app version.
    - Texts (data/*.json) are kept in one cache that outlives app versions. Anything read once,
      or downloaded from Settings → Offline, opens offline from then on; when online it is
