@@ -745,3 +745,18 @@ body.story-open { overflow: hidden; }
 .patha-seg .pt-m { font-family: var(--deva); font-size: 1.15em; margin-right: 6px; opacity: .8; }
 
 .fontb-shobhika { font-family: 'Vedalokana Shobhika', serif; }
+
+/* install instructions */
+.inst { margin: 18px 0; }
+.inst h2 { margin-top: 0; }
+.inst-one { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 10px 0 14px; }
+.inst-one span { color: var(--muted); font-size: 14px; }
+.inst-d { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); margin: 8px 0; padding: 0 14px; }
+.inst-d summary { cursor: pointer; padding: 12px 0; font-weight: 600; min-height: 24px; }
+.inst-d[open] summary { border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.inst-d p, .inst-d ol { margin: 8px 0; font-size: 15px; line-height: 1.55; }
+.inst-d ol { padding-left: 22px; }
+.inst-ico { vertical-align: -3px; margin: 0 1px; }
+.inst-note, .inst-done { font-size: 14px; color: var(--muted); }
+.inst-done { color: var(--ink); }
+.inst-one[hidden] { display: none; }

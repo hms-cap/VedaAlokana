@@ -2,6 +2,9 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.6.0 — 2026-10-31
+- Install instructions for Android, iPhone/iPad and computers (Settings → About), with a one-tap Install button where the browser offers one (Chrome and Edge). iOS has no one-tap install, so it gets the three-step Safari guide.
+
 ## 1.5.0 — 2026-10-31
 - Renamed from Vedālokana to Vedāvalokanam. Storage keys and cache names are unchanged, so settings, reading place and downloaded texts carry over.
 

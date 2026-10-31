@@ -180,7 +180,60 @@ applyTheme();
 
 // ---------- version, installing and offline ----------
 const APP = self.VEDALOKANA || { version: '0.0.0', released: '' };
+
+// One-tap install: Chrome and Edge on Android and desktop offer the browser's own prompt through this event.
+let installEvt = null;
+addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; document.dispatchEvent(new Event('vl-install-ready')); });
+addEventListener('appinstalled', () => { installEvt = null; document.dispatchEvent(new Event('vl-installed')); });
+const UA = navigator.userAgent || '';
+const IS_IOS = /iPhone|iPad|iPod/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const IS_ANDROID = /Android/.test(UA);
+const IS_STANDALONE = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
+function installHTML() {
+  if (IS_STANDALONE()) return '<section class="inst"><h2>Install</h2><p class="inst-done">✓ Installed — you are using the app now.</p></section>';
+  const open = (k) => (k ? ' open' : '');
+  const share = '<svg class="inst-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M8 7l4-4 4 4M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>';
+  const dots = '<svg class="inst-ico" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>';
+  return `<section class="inst" id="inst">
+    <h2>Install as an app</h2>
+    <p class="lede">Installing gives you a home-screen icon, a full-screen window and offline reading. It uses no app store and takes a few seconds.</p>
+    <div class="inst-one" id="instOne" hidden><button type="button" class="off-btn" id="instBtn">Install now</button><span>One tap, your browser does the rest.</span></div>
+    <details class="inst-d"${open(IS_ANDROID)}><summary>Android</summary>
+      <p><b>Chrome or Edge:</b> if an <i>Install now</i> button appears above, tap it. Otherwise open the menu ${dots} and choose <i>Install app</i> (or <i>Add to Home screen</i>), then <i>Install</i>.</p>
+      <p><b>Samsung Internet:</b> menu ☰ → <i>Add page to</i> → <i>Home screen</i>.</p>
+      <p><b>Firefox:</b> menu ${dots} → <i>Install</i>.</p></details>
+    <details class="inst-d"${open(IS_IOS)}><summary>iPhone and iPad</summary>
+      <p>Apple does not allow a one-tap install, so it takes three taps. Open this page in <b>Safari</b>:</p>
+      <ol><li>Tap the <i>Share</i> button ${share} at the bottom of the screen (top-right on iPad).</li>
+      <li>Scroll down and tap <i>Add to Home Screen</i>.</li>
+      <li>Tap <i>Add</i>. The icon appears on your home screen.</li></ol>
+      <p>On iOS 16.4 and later, Chrome and Edge also offer <i>Add to Home Screen</i> in their Share menu.</p></details>
+    <details class="inst-d"><summary>Computer</summary>
+      <p><b>Chrome or Edge:</b> tap <i>Install now</i> above, or the install icon at the right end of the address bar.</p>
+      <p><b>Safari (macOS Sonoma or later):</b> <i>File</i> → <i>Add to Dock</i>.</p></details>
+    <p class="inst-note">After installing, open the app once while connected so the texts you want can be saved for offline use (Settings → Offline).</p>
+  </section>`;
+}
+function wireInstall() {
+  const one = document.getElementById('instOne'); const btn = document.getElementById('instBtn');
+  if (!one || !btn) return;
+  const sync = () => { one.hidden = !installEvt; };
+  sync();
+  const on = () => sync();
+  document.addEventListener('vl-install-ready', on);
+  document.addEventListener('vl-installed', () => { const i = document.getElementById('inst'); if (i) i.outerHTML = installHTML(); });
+  btn.onclick = async () => {
+    if (!installEvt) return;
+    installEvt.prompt();
+    const { outcome } = await installEvt.userChoice.catch(() => ({}));
+    installEvt = null; sync();
+    if (outcome === 'accepted') btn.textContent = 'Installing…';
+  };
+}
 const CHANGES = [
+  ['1.6.0', '2026-10-31', [
+    'Install instructions for Android, iPhone/iPad and computers under Settings → About, with a one-tap Install button where the browser allows it.']],
   ['1.5.0', '2026-10-31', [
     'The app is now called Vedāvalokanam (previously Vedālokana). Your settings, place and offline downloads are kept.']],
   ['1.4.1', '2026-10-31', [
@@ -1137,6 +1190,7 @@ async function viewAbout() {
       <div class="app-acts"><button type="button" class="off-btn ghost" id="chkUpd">Check for updates</button><a class="off-btn ghost" href="#/settings?s=offline">Offline downloads</a></div>
       <p class="upd-out" id="updOut" role="status" aria-live="polite"></p>
     </section>
+    ${installHTML()}
     <p class="lede">Vedāvalokanam is a non-commercial browser for the Vedas, built from openly published digital texts. Text and tags are shown as the sources give them; corrections belong upstream.</p>
     <h2>What’s new</h2>
     <ol class="changes">${CHANGES.map(([v, d, items], i) => `<li${i ? '' : ' class="cur"'}><div class="ch-h"><b>${esc(v)}</b><span>${esc(fmtDay(d))}</span>${i ? '' : '<em>This version</em>'}</div>
@@ -1154,10 +1208,11 @@ async function viewAbout() {
     <h2>Fonts</h2>
     <p>Noto Serif Devanagari, Noto Serif Kannada and Shobhika (IIT Bombay), rebuilt with every anudātta at one depth and, optionally, heavier svara marks; IBM Plex Sans and Gentium Book Plus. All are under the SIL Open Font License; the licence texts are in the <code>fonts</code> folder.</p>
     <h2>Building it</h2>
-    <p>The data is built by <code>scripts/build-data.mjs</code> and the fonts by <code>scripts/make-fonts.py</code>; the source repositories and steps are in the project README. ${standalone ? '' : 'To install, use your browser’s “Install app” or “Add to Home Screen”.'}</p>
+    <p>The data is built by <code>scripts/build-data.mjs</code> and the fonts by <code>scripts/make-fonts.py</code>; the source repositories and steps are in the project README.</p>
   </div>`;
   const upd = document.getElementById('chkUpd');
   upd.onclick = () => checkForUpdate(upd, document.getElementById('updOut'));
+  wireInstall();
   const st = document.getElementById('appState');
   const set = (ok, text) => { st.classList.toggle('ok', ok); st.lastElementChild.textContent = text; };
   if (!swOK) set(false, 'Offline use needs the app’s own https address.');
