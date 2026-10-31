@@ -760,3 +760,23 @@ body.story-open { overflow: hidden; }
 .inst-note, .inst-done { font-size: 14px; color: var(--muted); }
 .inst-done { color: var(--ink); }
 .inst-one[hidden] { display: none; }
+
+/* ---- sūktas: Veda buttons (Home and the Sūktas tab) and the sūkta page ---- */
+.skv { display: grid; grid-auto-flow: column; grid-auto-columns: max-content; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px 12px; padding: 2px 16px; }
+.skv::-webkit-scrollbar { display: none; }
+.skv-b { display: inline-flex; align-items: center; gap: 10px; height: 52px; padding: 0 16px 0 10px; border-radius: 16px; border: 1.5px solid var(--vc); background: var(--surface); color: var(--ink); font: inherit; cursor: pointer; }
+.skv-b:hover { text-decoration: none; background: color-mix(in srgb, var(--vc) 10%, var(--surface)); }
+.skv-b[aria-pressed="true"] { background: var(--vc); color: #FFFFFF; }
+.skv-i { width: 28px; height: 28px; stroke-width: 2; color: var(--vc); flex: none; }
+.skv-b[aria-pressed="true"] .skv-i { color: #FFFFFF; }
+.skv-n { display: flex; flex-direction: column; line-height: 1.2; text-align: left; }
+.skv-n b { font-size: 14px; font-weight: 600; white-space: nowrap; }
+.skv-n small { font-size: 12px; opacity: .8; }
+@media (min-width: 900px) { .home > .skv { grid-column: 1 / -1; } .skv { margin-inline: 0; padding-inline: 0; } }
+.sk-ref { white-space: normal; text-align: right; max-width: 45%; }
+.sk-page .sk-info { color: var(--muted); font-size: 14px; margin: 4px 0 12px; }
+.sk-page .sk-info em { font-style: normal; }
+.sk-acts { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.sk-acts .chip { display: inline-flex; align-items: center; text-decoration: none; }
+.sk-seg { font-size: 14px; font-weight: 600; margin: 22px 0 0; color: var(--muted); }
+.sk-seg a { color: var(--indigo); }

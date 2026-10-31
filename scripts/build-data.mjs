@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { iastToDeva, devaToIast, isoToIast, stripRomanAccents, nameKey } from './translit.mjs';
 import { extraTexts } from './texts.mjs';
-import { SUKTAS } from './suktas.mjs';
+import { buildSuktas } from './build-suktas.mjs';
 import { buildSayana } from './sayana.mjs';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, all) => {
@@ -401,28 +401,9 @@ const vedas = VEDAS.map((v) => ({
 }));
 fs.writeFileSync(path.join(OUT, 'catalog.json'), JSON.stringify({ built: new Date().toISOString().slice(0, 10), layers: LAYERS, vedas, texts }, null, 1));
 
-// ---- famous sūktas: resolve each entry against the data and check its opening
-const fold = (x) => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z]/g, '');
-const byText = Object.fromEntries(texts.map((t) => [t.id, t]));
-const textCache = {};
-const suktas = SUKTAS.map((e) => {
-  const meta = byText[e.text];
-  const t = (textCache[`${e.text}/${e.d1}`] ||= JSON.parse(fs.readFileSync(path.join(OUT, e.text, `t${e.d1}.json`), 'utf8')));
-  const verses = t[e.d2] || [];
-  const first = e.v ? verses.find((x) => x[0] === e.v) : verses[0];
-  if (!first) throw new Error(`sūkta ${e.name}: ${e.text} ${e.d1}.${e.d2}.${e.v} not found`);
-  const opening = first[2].join(' ');
-  const found = e.within ? fold(opening).includes(fold(e.starts)) : fold(opening).startsWith(fold(e.starts));
-  if (!found) throw new Error(`sūkta ${e.name}: expected "${e.starts}", found "${opening.slice(0, 60)}"`);
-  const parts = meta.refFmt === 'v' ? [first[0]] : meta.refFmt === 'd2.v' ? [e.d2, e.v] : [e.d1, e.d2, e.v];
-  const ref = meta.refFmt === 'label' && first[5] ? first[5] : parts.filter((x) => x !== null && x !== undefined).join('.');
-  return {
-    ...e, ref: `${meta.ref} ${ref}`, href: `#/v/${e.text}/c/${e.d1}/${e.d2}${e.v ? `?v=${e.v}` : ''}`,
-    count: e.v ? 1 : verses.length, line: first[1][0] || '', roman: first[2][0] || '',
-  };
-});
-fs.writeFileSync(path.join(OUT, 'suktas.json'), JSON.stringify(suktas));
-console.log(`suktas: ${suktas.length} checked against the text`);
+// ---- sūktas: resolve each entry against the data (scripts/build-suktas.mjs)
+const suktas = buildSuktas(OUT);
+console.log(`suktas: ${suktas.length} found in the text`);
 console.log('wrote', OUT);
 
 // ---- per-Veda file lists for "Download for offline" (writes data/offline.json)

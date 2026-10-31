@@ -243,6 +243,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.9.0', '2026-10-31', ['113 sūktas, mantras and śānti pāṭhas from every Veda (was 54), each on a page of its own, put together from all its parts.', 'Home: a button for each Veda under the Veda tiles shows its sūktas.']],
   ['1.8.0', '2026-10-31', ['Kannada: an anudātta after ಁ (ಲೋಁ॒ ವೀಁ॒) also sits under its letter; checked over every accented syllable of all the Vedas.', 'Dākṣiṇātya pāṭha in the Atharvaveda and the Vājasaneyi Saṃhitā: nasals as anusvāra (इंद्र). The Taittirīya texts already print their own pāṭha.']],
   ['1.7.3', '2026-10-31', ['Kannada: every anudātta sits under its own letter, also under letters joined with their vowel sign (ಜಾ ಪು ವೋ) and before a visarga (ತೀಃ), instead of drifting toward the next letter.']],
   ['1.7.2', '2026-10-31', ['The Ṛgveda’s single-stroke pāṭha is now called Antarjāla pāṭha: the text as the online source gives it.']],
@@ -547,7 +548,7 @@ async function renderRail(rt) {
   const cur = (href) => (getHash() === href || getHash().startsWith(`${href}?`) ? ' aria-current="page"' : '');
   let h = `<div class="lipi" role="group" aria-label="Script for Sanskrit text"><span>Script</span>
     <button data-lipi="deva" aria-pressed="${prefs.lipi === 'deva'}">देवनागरी</button><button data-lipi="knda" aria-pressed="${prefs.lipi === 'knda'}">ಕನ್ನಡ</button></div>`;
-  h += `<a href="#/suktas"${rt.parts[0] === 'suktas' ? ' aria-current="page"' : ''}><span>Famous sūktas</span><span class="dv" lang="sa">सूक्तानि</span></a>`;
+  h += `<a href="#/suktas"${rt.parts[0] === 'suktas' ? ' aria-current="page"' : ''}><span>Sūktas</span><span class="dv" lang="sa">सूक्तानि</span></a>`;
   h += `<h2>Vedas</h2>`;
   for (const v of cat.vedas) {
     h += `<a href="#/veda/${v.id}"${v.id === vid && !id ? ' aria-current="page"' : ''}><span>${esc(v.name)}</span><span class="dv" lang="sa">${esc(v.deva)}</span></a>`;
@@ -586,7 +587,6 @@ const vedaIcon = (id, cls) => VEDA_ICON[id] ? `<svg class="${cls}" viewBox="0 0 
 // Line drawing of an āśrama at dawn — banyan, parṇaśālā, a ṛṣi seated by the homa fire — shown faintly behind Home.
 const ASHRAMA_SVG = `<div class="home-scene" aria-hidden="true"><svg class="scene" viewBox="0 0 800 300" preserveAspectRatio="xMidYMax meet" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <g class="sun-g"> <path d="M520 196a60 60 0 0 1 120 0"/> <path d="M580 120v-18M535 136l-11-13M625 136l11-13M507 166l-15-7M653 166l15-7M496 196h-16M664 196h16" stroke-width="1.6"/> </g> <path d="M430 92q7-6 13 0q6-6 13 0M470 70q5-5 10 0q5-5 10 0M398 118q5-4 9 0q5-4 9 0" stroke-width="1.5"/> <path d="M0 214c70-34 120-46 190-24s110 4 170-20 120-26 190 6 130 30 250 0" /> <path d="M0 236c90-16 160-6 250 2s160-10 260-6 170 14 290 2" stroke-width="1.5" opacity=".7"/> <g> <path d="M96 252c4-30 6-54 2-80M112 252c-2-32 0-56 8-82"/> <path d="M98 176c-14-10-30-12-44-4M118 172c12-12 30-16 46-8M104 172c0-14 2-24 8-34"/> <path d="M40 166c-22-6-28-30-10-42-8-20 10-38 30-32 6-22 34-28 50-14 16-16 44-10 50 10 22-2 34 20 24 36 16 12 8 38-14 40-6 14-26 20-40 12-14 10-36 10-50 0-16 8-36 2-40-10z"/> <path d="M58 168v40M76 172v54M140 170v44M158 166v30" stroke-width="1.2" opacity=".8"/> </g> <g> <path d="M232 252v-62h104v62"/> <path d="M216 194l68-58 68 58"/> <path d="M234 178l-6 8M252 162l-8 12M270 148l-8 14M298 148l8 14M316 162l8 12M334 178l6 8" stroke-width="1.4"/> <path d="M270 252v-38a14 14 0 0 1 28 0v38"/> <path d="M216 194h136" stroke-width="1.4"/> </g> <g> <circle cx="430" cy="196" r="9"/> <path d="M425 188c0-8 10-10 12-3"/> <path d="M430 186c4-8 10-9 12-4" stroke-width="1.4"/> <path d="M420 212c-4 10-6 20-6 30M440 212c4 10 6 20 6 30"/> <path d="M420 212c6-6 14-6 20 0"/> <path d="M402 250c10-10 46-10 56 0c-18 6-38 6-56 0z"/> <path d="M418 226c6 6 18 6 24 0" stroke-width="1.4"/> </g> <g> <path d="M478 252h44l-6-12h-32z"/> <path d="M500 238c-10-8-6-18 0-26 2 8 8 8 6 16 4-2 6-6 5-10 6 8 4 18-11 20z"/> </g> <g><path d="M372 252h22l4-22h-30z"/><path d="M383 230v-14M383 222l-7-6M383 218l7-6M383 226l6-4" stroke-width="1.4"/></g> <path d="M0 270c80-6 140 8 230 4s170-12 260-6 190 10 310 0" stroke-width="1.4" opacity=".7"/> <path d="M120 286c70-4 130 4 200 2M480 288c80-4 150 2 240-2" stroke-width="1.2" opacity=".5"/> </svg></div>`;
 const VEDA_GLYPH = { rv: 'ऋ', syv: 'य', kyv: 'य', sv: 'सा', av: 'अ' };
-const HOME_SUKTAS = ['Puruṣa Sūkta', 'Śrī Rudram', 'Nāsadīya Sūkta', 'Medhā Sūkta', 'Durgā Sūkta', 'Hiraṇyagarbha Sūkta', 'Śānti Mantra'];
 const SUN_SVG = `<svg class="hero-sun" width="260" height="260" viewBox="0 0 260 260" aria-hidden="true"><circle cx="130" cy="130" r="46"/><circle cx="130" cy="130" r="70" class="r1"/><circle cx="130" cy="130" r="94" class="r2"/><circle cx="130" cy="130" r="118" class="r3"/></svg>`;
 const ARROW = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 
@@ -612,7 +612,6 @@ async function viewHome() {
   try { last = JSON.parse(localStorage.getItem('vedalokana.last') || 'null'); } catch { /* storage unavailable */ }
   let suk = [];
   try { suk = (cache.suktas ||= await json('data/suktas.json')); } catch { /* optional */ }
-  const chips = HOME_SUKTAS.map((n) => suk.find((s) => s.name.startsWith(n))).filter(Boolean).slice(0, 6);
   const pct = last?.of ? Math.min(1, last.v / last.of) : 0;
   main.innerHTML = `${ASHRAMA_SVG}<div class="home">
     <section class="pc" id="pc" aria-label="Today’s pañcāṅga"></section>
@@ -636,11 +635,86 @@ async function viewHome() {
         ${VEDA_ICON[v.id] ? vedaIcon(v.id, 'vt-i') + vedaIcon(v.id, 'vt-w') : `<span class="vt-g" lang="sa">${esc(VEDA_GLYPH[v.id] || v.deva[0])}</span>`}
         <span class="vt-n"><b>${T(v.name, VEDA_SA[v.id])}</b><small>${s ? `${F(s.verses)} ${unitHTML(s)}` : ''}</small></span></a>`;
   }).join('')}</div>
-    ${chips.length ? `<div class="sec-h"><h2>${T('Sūktas', 'सूक्तानि')}</h2><a href="#/suktas">${SA() ? `<span lang="sa">सर्वाणि ${dg(suk.length)}</span>` : `All ${suk.length}`}</a></div>
-    <div class="schips">${chips.map((s) => `<a class="schip" href="${esc(s.href)}${s.v ? `?v=${s.v}` : ''}"><span lang="sa">${esc(s.deva)}</span><small>${SA() ? `<span lang="sa">${esc(refSa({ id: s.text, deva: '' }, s.ref.replace(/^\S+\s/, '')))}</span>` : esc(s.ref)}</small></a>`).join('')}</div>` : ''}
+    ${suk.length ? `<div class="sec-h"><h2>${T('Sūktas', 'सूक्तानि')}</h2><a href="#/suktas">${SA() ? `<span lang="sa">सर्वाणि ${dg(suk.length)}</span>` : `All ${suk.length}`}</a></div>
+    ${sukVedaButtons(cat, suk, homeVeda(suk), 'button')}
+    <div class="schips" id="homeSk">${sukChips(suk, homeVeda(suk))}</div>` : ''}
     <p class="lede home-foot">Every text comes from an openly published digital edition. <a href="#/about">About Vedāvalokanam ${esc(APP.version)}: sources and what’s new.</a></p>
   </div>`;
   renderPanchanga();
+  main.querySelectorAll('.skv [data-skv]').forEach((b) => b.addEventListener('click', () => {
+    prefs.homeSk = b.dataset.skv; savePrefs();
+    main.querySelectorAll('.skv [data-skv]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    $('#homeSk').innerHTML = sukChips(suk, prefs.homeSk);
+  }));
+}
+
+// ---------- sūktas: the Veda buttons and chips shared by Home and the Sūktas tab ----------
+const homeVeda = (suk) => (suk.some((e) => e.veda === prefs.homeSk) ? prefs.homeSk : 'rv');
+const sukRef = (e) => (SA() && e.refs ? `<span lang="sa">${esc(e.refs.map(([t, r]) => (r ? `${REF_SA[t] || ''} ${dg(r)}` : (cache.catalog?.texts.find((x) => x.id === t)?.deva || dg(e.ref)))).join('; ').trim())}</span>` : esc(e.ref));
+function sukChips(suk, veda) {
+  return suk.filter((e) => e.veda === veda).map((e) => `<a class="schip" href="${esc(e.href)}"><span lang="sa">${esc(e.deva)}</span><small>${sukRef(e)}</small></a>`).join('');
+}
+// as buttons (Home: switch the chips in place) or as links (Sūktas tab: filter the list)
+function sukVedaButtons(cat, suk, cur, as, href) {
+  const n = (id) => suk.filter((e) => e.veda === id).length;
+  return `<div class="skv" role="group" aria-label="Veda">${cat.vedas.filter((v) => n(v.id)).map((v) => {
+    const inner = `${VEDA_ICON[v.id] ? vedaIcon(v.id, 'skv-i') : ''}<span class="skv-n"><b>${T(v.name, VEDA_SA[v.id])}</b><small>${F(n(v.id))}</small></span>`;
+    return as === 'button'
+      ? `<button type="button" class="skv-b" style="--vc: var(--v-${v.id})" data-skv="${v.id}" aria-pressed="${String(v.id === cur)}">${inner}</button>`
+      : `<a class="skv-b" style="--vc: var(--v-${v.id})" href="${href(v.id)}" aria-pressed="${String(v.id === cur)}">${inner}</a>`;
+  }).join('')}</div>`;
+}
+const KIND = { sūkta: ['Sūkta', 'सूक्तम्'], mantra: ['Mantra', 'मन्त्रः'], anuvāka: ['Anuvāka', 'अनुवाकः'], praśna: ['Praśna', 'प्रश्नः'], adhyāya: ['Adhyāya', 'अध्यायः'], parva: ['Parva', 'पर्व'], śānti: ['Śānti mantra', 'शान्तिमन्त्रः'] };
+
+// ---------- one sūkta, put together from its parts ----------
+async function viewSukta(sid) {
+  const all = (cache.suktas ||= await json('data/suktas.json'));
+  const s = all.find((x) => x.id === sid);
+  if (!s) { notFound(); return; }
+  setTitle(s.name);
+  const cat = await catalog();
+  const metaOf = (t) => cat.texts.find((x) => x.id === t);
+  const blocks = [];
+  for (const g of s.segs) {
+    const meta = metaOf(g.t);
+    const vs = ((await text(g.t, g.d1))[g.d2] || []).filter((v) => v[0] >= g.v[0] && v[0] <= g.v[1]);
+    vs.forEach((v, i) => {
+      const a = i === 0 ? g.a : null; const b = i === vs.length - 1 ? g.b : null;
+      const lines = !a && !b ? v[1] : v[1].map((l, li) => {
+        if ((a && li < a[0]) || (b && li > b[0])) return '';
+        const w = l.split(' ');
+        return w.slice(a && li === a[0] ? a[1] : 0, b && li === b[0] ? b[1] + 1 : w.length).join(' ');
+      }).filter((l) => l.trim());
+      blocks.push({ g, meta, v, lines, cut: !!(a || b) });
+    });
+  }
+  const showRoman = (b) => !b.cut && b.v[2]?.length && (prefs.script !== 'deva' || !b.lines.length);
+  const vedaName = cat.vedas.find((v) => v.id === s.veda);
+  let n = 0; let lastSeg = null;
+  const body = blocks.map((b) => {
+    n++;
+    const head = b.g !== lastSeg && new Set(s.segs.map((x) => x.t)).size + s.segs.length > 2
+      ? `<h2 class="sk-seg">${b.g.title ? `${T(b.g.title, b.g.titleDeva)} · ` : ''}<a href="#/v/${b.g.t}/c/${b.g.d1}/${b.g.d2}?v=${b.g.v[0]}">${SA() ? `<span lang="sa">${esc(`${REF_SA[b.g.t] || b.meta.deva} ${dg(b.g.ref || '')}`)}</span>` : esc(`${b.meta.ref} ${b.g.ref || ''}`)}</a></h2>` : '';
+    lastSeg = b.g;
+    const ref = refOf(b.meta, b.g.d1, b.g.d2, b.v[0], b.v[5]);
+    let html = '';
+    if (b.lines.length && prefs.script !== 'roman') html += `<div class="deva" lang="sa">${svaraLines(b.g.t, b.lines, b.cut ? null : b.v[3]).map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
+    if (showRoman(b)) html += `<div class="roman" lang="sa-Latn">${b.v[2].map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
+    if (!b.cut && b.v[4] && prefs.tr) html += `<p class="tr" lang="en">${esc(b.v[4])}</p>`;
+    return `${head}<section class="verse" aria-label="${esc(b.meta.ref)} ${esc(ref)}">
+      <div class="vnum"><a href="#/v/${b.g.t}/c/${b.g.d1}/${b.g.d2}?v=${b.v[0]}" title="${esc(`${b.meta.ref} ${ref}`)}">${N(String(n))}</a></div><div>${html}</div></section>`;
+  }).join('');
+  const k = KIND[s.kind] || KIND.sūkta;
+  main.innerHTML = `<div class="col sk-page">
+    <h1>${SA() ? `<span lang="sa">${esc(s.deva)}</span>` : `${esc(s.name)}<span class="h1-deva" lang="sa">${esc(s.deva)}</span>`}</h1>
+    <p class="sk-info">${T(vedaName?.name || '', VEDA_SA[s.veda])} · ${sukRef(s)} · ${T(k[0], k[1])} · ${SA() ? `<span lang="sa">${esc(s.devataDeva)}</span>` : `<em>Devatā</em> ${esc(s.devata)}`}${s.count > 1 ? ` · ${F(s.count)} ${T('verses', 'मन्त्राः')}` : ''}</p>
+    <div class="sk-acts">${s.reader ? `<a class="chip" href="${s.reader}">${T('Open in the reader', 'मूलग्रन्थे पठ')}</a>` : ''}<button type="button" class="chip" id="skCopy">${T('Copy', 'प्रतिलिपिः')}</button></div>
+    <div class="verses">${body}</div>
+  </div>`;
+  $('#skCopy')?.addEventListener('click', async (e) => {
+    const txt = [s.deva, ...blocks.flatMap((b) => svaraLines(b.g.t, b.lines, b.cut ? null : b.v[3]).map((l) => (prefs.lipi === 'knda' ? toKnda(l) : l))), `— ${s.ref}`].join('\n');
+    try { await navigator.clipboard.writeText(txt); e.target.textContent = SA() ? 'प्रतिलिपिः ✓' : 'Copied'; } catch { /* clipboard blocked */ }
+  });
 }
 
 // ---------- local pañcāṅga ----------
@@ -1426,16 +1500,16 @@ function renderChrome(r, path) {
   // back goes up one level
   const page = r.parts[0] || '';
   const topLevel = ['', 'library', 'suktas', 'search', 'settings'].includes(page);
-  const parentHref = path.length >= 2 ? path[path.length - 2].href : page === 'about' ? '#/settings' : topLevel ? null : '#/library';
+  const parentHref = path.length >= 2 ? path[path.length - 2].href : page === 'about' ? '#/settings' : page === 's' ? '#/suktas' : topLevel ? null : '#/library';
   const back = $('#backBtn');
   back.hidden = !parentHref;
   if (parentHref) back.setAttribute('href', parentHref);
   $('#brand').classList.toggle('when-back', !!parentHref);
-  const named = { library: 'Library', suktas: 'Sūktas', search: 'Search', settings: 'Settings', about: 'About' }[page];
+  const named = { library: 'Library', suktas: 'Sūktas', s: 'Sūktas', search: 'Search', settings: 'Settings', about: 'About' }[page];
   const lastC = path[path.length - 1];
-  $('#topTitle').textContent = lastC ? Tp(lastC.label, lastC.deva) : (named ? Tp(named, MENU_SA[page]) : '');
+  $('#topTitle').textContent = lastC ? Tp(lastC.label, lastC.deva) : (named ? Tp(named, MENU_SA[page === 's' ? 'suktas' : page]) : '');
   // tabs
-  const tab = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 'about' ? 'settings' : page);
+  const tab = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 'about' ? 'settings' : page === 's' ? 'suktas' : page);
   $('#tabbar').querySelectorAll('[data-tab]').forEach((a) => (a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
   document.body.classList.toggle('reading', page === 'v' && r.parts[2] === 'c');
   if (!(page === 'v' && r.parts[2] === 'c')) { $('#readerbar').hidden = true; readerNav = null; }
@@ -1460,7 +1534,7 @@ async function viewLibrary() {
 const VEDA_SHORT = { rv: 'Ṛgveda', syv: 'Śukla Yajurveda', kyv: 'Kṛṣṇa Yajurveda', sv: 'Sāmaveda', av: 'Atharvaveda' };
 const foldName = (x) => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 async function viewSuktas(params) {
-  setTitle('Famous sūktas');
+  setTitle('Sūktas');
   const all = (cache.suktas ||= await json('data/suktas.json'));
   const cat = await catalog();
   const vedaF = params.get('veda') && VEDA_SHORT[params.get('veda')] ? params.get('veda') : '';
@@ -1488,16 +1562,12 @@ async function viewSuktas(params) {
   const row = (e) => `<a class="sk-row" href="${e.href}">
       <span class="sk-top"><span class="sk-name"><span class="dv" lang="sa">${esc(e.deva)}</span><span class="ia">${esc(e.name)}</span></span><span class="sk-ref">${esc(e.ref)}</span></span>
       <span class="sk-line" lang="sa">${esc(e.line)}</span>
-      <span class="sk-meta">${by !== 'devata' ? `<span><em>Devatā</em> ${esc(e.devata)}</span>` : ''}${by !== 'veda' ? `<span>${esc(VEDA_SHORT[e.veda])}</span>` : ''}<span>${e.kind === 'mantra' ? 'Mantra' : `${fmt(e.count)} ${e.count === 1 ? 'verse' : 'verses'}`}</span></span>
+      <span class="sk-meta">${by !== 'devata' ? `<span><em>Devatā</em> ${esc(e.devata)}</span>` : ''}${by !== 'veda' ? `<span>${esc(VEDA_SHORT[e.veda])}</span>` : ''}<span>${esc((KIND[e.kind] || KIND.sūkta)[0])}${e.count > 1 ? ` · ${fmt(e.count)} verses` : ''}</span></span>
     </a>`;
-  const counts = Object.fromEntries(Object.keys(VEDA_SHORT).map((k) => [k, all.filter((e) => e.veda === k).length]));
   main.innerHTML = `<div class="col">
-    <h1>Famous sūktas<span class="h1-deva" lang="sa">सूक्तानि</span></h1>
-    <p class="lede">Well-known sūktas and mantras from every Veda. Each opens at its first verse.</p>
-    <nav class="chips sk-filter" aria-label="Veda">
-      <a class="chip" href="${href({ veda: '' })}"${!vedaF ? ' aria-current="true"' : ''}>All <small>${all.length}</small></a>
-      ${Object.entries(VEDA_SHORT).filter(([k]) => counts[k]).map(([k, n]) => `<a class="chip" href="${href({ veda: k })}"${vedaF === k ? ' aria-current="true"' : ''}>${esc(n)} <small>${counts[k]}</small></a>`).join('')}
-    </nav>
+    <h1>${T('Sūktas', 'सूक्तानि')}${SA() ? '' : '<span class="h1-deva" lang="sa">सूक्तानि</span>'}</h1>
+    <p class="lede">The sūktas, mantras and śānti pāṭhas of recitation books such as the Sasvara Vedamantrāḥ, from every Veda. Each opens as one piece, even when it is gathered from several places.</p>
+    ${sukVedaButtons(cat, all, vedaF, 'link', (k) => href({ veda: vedaF === k ? '' : k }))}
     <div class="seg sk-sort" role="group" aria-label="List by">
       ${[['veda', 'By Veda'], ['devata', 'By devatā'], ['az', 'A–Z']].map(([k, l]) => `<a href="${href({ by: k })}" data-by="${k}" aria-pressed="${by === k}">${l}</a>`).join('')}
     </div>
@@ -1597,6 +1667,7 @@ async function route() {
     else if (a === 'about') await viewAbout();
     else if (a === 'library') await viewLibrary();
     else if (a === 'suktas') await viewSuktas(r.params);
+    else if (a === 's') await viewSukta(id);
     else if (a === 'search') await viewSearch();
     else if (a === 'settings') await viewSettings();
     else if (a === 'veda') await viewVedaGroup(id, sub);

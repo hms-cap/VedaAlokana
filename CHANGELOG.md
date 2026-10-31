@@ -2,6 +2,12 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.9.0 — 2026-10-31
+- **113 sūktas, mantras and śānti pāṭhas** (was 54), as gathered in recitation books such as the Sasvara Vedamantrāḥ: Ṛgveda 50, Śukla Yajurveda 13, Kṛṣṇa Yajurveda 24, Sāmaveda 3, Atharvaveda 23. New among them: Gaṇapati Sūkta (RV 8.81 + 10.112.9–10, as in the Kannada book), Navagraha Sūkta, Manyu, Pitṛ, Viśvakarma, Bhāgya, Svasti, Vāstu, Rakṣoghna, Dhruva, Aghamarṣaṇa; Nārāyaṇa Sūkta, Mantrapuṣpam, Durgā (cut to its own verses), Medhā, Trisuparṇa, Pañcabrahma, Mṛttikā, Bhū Sūkta, Nakṣatra Sūkta, Uttaranārāyaṇa, the Aruṇa Praśna; Tad eva and Śivasaṅkalpa; the Brahma, Madhu, Śālā, Medhā and Abhaya sūktas of the Atharvaveda; and a śānti mantra for each Veda.
+- Each sūkta opens on a page of its own (`#/s/…`), put together from all its parts, even when they lie in different places or start and end inside a section of the source; Copy takes the whole sūkta. The page follows the chosen script and pāṭha.
+- Home: below the Veda tiles, a button for each Veda shows that Veda's sūktas; the Sūktas tab filters with the same buttons.
+- `scripts/suktas.mjs` lists them by reference or by their opening and closing words; `scripts/build-suktas.mjs` finds each in the data and stops on any it cannot find.
+
 ## 1.8.0 — 2026-10-31
 - Kannada anudātta, checked over every accented syllable of all the Vedas (about 306,000): after a candrabindu with a long vowel or reph (ಲೋಁ॒ ವೀಁ॒ ಲ್ಲೋಁ॒, common in the Taittirīya texts) the bar sat at the end of the letter; svara marks now move in front of ಁ as they do in front of ಂ and ಃ. No bar is now more than a third of a letter off its letter, except under the Taittirīya ಗ್ಂ, where it stays under ಗ್ಂ as Devanagari keeps it under ꣳ.
 - Dākṣiṇātya pāṭha in the Atharvaveda and the Vājasaneyi Saṃhitā: nasals before a stop of their class are written as anusvāra (इंद्र, य॑न्ति → यं॑ति). Neither has a padapāṭha here, so word-final nasals are converted too, and avagraha at pāda junctions (which needs word boundaries) is not added. The Taittirīya Saṃhitā, Brāhmaṇa, Āraṇyaka and Upaniṣad are left as they are: they already print the Taittirīya pāṭha, with its own nasals (शन्नो, तन्तन्मे) and avagrahas (माऽघशꣳसो).
