@@ -118,7 +118,7 @@ function paintLipiToggle() {
   document.querySelectorAll('#lipiToggle [data-lipi]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lipi === prefs.lipi)));
 }
 // ---------- Ṛgveda pāṭha: as South Indian books print it (default) or as VedaWeb publishes it ----------
-const PATHA = { dakshinatya: ['Dākṣiṇātya pāṭha', 'दाक्षिणात्यपाठः'], std: ['Śṛṅgeri style', 'शृङ्गेरी पाठः'] };
+const PATHA = { dakshinatya: ['Dākṣiṇātya pāṭha', 'दाक्षिणात्यपाठः'], std: ['Sāmānya pāṭha', 'सामान्यपाठः'] };
 // lines: the half-verses of one ṛk; pada: its padapāṭha words (word boundaries for nasals and avagraha)
 const svaraLines = (textId, lines, pada) => (prefs.patha === 'dakshinatya' && textId === 'rv' ? dakshinatyaVerse(lines, pada) : lines);
 
@@ -236,6 +236,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.7.1', '2026-10-31', ['The Ṛgveda’s single-stroke pāṭha is now called Sāmānya pāṭha (previously Śṛṅgeri style).']],
   ['1.7.0', '2026-10-31', [
     'Dākṣiṇātya pāṭha (formerly Kāñcī · Mādhva), now the default for the Ṛgveda: dīrgha svarita, nasals inside a word as anusvāra (इंद्र), an avagraha where two pādas run together (दक्षि॑णेना॒ऽभि), and the kampa as Karnataka books print it (र॒प्स्व(अ॒)न्१॒॑तः). Checked against printed Gaṇapati, Hiraṇyagarbha, Puruṣa and Devī sūktas.']],
   ['1.6.0', '2026-10-31', [
@@ -1533,7 +1534,7 @@ async function viewSettings() {
       <div class="seg wide-seg">${opt('menu', 'script', 'In the reading script')}${opt('menu', 'en', 'English')}</div></section>
     <section class="set"><h2>Script for Sanskrit text</h2><p>Names, headings and mantras switch together. Svara marks are kept.</p>
       <div class="seg wide-seg">${opt('lipi', 'deva', 'देवनागरी', 'dvb')}${opt('lipi', 'knda', 'ಕನ್ನಡ', 'knb')}</div></section>
-    <section class="set"><h2>Ṛgveda pāṭha</h2><p>Dākṣiṇātya pāṭha prints the Ṛgveda as South Indian recitation books do: a svarita on a heavy syllable with two strokes (dīrgha svarita <span lang="sa">ई᳚</span>), a nasal inside a word as anusvāra (<span lang="sa">इंद्र</span>), an avagraha where two pādas run together (<span lang="sa">दक्षि॑णेना॒ऽभि</span>), and a kampa with its vowel spelled out (<span lang="sa">र॒प्स्व(अ॒)न्१॒॑तः</span>). Śṛṅgeri style is the text as most printed editions give it, every svarita with one stroke.</p>
+    <section class="set"><h2>Ṛgveda pāṭha</h2><p>Dākṣiṇātya pāṭha prints the Ṛgveda as South Indian recitation books do: a svarita on a heavy syllable with two strokes (dīrgha svarita <span lang="sa">ई᳚</span>), a nasal inside a word as anusvāra (<span lang="sa">इंद्र</span>), an avagraha where two pādas run together (<span lang="sa">दक्षि॑णेना॒ऽभि</span>), and a kampa with its vowel spelled out (<span lang="sa">र॒प्स्व(अ॒)न्१॒॑तः</span>). Sāmānya pāṭha is the text as most printed editions give it (VedaWeb, after Aufrecht), every svarita with one stroke.</p>
       <div class="seg wide-seg">${opt('patha', 'dakshinatya', esc(PATHA.dakshinatya[0]))}${opt('patha', 'std', esc(PATHA.std[0]))}</div>
       <p class="svara-demo" lang="sa">${svaraLines('rv', ['आ नो॑ भर॒ दक्षि॑णेना॒भि स॒व्येन॒ प्र मृ॑श', 'इन्द्र॒ मा नो॒ वसो॒र्निर्भा॑क्'], ['ā', 'naḥ', 'bhara', 'dakṣiṇena', 'abhi', 'savyena', 'pra', 'mṛśa', 'indra', 'mā', 'naḥ', 'vasoḥ', 'niḥ', 'bhāk']).map((l) => `<span>${esc(l)}</span>`).join(' । ')}</p></section>
     <section class="set"><h2>Devanagari font</h2><p>Noto Serif is compact and even. Shobhika (IIT Bombay), made for Sanskrit and Vedic text, has larger letters and taller svarita marks. Kannada always uses Noto Serif Kannada.</p>
