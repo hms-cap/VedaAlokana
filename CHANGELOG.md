@@ -2,6 +2,9 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.4.1 — 2026-10-31
+- Check for updates: falls back to a plain request, then to the service worker itself, when the first request is refused, and shows the reason (HTTP status or network error) on failure.
+
 ## 1.4.0 — 2026-10-31
 - Every anudātta sits at one depth under the line. The stock fonts hang the bar from each letter's own bottom, so it stepped up and down along a line; `scripts/make-fonts.py` now anchors it at a fixed depth (deeper only under the rare letter that reaches below it).
 - Shobhika (IIT Bombay, OFL) as a second Devanagari font, with Bold (heavier) or Standard svara marks: Settings → Devanagari font.

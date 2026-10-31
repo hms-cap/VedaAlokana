@@ -181,6 +181,8 @@ applyTheme();
 // ---------- version, installing and offline ----------
 const APP = self.VEDALOKANA || { version: '0.0.0', released: '' };
 const CHANGES = [
+  ['1.4.1', '2026-10-31', [
+    'Check for updates tries several ways to reach the server and says why when it can’t, instead of a bare “couldn’t reach the server”.']],
   ['1.4.0', '2026-10-31', [
     'Every anudātta now sits at one depth under the line, instead of stepping up and down with each letter.',
     'Shobhika (IIT Bombay) as a second Devanagari font, with or without heavier svara marks: Settings → Devanagari font.']],
@@ -252,12 +254,41 @@ async function checkForUpdate(btn, out) {
   btn.disabled = true; say('Checking…');
   const finish = () => { btn.disabled = false; };
   if (!navigator.onLine) { say('You are offline. Check again when connected.'); return finish(); }
-  let latest = null;
-  try {
-    const r = await fetch(`version.js?fresh=${Date.now()}`, { cache: 'no-store' });
-    latest = (await r.text()).match(/version:\s*'([^']+)'/)?.[1] || null;
-  } catch { /* handled below */ }
-  if (!latest) { say('Couldn’t reach the server. Try again in a moment.'); return finish(); }
+  // Ask for version.js a few different ways: some hosts and preview frames refuse a query string or
+  // a cache-bypass request, and the answer is the same file either way.
+  const tries = [
+    [`version.js?fresh=${Date.now()}`, { cache: 'no-store' }],
+    ['version.js', { cache: 'reload' }],
+    ['version.js', {}],
+  ];
+  let latest = null; let why = '';
+  for (const [u, o] of tries) {
+    try {
+      const r = await fetch(u, o);
+      if (!r.ok) { why = `HTTP ${r.status}`; continue; }
+      latest = (await r.text()).match(/version:\s*'([^']+)'/)?.[1] || null;
+      if (latest) break;
+      why = 'unexpected reply';
+    } catch (err) { why = err?.message || 'network error'; }
+  }
+  // Last resort: let the browser fetch the service worker itself, which carries the version.
+  let reg0 = null;
+  if (!latest && swOK) {
+    reg0 = await navigator.serviceWorker.getRegistration().catch(() => null);
+    if (reg0) {
+      try { await reg0.update(); } catch (err) { why ||= err?.message || ''; }
+      const w0 = reg0.installing || reg0.waiting;
+      if (w0) {
+        const v = await new Promise((res) => {
+          const t = setTimeout(() => res(null), 4000);
+          navigator.serviceWorker.addEventListener('message', (e) => { if (e.data?.version) { clearTimeout(t); res(e.data.version); } }, { once: true });
+          w0.postMessage('version');
+        });
+        latest = v;
+      } else if (reg0.active) { latest = APP.version; why = ''; }
+    }
+  }
+  if (!latest) { say(`Couldn’t reach the server${why ? ` (${why})` : ''}. Try again in a moment.`); return finish(); }
   if (!newer(latest, APP.version)) { say(`You have the latest version, ${APP.version}.`); return finish(); }
   const restart = () => {
     say(`Version ${latest} is ready.`);
