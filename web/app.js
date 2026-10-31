@@ -294,6 +294,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.14.1', '2026-10-31', ['Check for updates no longer says you have the latest version when it couldn’t reach the server; it says it couldn’t check.']],
   ['1.14.0', '2026-10-31', ['Today’s mantra is now a set of up to five cards to swipe through in a loop: the mantra, its meaning, words and grammar, ṛṣi · devatā · chandas, and its use and significance — in English, or Kannada when the script is Kannada. 365 mantras from all four Vedas and the Upaniṣads, one for each day of the year; ↻ shows another.']],
   ['1.13.0', '2026-10-31', ['An options bar under the top bar holds every setting that applies to the page: script, menus, theme, pāṭha, padapāṭha, IAST, ṛṣi · devatā · chandas, translation, bhāṣya, text size, save and chant. ⋯ opens the same options with their names, plus svara marks and font. On phones it slides away while you read down and returns when you scroll up.', 'My sūktas has its own tab in the bottom bar (in place of Search, which stays at the top).']],
   ['1.12.1', '2026-10-31', ['The About link moved to the top of the start page, with a small info icon.']],
@@ -415,7 +416,7 @@ async function checkForUpdate(btn, out) {
           w0.postMessage('version');
         });
         latest = v;
-      } else if (reg0.active) { latest = APP.version; why = ''; }
+      }
     }
   }
   if (!latest) { say(`Couldn’t reach the server${why ? ` (${why})` : ''}. Try again in a moment.`); return finish(); }

@@ -2,8 +2,10 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
-## 1.12.1 — 2026-10-31
-- About link moved from the foot of the start page to the top, as a small info icon.
+## 1.14.1 — 2026-10-31
+- Check for updates no longer reports "latest version" when it couldn't reach the server; it says it couldn't check.
+- The Pages workflow now publishes the whole repository, same as the branch build, so the app at `/web/` is always present whichever deployment finishes last.
+- `web/version.js` had stayed at 1.12.1 through 1.13.0 and 1.14.0, so installed copies weren't offered those updates.
 
 ## 1.14.0 — 2026-10-31
 - **Daily mantra cards.** Today's mantra on Home is a set of up to five cards, swiped (or tapped, or stepped with the dots) in a loop: **the mantra** with its reference and tags; **its meaning**; **words and grammar** — two or three key words with their sense and form (gerundives, optatives, Vedic endings, compounds); **ṛṣi · devatā · chandas**, each with a short note; and **use and significance** — where it is recited (sandhyāvandana, pūjā, homa, saṃskāras) and why it matters. Notes are in English, and in Kannada when the script is Kannada. 365 mantras from the Ṛgveda, Yajurveda, Sāmaveda, Atharvaveda and the Upaniṣads, one for each day of the year; **↻** shows another set at random and **Today's** returns. The text of each mantra comes from the app's own data, so svaras and the pāṭha switch apply. `scripts/build-daily.mjs` builds them from `scripts/daily/` into `web/data/daily/`, in files of 50.
@@ -11,6 +13,9 @@ Versions follow [semantic versioning](https://semver.org). The version lives in 
 ## 1.13.0 — 2026-10-31
 - **Options bar.** A row of icons under the top bar holds every setting that applies to the page, one tap each: script (अ/ಅ), menus (En), theme, and — where they apply — pāṭha (ई᳚ / ई॑), padapāṭha, IAST, ṛṣi · devatā · chandas, translation, Sāyaṇa bhāṣya, text size (new, 85–175 %), save to My list and Chant view. Highlighted icons are on. **⋯** opens a panel with the same options named and grouped (Everywhere · This page · Reading), with svara marks and the Devanagari font; Back closes it. The page keeps the verse you were reading when an option redraws it. On phones the bar slides away while reading down and returns on scrolling up. It replaces the script and theme buttons in the top bar, the reader's switch row and toggle buttons, and the Save and Chant buttons on pages.
 - **My sūktas tab** in the bottom bar (`#/my`): My list · Recent · Frequent, reorder, Chant my list. It takes the place of the Search tab; search stays in the top bar. The My sūktas section on Home and the list chips on the Sūktas tab are gone; old `#/suktas?list=…` links open the tab.
+
+## 1.12.1 — 2026-10-31
+- About link moved from the foot of the start page to the top, as a small info icon.
 
 ## 1.12.0 — 2026-10-31
 - **Navigation, as in an app.** Back (the arrow, the browser or the phone) returns to the view you came from, at the place you were reading; with no earlier view it goes up to the parent. Moving to the next or previous verse, section or sūkta — by arrow, swipe, key or switch — replaces the view rather than adding a back step. Sheets, pickers and the chant view close on Back. The Library and Sūktas tabs remember where you were; tapping the current tab again returns to its top. Sūkta pages get breadcrumbs (Sūktas › Veda › sūkta); Continue reading covers sūkta pages; Search keeps its query when you come back.
