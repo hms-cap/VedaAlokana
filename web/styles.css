@@ -718,3 +718,14 @@ body.story-open { overflow: hidden; }
 .ch-h b { font-size: 17px; font-variant-numeric: tabular-nums; } .ch-h span { color: var(--muted); font-size: 14px; }
 .ch-h em { font-style: normal; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 10px; background: var(--indigo-soft); color: var(--indigo); }
 .changes ul { margin: 6px 0 0; padding-left: 18px; } .changes ul li { margin: 3px 0; }
+
+/* ---- menu language: En next to the script switch ---- */
+.lipi-toggle .lt-sep { width: 1px; margin: 6px 3px; background: var(--line); }
+.lipi-toggle .menu-en { width: 38px; font: 600 13px var(--ui); letter-spacing: .02em; }
+@media (max-width: 380px) { .lipi-toggle button { width: 34px; } .lipi-toggle .menu-en { width: 34px; } .theme-btn { width: 38px; } }
+/* Sanskrit labels in small UI text: a little larger, and no letter-spacing or capitals */
+:where(.tabbar, .pc-grid dt, .hero-k, .tag em, .cont-t, .wheel-h, .st-end small, .layer-tabs, .veda-switch, .sc-t small, .wc-s, .pc-grid small, .seg, .brand, .ct, .vt-n small, .pc-note, .pc-date, .lt-n, .db-c, .st-head) [lang^="sa"] {
+  font-size: 1.18em; letter-spacing: 0; text-transform: none; line-height: 1.35; }
+.tabbar [lang^="sa"] { font-size: 1.12em; }
+.brand [lang^="sa"] { font-size: 1.08em; }
+.st-next { gap: .35em; }

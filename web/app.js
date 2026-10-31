@@ -22,6 +22,29 @@ const LEVEL_DEVA = {
   Prapāṭhaka: 'प्रपाठक', Bhāga: 'भाग', Vallī: 'वल्ली', Khaṇḍa: 'खण्ड', Praśna: 'प्रश्न', Brāhmaṇa: 'ब्राह्मण', Book: 'पुस्तक',
 };
 
+// Labels in the reading script: the Sanskrit names of the levels (singular, plural), used when menus
+// follow the script (Settings → Menus, or the En button in the top bar switches back to English).
+const LEVEL_SA = {
+  Maṇḍala: ['मण्डलम्', 'मण्डलानि'], Sūkta: ['सूक्तम्', 'सूक्तानि'], Ṛk: ['ऋक्', 'ऋचः'], Adhyāya: ['अध्यायः', 'अध्यायाः'],
+  Mantra: ['मन्त्रः', 'मन्त्राः'], Ārcika: ['आर्चिकम्', 'आर्चिके'], Book: ['अध्यायः', 'अध्यायाः'], Verse: ['मन्त्रः', 'मन्त्राः'],
+  Verses: ['मन्त्राः', 'मन्त्राः'], Kāṇḍa: ['काण्डम्', 'काण्डानि'], Pañcikā: ['पञ्चिका', 'पञ्चिकाः'], Khaṇḍa: ['खण्डः', 'खण्डाः'],
+  Āraṇyaka: ['आरण्यकम्', 'आरण्यकानि'], Brāhmaṇa: ['ब्राह्मणम्', 'ब्राह्मणानि'], Kaṇḍikā: ['कण्डिका', 'कण्डिकाः'],
+  Prapāṭhaka: ['प्रपाठकः', 'प्रपाठकाः'], Pañcāśat: ['पञ्चाशत्', 'पञ्चाशतः'], Section: ['भागः', 'भागाः'], Vallī: ['वल्ली', 'वल्ल्यः'],
+  Anuvāka: ['अनुवाकः', 'अनुवाकाः'], Bhāga: ['भागः', 'भागाः'], Praśna: ['प्रश्नः', 'प्रश्नाः'],
+};
+const GROUP_SA = { Pūrvārcika: 'पूर्वार्चिकम्', Uttarārcika: 'उत्तरार्चिकम्', Pūrvabhāga: 'पूर्वभागः', Uttarabhāga: 'उत्तरभागः' };
+// Traditional short references (ऋ. १०.९०) for the English ones (RV 10.90).
+const REF_SA = {
+  rv: 'ऋ.', yv: 'वा.सं.', sv: 'सा.', svs: 'सा.', av: 'अ.', ts: 'तै.सं.', tb: 'तै.ब्रा.', ta: 'तै.आ.', sb: 'श.ब्रा.', ab: 'ऐ.ब्रा.',
+  kb: 'कौ.ब्रा.', aa: 'ऐ.आ.', sa: 'शां.आ.', aiu: 'ऐ.उ.', isu: 'ई.उ.', bu: 'बृ.उ.', tu: 'तै.उ.', kathu: 'क.उ.', svu: 'श्वे.उ.',
+  pb: 'प.ब्रा.', jub: 'जै.उ.ब्रा.', chu: 'छा.उ.', keu: 'के.उ.', gb: 'गो.ब्रा.', mu: 'मु.उ.', mau: 'मा.उ.', pru: 'प्र.उ.',
+};
+const FACET_SA = { rishi: 'ऋषिः', devata: 'देवता', chandas: 'छन्दः' };
+const VEDA_SA = { rv: 'ऋग्वेदः', syv: 'शुक्लयजुर्वेदः', kyv: 'कृष्णयजुर्वेदः', sv: 'सामवेदः', av: 'अथर्ववेदः' };
+const VEDA_SA_SHORT = { rv: 'ऋक्', syv: 'शुक्लयजुः', kyv: 'कृष्णयजुः', sv: 'साम', av: 'अथर्व' };
+const LAYER_SA = { samhita: 'संहिता', brahmana: 'ब्राह्मणम्', aranyaka: 'आरण्यकम्', upanishad: 'उपनिषत्' };
+const MENU_SA = { home: 'गृहम्', library: 'ग्रन्थालयः', suktas: 'सूक्तानि', search: 'अन्वेषणम्', settings: 'विन्यासः', about: 'परिचयः' };
+
 const $ = (s, el = document) => el.querySelector(s);
 const main = $('#main');
 const rail = $('#rail');
@@ -41,7 +64,7 @@ const PREF_KEY = 'vedalokana.prefs';
 const prefs = (() => {
   // Default view is made for chanting: the text in script only, no romanisation or translation.
   // `v` is bumped when defaults change, so an earlier saved reading view moves to the new one once.
-  const d = { v: 2, script: 'deva', mode: 'samhita', tr: false, tags: true, bhashya: false, lipi: 'deva', svara: 'bold', suktaBy: 'veda', theme: 'system' };
+  const d = { v: 2, script: 'deva', mode: 'samhita', tr: false, tags: true, bhashya: false, lipi: 'deva', svara: 'bold', suktaBy: 'veda', theme: 'system', menu: 'script' };
   try {
     const saved = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
     if ((saved.v || 1) < 2) { delete saved.script; delete saved.tr; delete saved.mode; }
@@ -75,6 +98,7 @@ const REDUCED_MOTION = () => window.matchMedia('(prefers-reduced-motion: reduce)
 let keepAnchor = null;
 function setLipi(l) {
   if (prefs.lipi === l) return;
+  document.querySelectorAll('#brand span, #tabbar [data-tab] span').forEach((e) => { e.textContent = ''; });
   // remember which verse is at the top of the screen, not just the pixel offset,
   // because the two scripts wrap lines differently; measure before the font changes
   const head = $('.topbar').getBoundingClientRect().bottom + ($('#pathbar').hidden ? 0 : $('#pathbar').offsetHeight);
@@ -83,12 +107,44 @@ function setLipi(l) {
     || verses.find((el) => el.getBoundingClientRect().bottom > head + 8);
   keepScrollY = window.scrollY;
   keepAnchor = anchor ? { id: anchor.id, top: anchor.getBoundingClientRect().top } : null;
-  prefs.lipi = l; savePrefs(); applyLipiClass();
+  prefs.lipi = l; savePrefs(); applyLipiClass(); applyMenu();
   route();
 }
 function paintLipiToggle() {
   document.querySelectorAll('#lipiToggle [data-lipi]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lipi === prefs.lipi)));
 }
+// ---------- menus in the reading script, or English ----------
+const SA = () => prefs.menu !== 'en';
+const dg = (x) => String(x).replace(/[0-9]/g, (d) => '०१२३४५६७८९'[d]);
+const inLipi = (x) => (prefs.lipi === 'knda' ? toKnda(x) : x);
+const T = (en, sa) => (SA() && sa ? `<span lang="sa">${esc(sa)}</span>` : esc(en));            // HTML
+const Tp = (en, sa) => (SA() && sa ? inLipi(sa) : en);                                            // plain text
+const F = (n) => (SA() ? `<span lang="sa">${dg(Number(n).toLocaleString('en-IN'))}</span>` : fmt(n)); // counts
+const N = (x) => (SA() ? `<span lang="sa">${esc(dg(x))}</span>` : esc(String(x)));                  // references
+const lvl = (name, plural = false) => LEVEL_SA[name]?.[plural ? 1 : 0];
+const unitSa = (t) => (t.id === 'rv' ? 'ऋचः' : lvl(t.levels[2], true) || 'मन्त्राः');
+const unitHTML = (t) => T(unitName(t), unitSa(t));
+const groupSa = (meta, d1) => (meta.groupNames?.[d1] ? GROUP_SA[meta.groupNames[d1]] || null : (lvl(meta.levels[0]) ? `${lvl(meta.levels[0])} ${dg(d1)}` : null));
+const contSa = (meta, cref) => (cref ? `${lvl(meta.levels[1] || meta.levels[2]) || ''} ${dg(cref)}`.trim() : null);
+const refSa = (meta, ref) => `${REF_SA[meta.id] || meta.deva} ${dg(ref)}`.trim();
+const refHTML = (meta, ref) => (SA() ? `<span lang="sa">${esc(refSa(meta, ref))}</span>` : esc(`${meta.ref} ${ref}`.trim()));
+const refText = (meta, ref) => (SA() ? inLipi(refSa(meta, ref)) : `${meta.ref} ${ref}`.trim());
+function setMenu(m) {
+  if (prefs.menu === m) return;
+  prefs.menu = m; savePrefs(); applyMenu(); route();
+}
+function applyMenu() {
+  document.querySelectorAll('#tabbar [data-tab]').forEach((a) => {
+    const k = a.dataset.tab; const span = a.querySelector('span');
+    const en = { home: 'Home', library: 'Library', suktas: 'Sūktas', search: 'Search', settings: 'Settings' }[k];
+    span.innerHTML = T(en, MENU_SA[k]);
+  });
+  $('#brand span').innerHTML = T('Vedālokana', 'वेदालोकनम्');
+  const b = $('#menuBtn');
+  if (b) { b.setAttribute('aria-pressed', String(!SA())); b.title = SA() ? 'Show menus in English' : 'Show menus in the reading script'; }
+}
+document.getElementById('menuBtn')?.addEventListener('click', () => setMenu(SA() ? 'en' : 'script'));
+
 function applyLipiClass() {
   document.body.classList.toggle('kn', prefs.lipi === 'knda');
   document.body.classList.toggle('svara-std', prefs.svara === 'std');
@@ -119,6 +175,9 @@ applyTheme();
 // ---------- version, installing and offline ----------
 const APP = self.VEDALOKANA || { version: '0.0.0', released: '' };
 const CHANGES = [
+  ['1.1.0', '2026-10-31', [
+    'Menus and labels follow the reading script: tabs, Veda and level names, ṛṣi · devatā · chandas, references and numbers in Sanskrit, in Devanagari or Kannada.',
+    'An En button beside the script switch, and a setting, bring back English menus at any time.']],
   ['1.0.0', '2026-10-31', [
     'Install Vedālokana as an app; it opens and works without a connection.',
     'Download each Veda, and the Sāyaṇa bhāṣya, for offline reading from Settings.',
@@ -378,7 +437,7 @@ async function viewHome() {
   setTitle('');
   const cat = await catalog();
   // Today's mantra comes from the Ṛgveda; offline, before the Ṛgveda is stored, show the Gāyatrī.
-  let m = { lines: ['तत्स॑वि॒तुर्वरे॑ण्यं॒ भर्गो॑ दे॒वस्य॑ धीमहि ।', 'धियो॒ यो नः॑ प्रचो॒दया॑त् ॥'], ref: '3.62.10', tags: 'Savitṛ · Viśvāmitra Gāthina · Gāyatrī', href: '#/v/rv/c/3/62?v=10' };
+  let m = { lines: ['तत्स॑वि॒तुर्वरे॑ण्यं॒ भर्गो॑ दे॒वस्य॑ धीमहि ।', 'धियो॒ यो नः॑ प्रचो॒दया॑त् ॥'], ref: '3.62.10', tags: 'Savitṛ · Viśvāmitra Gāthina · Gāyatrī', tagsSa: 'सविता · विश्वामित्रो गाथिनः · गायत्री', href: '#/v/rv/c/3/62?v=10' };
   try {
     const rv = await index('rv');
     const meta = cat.texts.find((v) => v.id === 'rv');
@@ -389,7 +448,7 @@ async function viewHome() {
     const dev = row[COL.devata] >= 0 ? rv.facets.devata[row[COL.devata]] : null;
     const ris = row[COL.rishi] >= 0 ? rv.facets.rishi[row[COL.rishi]] : null;
     const cha = row[COL.chandas] >= 0 ? rv.facets.chandas[row[COL.chandas]] : null;
-    m = { lines: verse[1], ref: refOf(meta, row[0], row[1], row[2]), tags: [dev, ris, cha].filter(Boolean).map((e) => cap(e[1])).join(' · '), href: `#/v/rv/c/${row[0]}/${row[1]}?v=${row[2]}` };
+    m = { lines: verse[1], ref: refOf(meta, row[0], row[1], row[2]), tags: [dev, ris, cha].filter(Boolean).map((e) => cap(e[1])).join(' · '), tagsSa: [dev, ris, cha].filter(Boolean).map((e) => e[2] || e[1]).join(' · '), href: `#/v/rv/c/${row[0]}/${row[1]}?v=${row[2]}` };
   } catch { /* keep the Gāyatrī */ }
   const byId = Object.fromEntries(cat.texts.map((x) => [x.id, x]));
   let last = null;
@@ -402,26 +461,26 @@ async function viewHome() {
     <section class="pc" id="pc" aria-label="Today’s pañcāṅga"></section>
     <section class="hero" aria-labelledby="todayH">
       ${SUN_SVG}
-      <h1 id="todayH" class="hero-k">Today’s mantra</h1>
+      <h1 id="todayH" class="hero-k">${T('Today’s mantra', 'अद्यतनमन्त्रः')}</h1>
       <div class="hero-m" lang="sa">${m.lines.map((l) => `<div>${esc(l)}</div>`).join('')}</div>
       <div class="hero-f">
-        <span class="hero-r"><b>Ṛgveda ${esc(m.ref)}</b><span>${esc(m.tags)}</span></span>
+        <span class="hero-r"><b>${SA() ? `<span lang="sa">ऋग्वेदः ${esc(dg(m.ref))}</span>` : `Ṛgveda ${esc(m.ref)}`}</b><span>${T(m.tags, m.tagsSa)}</span></span>
         <a class="hero-go" href="${m.href}" aria-label="Open Ṛgveda ${esc(m.ref)} in the reader">${ARROW}</a>
       </div>
     </section>
     ${last ? `<a class="cont" href="${esc(last.href)}">
       <svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" class="ring-bg"/><circle cx="24" cy="24" r="20" class="ring" stroke-dasharray="${(pct * 125.7).toFixed(1)} 126" transform="rotate(-90 24 24)"/></svg>
-      <span class="cont-t"><small>Continue chanting</small><b>${esc(last.where)}</b><small>${esc(last.text)}${last.of ? ` · ${last.v} of ${last.of}` : ''}</small></span>
+      <span class="cont-t"><small>${T('Continue chanting', 'पाठम् अनुवर्तय')}</small><b>${SA() && last.whereSa ? `<span lang="sa">${esc(last.whereSa)}</span>` : esc(last.where)}</b><small>${SA() && last.textSa ? `<span lang="sa">${esc(last.textSa)}</span>` : esc(last.text)}${last.of ? ` · ${SA() ? `<span lang="sa">${dg(last.v)} / ${dg(last.of)}</span>` : `${last.v} of ${last.of}`}` : ''}</small></span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>` : ''}
-    <div class="sec-h"><h2>The Vedas</h2><a href="#/library">Library</a></div>
+    <div class="sec-h"><h2>${T('The Vedas', 'वेदाः')}</h2><a href="#/library">${T('Library', MENU_SA.library)}</a></div>
     <div class="vtiles">${cat.vedas.map((v) => {
     const s = v.layers.samhita.map((i) => byId[i]).find((x) => x.has.svara || x.has.roman) || byId[v.layers.samhita[0]];
     return `<a class="vtile" href="#/veda/${v.id}" style="--vc: var(--v-${v.id})">
         ${VEDA_ICON[v.id] ? vedaIcon(v.id, 'vt-i') + vedaIcon(v.id, 'vt-w') : `<span class="vt-g" lang="sa">${esc(VEDA_GLYPH[v.id] || v.deva[0])}</span>`}
-        <span class="vt-n"><b>${esc(v.name)}</b><small>${s ? `${fmt(s.verses)} ${esc(unitName(s))}` : ''}</small></span></a>`;
+        <span class="vt-n"><b>${T(v.name, VEDA_SA[v.id])}</b><small>${s ? `${F(s.verses)} ${unitHTML(s)}` : ''}</small></span></a>`;
   }).join('')}</div>
-    ${chips.length ? `<div class="sec-h"><h2>Sūktas</h2><a href="#/suktas">All ${suk.length}</a></div>
-    <div class="schips">${chips.map((s) => `<a class="schip" href="${esc(s.href)}${s.v ? `?v=${s.v}` : ''}"><span lang="sa">${esc(s.deva)}</span><small>${esc(s.ref)}</small></a>`).join('')}</div>` : ''}
+    ${chips.length ? `<div class="sec-h"><h2>${T('Sūktas', 'सूक्तानि')}</h2><a href="#/suktas">${SA() ? `<span lang="sa">सर्वाणि ${dg(suk.length)}</span>` : `All ${suk.length}`}</a></div>
+    <div class="schips">${chips.map((s) => `<a class="schip" href="${esc(s.href)}${s.v ? `?v=${s.v}` : ''}"><span lang="sa">${esc(s.deva)}</span><small>${SA() ? `<span lang="sa">${esc(refSa({ id: s.text, deva: '' }, s.ref.replace(/^\S+\s/, '')))}</span>` : esc(s.ref)}</small></a>`).join('')}</div>` : ''}
     <p class="lede home-foot">Every text comes from an openly published digital edition. <a href="#/about">About Vedālokana ${esc(APP.version)}: sources and what’s new.</a></p>
   </div>`;
   renderPanchanga();
@@ -436,9 +495,15 @@ function place() {
   return { lat: 20, lon: -new Date().getTimezoneOffset() / 4, name: 'Your time zone', guess: true };
 }
 const hm = (t, base) => {
+  const next = new Date(t).getDate() !== new Date(base).getDate();
+  if (SA()) {
+    const s = dg(new Date(t).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
+    return `<span lang="sa">${next ? 'श्वः ' : ''}${s}</span>`;
+  }
   const s = new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-  return new Date(t).getDate() !== new Date(base).getDate() ? `${s} tomorrow` : s;
+  return esc(next ? `${s} tomorrow` : s);
 };
+const till = (t, base) => (SA() ? `${hm(t, base)} <span lang="sa">पर्यन्तम्</span>` : `till ${hm(t, base)}`);
 async function renderPanchanga() {
   const el = document.getElementById('pc'); if (!el) return;
   const pl = place();
@@ -446,7 +511,9 @@ async function renderPanchanga() {
   try { p = (await import('./panchanga.js')).panchanga(new Date(), pl.lat, pl.lon); } catch { el.remove(); return; }
   const now = Date.now();
   el.innerHTML = `<div class="pc-top">
-      <span class="pc-date">${esc(new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' }))}</span>
+      <span class="pc-date">${SA()
+    ? `<span lang="sa">${esc(dg(new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric' }).replace(/\//g, '-')))}</span>`
+    : esc(new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' }))}</span>
       <button class="pc-loc" type="button" aria-label="Pañcāṅga place: ${esc(pl.name)}. Use my location">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/></svg>
         <span>${esc(pl.name)}</span></button>
@@ -454,13 +521,13 @@ async function renderPanchanga() {
     <div class="pc-main"><span lang="sa">${esc(p.masa)} ${esc(p.paksha)} ${esc(p.tithi)}</span></div>
     <div class="pc-sub" lang="sa">${esc(p.samvatsara)} संवत्सर · ${esc(p.rtu)} ऋतु · ${esc(p.ayana)} · ${esc(p.vara)}</div>
     <dl class="pc-grid">
-      <div><dt>Tithi</dt><dd><span lang="sa">${esc(p.tithi)}</span><small>till ${esc(hm(p.tithiEnd, now))}</small></dd></div>
-      <div><dt>Nakṣatra</dt><dd><span lang="sa">${esc(p.nakshatra)}</span><small>till ${esc(hm(p.nakshatraEnd, now))}</small></dd></div>
-      <div><dt>Yoga</dt><dd><span lang="sa">${esc(p.yoga)}</span><small>till ${esc(hm(p.yogaEnd, now))}</small></dd></div>
-      <div><dt>Karaṇa</dt><dd><span lang="sa">${esc(p.karana)}</span><small>at sunrise</small></dd></div>
-      <div class="pc-sun"><dt>Sun</dt><dd><span>↑ ${esc(hm(p.sunrise, now))}</span><small>↓ ${p.sunset ? esc(hm(p.sunset, now)) : '–'}</small></dd></div>
+      <div><dt>${T('Tithi', 'तिथिः')}</dt><dd><span lang="sa">${esc(p.tithi)}</span><small>${till(p.tithiEnd, now)}</small></dd></div>
+      <div><dt>${T('Nakṣatra', 'नक्षत्रम्')}</dt><dd><span lang="sa">${esc(p.nakshatra)}</span><small>${till(p.nakshatraEnd, now)}</small></dd></div>
+      <div><dt>${T('Yoga', 'योगः')}</dt><dd><span lang="sa">${esc(p.yoga)}</span><small>${till(p.yogaEnd, now)}</small></dd></div>
+      <div><dt>${T('Karaṇa', 'करणम्')}</dt><dd><span lang="sa">${esc(p.karana)}</span><small>${T('at sunrise', 'सूर्योदये')}</small></dd></div>
+      <div class="pc-sun"><dt>${T('Sun', 'सूर्यः')}</dt><dd><span>↑ ${hm(p.sunrise, now)}</span><small>↓ ${p.sunset ? hm(p.sunset, now) : '–'}</small></dd></div>
     </dl>
-    ${pl.guess ? '<p class="pc-note">Times for the place shown. Tap it to use your location.</p>' : ''}`;
+    ${pl.guess ? `<p class="pc-note">${T('Times for the place shown. Tap it to use your location.', 'दर्शितस्थानस्य कालाः। स्वस्थानाय स्पृशतु।')}</p>` : ''}`;
   el.querySelector('.pc-loc').addEventListener('click', () => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition((pos) => {
@@ -480,9 +547,9 @@ async function viewVedaGroup(vid, layerArg) {
   const card = (t) => `<a class="text-card" href="#/v/${t.id}">
       <span class="tc-top"><span class="dv" lang="sa">${esc(t.deva)}</span>
         <svg class="go" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span>
-      <span class="nm">${esc(t.name)}</span>
+      ${SA() ? '' : `<span class="nm">${esc(t.name)}</span>`}
       ${t.shakha ? `<span class="sk">${esc(t.shakha)} śākhā</span>` : ''}
-      <span class="ct">${fmt(t.verses)} ${esc(unitName(t))}${t.containers > 1 ? ` in ${fmt(t.containers)} ${esc((t.levels[1] || 'section').toLowerCase())}s` : ''}</span>
+      <span class="ct">${SA() ? `${F(t.verses)} ${unitHTML(t)}${t.containers > 1 && lvl(t.levels[1]) ? ` · ${F(t.containers)} ${T('', lvl(t.levels[1], true))}` : ''}` : `${fmt(t.verses)} ${esc(unitName(t))}${t.containers > 1 ? ` in ${fmt(t.containers)} ${esc((t.levels[1] || 'section').toLowerCase())}s` : ''}`}</span>
       ${badgesHTML(t)}
     </a>`;
   const blurb = {
@@ -493,10 +560,10 @@ async function viewVedaGroup(vid, layerArg) {
   }[layer];
   const sam = layer === 'samhita' ? (v.layers.samhita.map((i) => byId[i]).find((x) => x.has.svara || x.has.roman) || byId[v.layers.samhita[0]]) : null;
   main.innerHTML = `<div class="wide veda-page" style="--vc: var(--v-${v.id})">
-    <nav class="veda-switch" aria-label="Veda">${cat.vedas.map((x) => `<a href="#/veda/${x.id}${layer !== 'samhita' ? `/${layer}` : ''}"${x.id === v.id ? ' aria-current="page"' : ''} style="--vc: var(--v-${x.id})">${esc(x.name.replace(/veda$/, ''))}</a>`).join('')}</nav>
-    <h1>${esc(v.name)}<span class="h1-deva" lang="sa">${esc(v.deva)}</span></h1>
+    <nav class="veda-switch" aria-label="Veda">${cat.vedas.map((x) => `<a href="#/veda/${x.id}${layer !== 'samhita' ? `/${layer}` : ''}"${x.id === v.id ? ' aria-current="page"' : ''} style="--vc: var(--v-${x.id})">${T(x.name.replace(/veda$/, ''), VEDA_SA_SHORT[x.id])}</a>`).join('')}</nav>
+    <h1>${SA() ? `<span lang="sa">${esc(VEDA_SA[v.id] || v.deva)}</span>` : `${esc(v.name)}<span class="h1-deva" lang="sa">${esc(v.deva)}</span>`}</h1>
     <nav class="layer-tabs" aria-label="Layers">${cat.layers.map((l) => `<a href="#/veda/${v.id}/${l}"${l === layer ? ' aria-current="page"' : ''}>
-      <span class="lt-l">${LAYERS[l].label}</span><span class="lt-n">${v.layers[l].length || '–'}</span></a>`).join('')}</nav>
+      <span class="lt-l">${T(LAYERS[l].label, LAYER_SA[l])}</span><span class="lt-n">${v.layers[l].length ? N(v.layers[l].length) : '–'}</span></a>`).join('')}</nav>
     ${sam ? '<section class="wheel-wrap" id="wheel" aria-label="Divisions of the Saṃhitā"></section>' : ''}
     <p class="lede">${esc(blurb)}</p>
     ${v.layers[layer].length
@@ -514,8 +581,8 @@ async function renderWheel(meta) {
   const id = meta.id;
   const multi = x.groups.length > 1;
   const segs = multi
-    ? x.groups.map(([d1, cs]) => ({ k: d1, name: groupName(meta, d1), n: cs.reduce((a, c) => a + c[1], 0), sub: cs.length, subName: meta.levels[1], href: `#/v/${id}/g/${d1}` }))
-    : x.groups[0][1].map(([d2, n, title]) => ({ k: d2, name: `${meta.levels[1] || 'Section'} ${d2}`, title, n, href: `#/v/${id}/c/${x.groups[0][0]}/${d2}` }));
+    ? x.groups.map(([d1, cs]) => ({ k: d1, name: groupName(meta, d1), sa: groupSa(meta, d1), n: cs.reduce((a, c) => a + c[1], 0), sub: cs.length, subName: meta.levels[1], href: `#/v/${id}/g/${d1}` }))
+    : x.groups[0][1].map(([d2, n, title]) => ({ k: d2, name: `${meta.levels[1] || 'Section'} ${d2}`, sa: lvl(meta.levels[1]) ? `${lvl(meta.levels[1])} ${dg(d2)}` : null, title, n, href: `#/v/${id}/c/${x.groups[0][0]}/${d2}` }));
   const total = segs.reduce((a, s) => a + s.n, 0);
   const cx = 170; const r0 = 92; const r1 = 150; const gap = segs.length > 24 ? 0.6 : 1.2;
   const pt = (r, d) => [cx + r * Math.cos(d * Math.PI / 180), cx + r * Math.sin(d * Math.PI / 180)].map((v) => v.toFixed(1));
@@ -532,21 +599,21 @@ async function renderWheel(meta) {
   const max = dev[0]?.[3] || 1;
   el.innerHTML = `<div class="wheel">
       <svg viewBox="0 0 340 340" role="group" aria-label="${esc(meta.name)}: ${segs.length} ${esc(multi ? `${meta.levels[0]}s` : `${meta.levels[1]}s`)}, sized by ${esc(unitName(meta))}">${paths}</svg>
-      <div class="wheel-c"><span class="wc-n" lang="sa">${esc(meta.deva)}</span><span class="wc-s">${fmt(total)} ${esc(unitName(meta))}</span></div>
+      <div class="wheel-c"><span class="wc-n" lang="sa">${esc(meta.deva)}</span><span class="wc-s">${F(total)} ${unitHTML(meta)}</span></div>
     </div>
     <div class="wheel-side">
       <div class="seg-card" aria-live="polite"></div>
-      ${dev.length ? `<h2 class="wheel-h">Most addressed devatās</h2>
-      <div class="dbars">${dev.map((d) => `<a class="dbar" href="${findHref(id, { devata: d[0] })}"><span class="db-n" lang="sa">${esc(d[2] || d[1])}</span><span class="db-b"><span style="width:${(d[3] / max * 100).toFixed(1)}%"></span></span><span class="db-c">${fmt(d[3])}</span></a>`).join('')}</div>` : ''}
+      ${dev.length ? `<h2 class="wheel-h">${T('Most addressed devatās', 'प्रमुखदेवताः')}</h2>
+      <div class="dbars">${dev.map((d) => `<a class="dbar" href="${findHref(id, { devata: d[0] })}"><span class="db-n" lang="sa">${esc(d[2] || d[1])}</span><span class="db-b"><span style="width:${(d[3] / max * 100).toFixed(1)}%"></span></span><span class="db-c">${F(d[3])}</span></a>`).join('')}</div>` : ''}
     </div>`;
   const card = el.querySelector('.seg-card');
   const pick = (i) => {
     const s = segs[i];
     el.querySelectorAll('.seg').forEach((p) => p.classList.toggle('on', Number(p.dataset.i) === i));
     card.innerHTML = `<span class="sc-dot" aria-hidden="true"></span>
-      <span class="sc-t"><b>${esc(s.name)}${s.title && !/^\d+$/.test(s.title) ? ` · <span lang="sa">${esc(s.title)}</span>` : ''}</b>
-      <small>${s.sub ? `${fmt(s.sub)} ${esc((s.subName || 'section').toLowerCase())}s · ` : ''}${fmt(s.n)} ${esc(unitName(meta))}</small></span>
-      <a class="sc-go" href="${s.href}">Open</a>`;
+      <span class="sc-t"><b>${T(s.name, s.sa)}${s.title && !/^\d+$/.test(s.title) ? ` · <span lang="sa">${esc(s.title)}</span>` : ''}</b>
+      <small>${s.sub ? (SA() && lvl(s.subName) ? `${F(s.sub)} ${T('', lvl(s.subName, true))} · ` : `${fmt(s.sub)} ${esc((s.subName || 'section').toLowerCase())}s · `) : ''}${F(s.n)} ${unitHTML(meta)}</small></span>
+      <a class="sc-go" href="${s.href}">${T('Open', 'पठ')}</a>`;
   };
   el.querySelectorAll('.seg').forEach((p) => {
     p.addEventListener('click', () => pick(Number(p.dataset.i)));
@@ -809,28 +876,28 @@ async function viewContainer(id, d1, d2, params) {
   const prev = flat[pos - 1]; const next = flat[pos + 1];
 
   const summary = FKEYS.map((f) => [f, primaryTag(x, rows, f)]).filter(([, e]) => e);
-  const seg = (name, opts) => `<div class="seg" role="group" aria-label="${esc(name)}">${opts.map(([k, v, l, dis]) => `<button data-p="${k}" data-v="${v}" aria-pressed="${String(prefs[k] === v)}"${dis ? ' disabled' : ''}>${esc(l)}</button>`).join('')}</div>`;
+  const seg = (name, opts) => `<div class="seg" role="group" aria-label="${esc(name)}">${opts.map(([k, v, l, dis]) => `<button data-p="${k}" data-v="${v}" aria-pressed="${String(prefs[k] === v)}"${dis ? ' disabled' : ''}>${l}</button>`).join('')}</div>`;
   const controls = [
     hasDeva ? seg('Script', [['lipi', 'deva', 'देवनागरी'], ['lipi', 'knda', 'ಕನ್ನಡ']]).replace('class="seg"', 'class="seg lipi-seg"') : '',
-    hasDeva && hasRoman ? seg('Show', [['script', 'both', 'Both'], ['script', 'deva', 'Script'], ['script', 'roman', 'IAST']]) : '',
-    hasPada ? seg('Text', [['mode', 'samhita', 'Saṃhitā'], ['mode', 'pada', 'Padapāṭha']]) : '',
-    hasTr && (hasDeva || hasRoman) ? seg('Translation', [['tr', true, 'Translation'], ['tr', false, 'Hide']]) : '',
-    hasBh ? seg('Bhāṣya', [['bhashya', true, `${meta.has.bhashya} bhāṣya`], ['bhashya', false, 'Hide']]) : '',
-    summary.length ? seg('Ṛṣi, devatā, chandas', [['tags', true, 'Ṛṣi · Devatā · Chandas'], ['tags', false, 'Hide']]) : '',
+    hasDeva && hasRoman ? seg('Show', [['script', 'both', T('Both', 'उभयम्')], ['script', 'deva', T('Script', 'लिपिः')], ['script', 'roman', 'IAST']]) : '',
+    hasPada ? seg('Text', [['mode', 'samhita', T('Saṃhitā', 'संहितापाठः')], ['mode', 'pada', T('Padapāṭha', 'पदपाठः')]]) : '',
+    hasTr && (hasDeva || hasRoman) ? seg('Translation', [['tr', true, T('Translation', 'अनुवादः')], ['tr', false, T('Hide', 'गोपय')]]) : '',
+    hasBh ? seg('Bhāṣya', [['bhashya', true, T(`${meta.has.bhashya} bhāṣya`, 'सायणभाष्यम्')], ['bhashya', false, T('Hide', 'गोपय')]]) : '',
+    summary.length ? seg('Ṛṣi, devatā, chandas', [['tags', true, T('Ṛṣi · Devatā · Chandas', 'ऋषिः · देवता · छन्दः')], ['tags', false, T('Hide', 'गोपय')]]) : '',
   ].join('');
 
   main.innerHTML = `<article class="col">
     <div class="crumbs"><a href="#/v/${id}">${esc(meta.name)}</a>${x.groups.length > 1 ? `<span aria-hidden="true">/</span><a href="#/v/${id}/g/${d1}">${esc(groupName(meta, d1))}</a>` : ''}</div>
     <div class="reader-head"><div>
-      <h1>${cref ? `${esc(meta.levels[1] || meta.levels[2])} ${esc(cref)}` : esc(meta.name)}</h1>
+      <h1>${cref ? (SA() && contSa(meta, cref) ? `<span lang="sa">${esc(contSa(meta, cref))}</span>` : `${esc(meta.levels[1] || meta.levels[2])} ${esc(cref)}`) : T(meta.name, meta.deva)}</h1>
       ${c[2] && meta.refFmt !== 'label' ? `<div class="ctitle" lang="sa">${esc(c[2])}</div>` : ''}
-    </div>${hasDeva ? `<button class="chant-btn" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10-6.5a1 1 0 0 0 0-1.8l-10-6.5A1 1 0 0 0 8 5.5z"/></svg>Chant view</button>` : ''}</div>
-    ${summary.length ? `<div class="tags" id="sumTags"${prefs.tags ? '' : ' hidden'}>${summary.map(([f, e]) => `<a class="tag" href="${findHref(id, { [f]: e[0] })}"><em>${FACETS[f].label}</em>${e[2] ? `<span class="dv" lang="sa">${esc(e[2])}</span>` : ''}<span>${esc(cap(e[1]))}</span></a>`).join('')}</div>` : ''}
+    </div>${hasDeva ? `<button class="chant-btn" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10-6.5a1 1 0 0 0 0-1.8l-10-6.5A1 1 0 0 0 8 5.5z"/></svg>${T('Chant view', 'पारायणम्')}</button>` : ''}</div>
+    ${summary.length ? `<div class="tags" id="sumTags"${prefs.tags ? '' : ' hidden'}>${summary.map(([f, e]) => `<a class="tag" href="${findHref(id, { [f]: e[0] })}"><em>${T(FACETS[f].label, FACET_SA[f])}</em>${e[2] ? `<span class="dv" lang="sa">${esc(e[2])}</span>` : ''}${SA() && e[2] ? '' : `<span>${esc(cap(e[1]))}</span>`}</a>`).join('')}</div>` : ''}
     ${controls ? `<div class="controls">${controls}</div>` : ''}
     <div id="verses"></div>
     <nav class="pager" aria-label="Neighbouring ${esc(meta.levels[1].toLowerCase())}s">
-      ${prev ? `<a href="#/v/${id}/c/${prev[0]}/${prev[1]}">‹ ${esc(meta.ref)} ${esc(containerRef(meta, prev[0], prev[1], prev[2]))}</a>` : '<span></span>'}
-      ${next ? `<a href="#/v/${id}/c/${next[0]}/${next[1]}">${esc(meta.ref)} ${esc(containerRef(meta, next[0], next[1], next[2]))} ›</a>` : ''}
+      ${prev ? `<a href="#/v/${id}/c/${prev[0]}/${prev[1]}">‹ ${refHTML(meta, containerRef(meta, prev[0], prev[1], prev[2]))}</a>` : '<span></span>'}
+      ${next ? `<a href="#/v/${id}/c/${next[0]}/${next[1]}">${refHTML(meta, containerRef(meta, next[0], next[1], next[2]))} ›</a>` : ''}
     </nav>
   </article>`;
 
@@ -851,7 +918,7 @@ async function viewContainer(id, d1, d2, params) {
         shown[f] = key; return true;
       }).map((f) => {
         const e = x.facets[f][r[COL[f]]];
-        return `<a class="tag" href="${findHref(id, { [f]: e[0] })}"><em>${FACETS[f].label}</em><span>${esc(cap(e[1]))}</span></a>`;
+        return `<a class="tag" href="${findHref(id, { [f]: e[0] })}"><em>${T(FACETS[f].label, FACET_SA[f])}</em>${SA() && e[2] ? `<span lang="sa">${esc(e[2])}</span>` : `<span>${esc(cap(e[1]))}</span>`}</a>`;
       }).join('') : '';
       const ref = refOf(meta, d1, d2, v, label);
       let body = '';
@@ -864,7 +931,7 @@ async function viewContainer(id, d1, d2, params) {
       if (tr && (prefs.tr || (!hasDeva && !hasRoman))) body += `<p class="tr" lang="en">${esc(tr)}</p>`;
       const bh = !(hasBh && prefs.bhashya) ? '' : `<details class="bh" data-bh="${v}"><summary>${esc(meta.has.bhashya)} bhāṣya <span class="dv" lang="sa">सायणभाष्यम्</span></summary><div class="bh-text" lang="sa"><p class="bh-wait">Loading…</p></div></details>`;
       return `<section class="verse${v === hl ? ' hl' : ''}" id="v${v}" aria-label="${esc(meta.ref)} ${esc(ref)}">
-        <div class="vnum"><a href="#/v/${id}/c/${d1}/${d2}?v=${v}">${esc(ref)}</a></div>
+        <div class="vnum"><a href="#/v/${id}/c/${d1}/${d2}?v=${v}">${N(ref)}</a></div>
         <div>${label && meta.refFmt !== 'label' ? `<div class="vlabel">${esc(label)}</div>` : ''}${body}${tags ? `<div class="tags">${tags}</div>` : ''}${bh}</div>
         <button class="icon-btn copy" data-copy="${v}" aria-label="Copy ${esc(meta.ref)} ${esc(ref)}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/></svg></button>
       </section>`;
@@ -892,18 +959,19 @@ async function viewContainer(id, d1, d2, params) {
     const k = b.dataset.p; const raw = b.dataset.v;
     if (k === 'lipi') { setLipi(raw); return; }
     if (k === 'theme') { setTheme(raw); return; }
+    if (k === 'menu') { setMenu(raw); return; }
     prefs[k] = raw === 'true' ? true : raw === 'false' ? false : raw;
     savePrefs();
     b.parentElement.querySelectorAll('button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
     draw();
   }));
-  lastRead = { href: `#/v/${id}/c/${d1}/${d2}`, text: meta.name, where: cref ? `${meta.ref} ${cref}` : meta.name, v: 1, of: verses.length };
+  lastRead = { href: `#/v/${id}/c/${d1}/${d2}`, text: meta.name, textSa: meta.deva, where: cref ? `${meta.ref} ${cref}` : meta.name, whereSa: cref ? refSa(meta, cref) : meta.deva, v: 1, of: verses.length };
   try { localStorage.setItem('vedalokana.last', JSON.stringify(lastRead)); } catch { /* storage unavailable */ }
   // phone reader bar: previous · section picker · next
   const rb = $('#readerbar');
   rb.hidden = false;
   rb.innerHTML = `${prev ? `<a class="rb-step" href="#/v/${id}/c/${prev[0]}/${prev[1]}" aria-label="Previous ${esc((meta.levels[1] || 'section').toLowerCase())}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a>` : '<span class="rb-step" aria-hidden="true"></span>'}
-    <button class="rb-pick" aria-haspopup="dialog"><span>${esc(cref ? `${meta.ref} ${cref}` : meta.name)}</span>${CHEV}</button>
+    <button class="rb-pick" aria-haspopup="dialog"><span>${cref ? refHTML(meta, cref) : T(meta.name, meta.deva)}</span>${CHEV}</button>
     ${next ? `<a class="rb-step" href="#/v/${id}/c/${next[0]}/${next[1]}" aria-label="Next ${esc((meta.levels[1] || 'section').toLowerCase())}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>` : '<span class="rb-step" aria-hidden="true"></span>'}`;
   rb.querySelector('.rb-pick').addEventListener('click', async () => {
     const c2 = currentPath[currentPath.length - 1];
@@ -911,8 +979,8 @@ async function viewContainer(id, d1, d2, params) {
   });
   const sec = (meta.levels[1] || 'section').toLowerCase();
   readerNav = {
-    prev: prev && { href: `#/v/${id}/c/${prev[0]}/${prev[1]}`, label: `${meta.ref} ${containerRef(meta, prev[0], prev[1], prev[2])}` },
-    next: next && { href: `#/v/${id}/c/${next[0]}/${next[1]}`, label: `${meta.ref} ${containerRef(meta, next[0], next[1], next[2])}` },
+    prev: prev && { href: `#/v/${id}/c/${prev[0]}/${prev[1]}`, label: refText(meta, containerRef(meta, prev[0], prev[1], prev[2])) },
+    next: next && { href: `#/v/${id}/c/${next[0]}/${next[1]}`, label: refText(meta, containerRef(meta, next[0], next[1], next[2])) },
     sec,
   };
   const story = { verses: verses.filter((x) => x[1].length), meta, d1, d2, cref, next: readerNav.next };
@@ -1082,7 +1150,7 @@ function openSheet({ title, items, layout = 'list', note }) {
   lastFocus = document.activeElement;
   const body = items.length
     ? `<div class="sheet-${layout}">${items.map((it) => `<a href="${it.href}"${it.current ? ' aria-current="true"' : ''}${it.disabled ? ' aria-disabled="true"' : ''}>
-        <span class="si-main">${it.deva ? `<span class="dv" lang="sa">${esc(it.deva)}</span>` : ''}<span>${esc(it.label)}</span></span>
+        <span class="si-main">${SA() && it.deva ? `<span lang="sa">${esc(it.deva)}</span>` : `${it.deva ? `<span class="dv" lang="sa">${esc(it.deva)}</span>` : ''}<span>${esc(it.label)}</span>`}</span>
         ${it.sub ? `<span class="si-sub">${esc(it.sub)}</span>` : ''}</a>`).join('')}</div>`
     : '<p class="empty">Nothing here yet.</p>';
   sheetRoot.innerHTML = `<div class="sheet-backdrop" data-close></div>
@@ -1115,12 +1183,12 @@ async function buildPath(r) {
   if (!layer || !v.layers[layer]) layer = cat.layers.find((l) => v.layers[l].length);
   const byId = Object.fromEntries(cat.texts.map((t) => [t.id, t]));
   path.push({
-    label: v.name, deva: v.deva, href: `#/veda/${v.id}`, title: 'Choose a Veda',
-    items: async () => cat.vedas.map((x) => ({ label: x.name, deva: x.deva, href: `#/veda/${x.id}`, current: x.id === v.id,
+    label: v.name, deva: VEDA_SA[v.id] || v.deva, href: `#/veda/${v.id}`, title: 'Choose a Veda',
+    items: async () => cat.vedas.map((x) => ({ label: x.name, deva: VEDA_SA[x.id] || x.deva, href: `#/veda/${x.id}`, current: x.id === v.id,
       sub: cat.layers.reduce((n, l) => n + x.layers[l].length, 0) + ' texts' })),
   });
   path.push({
-    label: LAYERS[layer].label, deva: LAYERS[layer].deva, href: `#/veda/${v.id}/${layer}`, title: `${v.name}: choose a layer`,
+    label: LAYERS[layer].label, deva: LAYER_SA[layer], href: `#/veda/${v.id}/${layer}`, title: `${v.name}: choose a layer`,
     items: async () => cat.layers.map((l) => ({ label: LAYERS[l].plural, deva: LAYERS[l].deva, href: `#/veda/${v.id}/${l}`, current: l === layer,
       sub: v.layers[l].length ? v.layers[l].map((t) => byId[t].name).join(', ') : (v.absent?.[l] ? 'None' : 'Not available yet') })),
   });
@@ -1130,9 +1198,9 @@ async function buildPath(r) {
     label: meta.name, deva: meta.deva, href: `#/v/${meta.id}`, title: `Texts of the ${v.name}`,
     items: async () => cat.layers.flatMap((l) => v.layers[l].map((t) => ({ label: byId[t].name, deva: byId[t].deva, href: `#/v/${t}`, current: t === meta.id, sub: LAYERS[l].label }))),
   });
-  const groupItems = async (cur) => x.groups.map(([g, cs]) => ({ label: groupName(meta, g), href: `#/v/${meta.id}/g/${g}`, current: g === cur, sub: `${cs.length} ${(meta.levels[1] || 'section').toLowerCase()}s` }));
+  const groupItems = async (cur) => x.groups.map(([g, cs]) => ({ label: groupName(meta, g), deva: groupSa(meta, g), href: `#/v/${meta.id}/g/${g}`, current: g === cur, sub: `${cs.length} ${(meta.levels[1] || 'section').toLowerCase()}s` }));
   const containerItems = (g, cur) => async () => (x.groups.find((e) => e[0] === g)?.[1] || []).map(([d2, n, tt]) => ({
-    label: containerRef(meta, g, d2, tt) || String(d2), href: `#/v/${meta.id}/c/${g}/${d2}`, current: d2 === cur,
+    label: containerRef(meta, g, d2, tt) || String(d2), deva: SA() && meta.refFmt !== 'label' ? dg(containerRef(meta, g, d2, tt) || String(d2)) : null, href: `#/v/${meta.id}/c/${g}/${d2}`, current: d2 === cur,
   }));
   if (sub === 'f' || sub === 'find') {
     const f = sub === 'f' ? p1 : FKEYS.find((k) => r.params.get(k));
@@ -1144,14 +1212,14 @@ async function buildPath(r) {
   if (sub === 'g' || sub === 'c') {
     const g = p1 !== undefined ? Number(p1) : (x.groups.length === 1 ? x.groups[0][0] : undefined);
     if (x.groups.length > 1 && g !== undefined) {
-      path.push({ label: groupName(meta, g), href: `#/v/${meta.id}/g/${g}`, title: `${meta.levels[0]}s`, items: () => groupItems(g), layout: 'list' });
+      path.push({ label: groupName(meta, g), deva: groupSa(meta, g), href: `#/v/${meta.id}/g/${g}`, title: `${meta.levels[0]}s`, items: () => groupItems(g), layout: 'list' });
     }
     if (sub === 'c') {
       const d2 = Number(p2);
       const tt = containerTitle(x, g, d2);
       const cref = containerRef(meta, g, d2, tt);
       path.push({
-        label: cref ? `${meta.levels[1] || meta.levels[2]} ${cref}` : meta.name, href: `#/v/${meta.id}/c/${g}/${d2}`,
+        label: cref ? `${meta.levels[1] || meta.levels[2]} ${cref}` : meta.name, deva: cref ? contSa(meta, cref) : meta.deva, href: `#/v/${meta.id}/c/${g}/${d2}`,
         title: `${x.groups.length > 1 ? groupName(meta, g) + ': ' : ''}choose a ${(meta.levels[1] || 'section').toLowerCase()}`,
         items: containerItems(g, d2), layout: 'grid',
       });
@@ -1164,10 +1232,11 @@ const CHEV = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke
 let currentPath = [];
 function renderChrome(r, path) {
   currentPath = path;
+  applyMenu();
   const bar = $('#pathbar');
   bar.hidden = !path.length;
   bar.innerHTML = `<ol>${path.map((c, i) => `<li><button class="crumb${i === path.length - 1 ? ' last' : ''}" data-i="${i}" aria-haspopup="dialog">
-    ${c.deva ? `<span class="dv" lang="sa">${esc(c.deva)}</span>` : ''}<span class="cl">${esc(c.label)}</span>${CHEV}</button></li>`).join('<li class="sep" aria-hidden="true">›</li>')}</ol>`;
+    ${SA() && c.deva ? `<span class="cl" lang="sa">${esc(c.deva)}</span>` : `${c.deva ? `<span class="dv" lang="sa">${esc(c.deva)}</span>` : ''}<span class="cl">${esc(c.label)}</span>`}${CHEV}</button></li>`).join('<li class="sep" aria-hidden="true">›</li>')}</ol>`;
   bar.querySelectorAll('.crumb').forEach((b) => b.addEventListener('click', async () => {
     const c = currentPath[Number(b.dataset.i)];
     openSheet({ title: c.title, items: await c.items(), layout: c.layout || 'list' });
@@ -1182,7 +1251,8 @@ function renderChrome(r, path) {
   if (parentHref) back.setAttribute('href', parentHref);
   $('#brand').classList.toggle('when-back', !!parentHref);
   const named = { library: 'Library', suktas: 'Sūktas', search: 'Search', settings: 'Settings', about: 'About' }[page];
-  $('#topTitle').textContent = path.length ? path[path.length - 1].label : (named || '');
+  const lastC = path[path.length - 1];
+  $('#topTitle').textContent = lastC ? Tp(lastC.label, lastC.deva) : (named ? Tp(named, MENU_SA[page]) : '');
   // tabs
   const tab = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 'about' ? 'settings' : page);
   $('#tabbar').querySelectorAll('[data-tab]').forEach((a) => (a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
@@ -1289,6 +1359,8 @@ async function viewSettings() {
     <h1>Settings</h1>
     <section class="set"><h2>Appearance</h2><p>Light for daytime, dark for early-morning or evening chanting. “Match device” follows your phone or computer.</p>
       <div class="seg wide-seg">${opt('theme', 'system', 'Match device')}${opt('theme', 'light', 'Light')}${opt('theme', 'dark', 'Dark')}</div></section>
+    <section class="set"><h2>Menus and labels</h2><p>In the reading script, names, levels, ṛṣi · devatā · chandas and numbers appear in Sanskrit, in Devanagari or Kannada as chosen above the text. The <b>En</b> button at the top switches back to English at any time.</p>
+      <div class="seg wide-seg">${opt('menu', 'script', 'In the reading script')}${opt('menu', 'en', 'English')}</div></section>
     <section class="set"><h2>Script for Sanskrit text</h2><p>Names, headings and mantras switch together. Svara marks are kept.</p>
       <div class="seg wide-seg">${opt('lipi', 'deva', 'देवनागरी', 'dvb')}${opt('lipi', 'knda', 'ಕನ್ನಡ', 'knb')}</div></section>
     <section class="set"><h2>Svara marks</h2><p>Bold marks are drawn heavier so ॑ and ॒ stand out at reading size.</p>
@@ -1509,7 +1581,7 @@ function openStory(st, start) {
       <path d="M260 30v460M30 260h460M97 97l326 326M423 97L97 423"/><path d="M260 120l121 210H139z"/><path d="M260 400L139 190h242z"/></g></svg></div>
     <div class="st-bar">${segs ? verses.map(() => '<span></span>').join('') : '<span class="st-fill"><i></i></span>'}</div>
     <div class="st-head">
-      <span class="st-t"><b>${esc(meta.ref)} ${esc(st.cref)}</b><small></small></span>
+      <span class="st-t"><b>${refHTML(meta, st.cref)}</b><small></small></span>
       <div class="st-lipi" role="group" aria-label="Script"><button type="button" data-l="deva" lang="sa-Deva">अ</button><button type="button" data-l="knda" lang="sa-Knda">ಅ</button></div>
       <button class="st-x" type="button" aria-label="Close chant view"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
@@ -1526,15 +1598,15 @@ function openStory(st, start) {
   const show = () => {
     if (end()) {
       body.innerHTML = st.next
-        ? `<div class="st-end"><small>${esc(meta.levels[1] || 'Section')} complete</small><a class="st-next" href="${st.next.href}">Next: ${esc(st.next.label)}</a></div>`
-        : `<div class="st-end"><small>End of the text</small></div>`;
+        ? `<div class="st-end"><small>${SA() && lvl(meta.levels[1]) ? `<span lang="sa">${esc(lvl(meta.levels[1]))} समाप्तम्</span>` : `${esc(meta.levels[1] || 'Section')} complete`}</small><a class="st-next" href="${st.next.href}">${SA() ? `<span lang="sa">अग्रिमम्:</span> ${esc(st.next.label)}` : `Next: ${esc(st.next.label)}`}</a></div>`
+        : `<div class="st-end"><small>${T('End of the text', 'ग्रन्थः समाप्तः')}</small></div>`;
       el.querySelector('.st-next')?.addEventListener('click', (e) => { e.preventDefault(); storyResume = 0; close(); swipeIn = 1; go(st.next.href); });
     } else {
       const [v, deva] = verses[i];
       body.innerHTML = `<div class="st-m" lang="sa">${deva.map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
-      el.querySelector('.st-t small').textContent = `${refOf(meta, st.d1, st.d2, v, verses[i][5])}`;
+      el.querySelector('.st-t small').textContent = SA() ? inLipi(dg(refOf(meta, st.d1, st.d2, v, verses[i][5]))) : `${refOf(meta, st.d1, st.d2, v, verses[i][5])}`;
     }
-    el.querySelector('.st-count').textContent = end() ? '' : `${i + 1} / ${verses.length}`;
+    el.querySelector('.st-count').textContent = end() ? '' : SA() ? inLipi(dg(`${i + 1} / ${verses.length}`)) : `${i + 1} / ${verses.length}`;
     if (segs) el.querySelectorAll('.st-bar span').forEach((b, k) => b.classList.toggle('on', k <= i));
     else el.querySelector('.st-fill i').style.width = `${Math.min(1, (i + 1) / verses.length) * 100}%`;
     el.querySelector('[data-d="-1"]').disabled = i === 0;
