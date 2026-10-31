@@ -2,6 +2,9 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.10.0 — 2026-10-31
+- **Śrī Sūkta** under the Ṛgveda, in two pāṭhas with a switch: the **South Indian pāṭha** (15 ṛks and the phalaśruti, with svaras as in Dayananda Aithal's Saswara Ṛgveda; dīrgha svarita in the Dākṣiṇātya pāṭha, one stroke in the Antarjāla pāṭha) and the **Khila pāṭha** (Ṛgveda Khila 2.6 in Scheftelowitz's edition, 29 verses and his alternatives, from GRETIL). In the South Indian text the words that read differently in the Khila are marked, and the Khila's reading is given under the verse (प्र॒बोधि॑नीम् / प्रमोदिनीम्, कु॒ले / गृहे, पक्वाम् …). The two texts are matched verse by verse and compared letter by letter in `scripts/build-suktas.mjs`; `scripts/sri-sukta-source.mjs` extracts them into `scripts/sources/sri-sukta.json`.
+
 ## 1.9.0 — 2026-10-31
 - **113 sūktas, mantras and śānti pāṭhas** (was 54), as gathered in recitation books such as the Sasvara Vedamantrāḥ: Ṛgveda 50, Śukla Yajurveda 13, Kṛṣṇa Yajurveda 24, Sāmaveda 3, Atharvaveda 23. New among them: Gaṇapati Sūkta (RV 8.81 + 10.112.9–10, as in the Kannada book), Navagraha Sūkta, Manyu, Pitṛ, Viśvakarma, Bhāgya, Svasti, Vāstu, Rakṣoghna, Dhruva, Aghamarṣaṇa; Nārāyaṇa Sūkta, Mantrapuṣpam, Durgā (cut to its own verses), Medhā, Trisuparṇa, Pañcabrahma, Mṛttikā, Bhū Sūkta, Nakṣatra Sūkta, Uttaranārāyaṇa, the Aruṇa Praśna; Tad eva and Śivasaṅkalpa; the Brahma, Madhu, Śālā, Medhā and Abhaya sūktas of the Atharvaveda; and a śānti mantra for each Veda.
 - Each sūkta opens on a page of its own (`#/s/…`), put together from all its parts, even when they lie in different places or start and end inside a section of the source; Copy takes the whole sūkta. The page follows the chosen script and pāṭha.

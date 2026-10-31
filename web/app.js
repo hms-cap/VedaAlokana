@@ -243,6 +243,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.10.0', '2026-10-31', ['Śrī Sūkta under the Ṛgveda, in the South Indian pāṭha with svaras and the Khila pāṭha of Scheftelowitz; the words where they differ are marked.']],
   ['1.9.0', '2026-10-31', ['113 sūktas, mantras and śānti pāṭhas from every Veda (was 54), each on a page of its own, put together from all its parts.', 'Home: a button for each Veda under the Veda tiles shows its sūktas.']],
   ['1.8.0', '2026-10-31', ['Kannada: an anudātta after ಁ (ಲೋಁ॒ ವೀಁ॒) also sits under its letter; checked over every accented syllable of all the Vedas.', 'Dākṣiṇātya pāṭha in the Atharvaveda and the Vājasaneyi Saṃhitā: nasals as anusvāra (इंद्र). The Taittirīya texts already print their own pāṭha.']],
   ['1.7.3', '2026-10-31', ['Kannada: every anudātta sits under its own letter, also under letters joined with their vowel sign (ಜಾ ಪು ವೋ) and before a visarga (ತೀಃ), instead of drifting toward the next letter.']],
@@ -666,12 +667,42 @@ function sukVedaButtons(cat, suk, cur, as, href) {
 }
 const KIND = { sūkta: ['Sūkta', 'सूक्तम्'], mantra: ['Mantra', 'मन्त्रः'], anuvāka: ['Anuvāka', 'अनुवाकः'], praśna: ['Praśna', 'प्रश्नः'], adhyāya: ['Adhyāya', 'अध्यायः'], parva: ['Parva', 'पर्व'], śānti: ['Śānti mantra', 'शान्तिमन्त्रः'] };
 
+// ---------- a sūkta given in pāṭhas of its own (Śrī Sūkta): switch between them, with the
+// words where the first differs from the critical text marked and that text's reading noted ----------
+function viewSuktaVersions(s, params) {
+  const ver = s.versions.find((v) => v.id === params?.get('p')) || s.versions[0];
+  // the South Indian text is published with dīrgha svarita; the Antarjāla pāṭha writes one stroke
+  const style = (l) => (prefs.patha === 'std' ? l.replace(/᳚/g, '॑') : l);
+  const wordsHTML = (line, li, marks) => line.split(' ').map((w, wi) => (marks?.some(([a, b]) => a === li && b === wi) ? `<mark class="pv">${esc(w)}</mark>` : esc(w))).join(' ');
+  let body = '';
+  for (const v of ver.verses) {
+    if (v.head) body += `<h2 class="sk-seg">${T(v.head[0], v.head[1])}</h2>`;
+    const lines = v.lines.map(style);
+    const note = v.reads?.length ? `<p class="pv-note">${SA() ? `<span lang="sa">खिलपाठः ${esc(dg(`2.6.${v.khila}`))}:</span>` : `Khila 2.6.${esc(v.khila)} reads`} <span lang="sa">${v.reads.map(esc).join(' · ')}</span></p>` : '';
+    body += `<section class="verse"><div class="vnum">${N(String(v.n))}</div><div><div class="deva" lang="sa">${lines.map((l, li) => `<div>${wordsHTML(l, li, v.marks)}</div>`).join('')}</div>${note}</div></section>`;
+  }
+  const k = KIND[s.kind] || KIND.sūkta;
+  main.innerHTML = `<div class="col sk-page">
+    <h1>${SA() ? `<span lang="sa">${esc(s.deva)}</span>` : `${esc(s.name)}<span class="h1-deva" lang="sa">${esc(s.deva)}</span>`}</h1>
+    <p class="sk-info">${T('Ṛgveda', VEDA_SA.rv)} · ${SA() ? '<span lang="sa">ऋग्वेदखिलम् २.६</span>' : esc(s.ref)} · ${T(k[0], k[1])} · ${SA() ? `<span lang="sa">${esc(s.devataDeva)}</span>` : `<em>Devatā</em> ${esc(s.devata)}`} · ${F(ver.verses.length)} ${T('verses', 'मन्त्राः')}</p>
+    <div class="seg wide-seg sk-ver" role="group" aria-label="Pāṭha">${s.versions.map((v) => `<a href="#/s/${s.id}${v === s.versions[0] ? '' : `?p=${v.id}`}" aria-pressed="${String(v === ver)}">${T(v.name, v.deva)}</a>`).join('')}</div>
+    <p class="lede sk-note">${esc(ver.note)}${ver === s.versions[0] ? ' Words that read differently in the Khila text are <mark class="pv">marked</mark>, with its reading under the verse.' : ''}</p>
+    <div class="sk-acts"><button type="button" class="chip" id="skCopy">${T('Copy', 'प्रतिलिपिः')}</button></div>
+    <div class="verses">${body}</div>
+  </div>`;
+  $('#skCopy')?.addEventListener('click', async (e) => {
+    const txt = [s.deva, ...ver.verses.flatMap((v) => v.lines.map(style).map((l) => (prefs.lipi === 'knda' ? toKnda(l) : l))), `— ${s.ref}`].join('\n');
+    try { await navigator.clipboard.writeText(txt); e.target.textContent = SA() ? 'प्रतिलिपिः ✓' : 'Copied'; } catch { /* clipboard blocked */ }
+  });
+}
+
 // ---------- one sūkta, put together from its parts ----------
-async function viewSukta(sid) {
+async function viewSukta(sid, params) {
   const all = (cache.suktas ||= await json('data/suktas.json'));
   const s = all.find((x) => x.id === sid);
   if (!s) { notFound(); return; }
   setTitle(s.name);
+  if (s.versions) { viewSuktaVersions(s, params); return; }
   const cat = await catalog();
   const metaOf = (t) => cat.texts.find((x) => x.id === t);
   const blocks = [];
@@ -1667,7 +1698,7 @@ async function route() {
     else if (a === 'about') await viewAbout();
     else if (a === 'library') await viewLibrary();
     else if (a === 'suktas') await viewSuktas(r.params);
-    else if (a === 's') await viewSukta(id);
+    else if (a === 's') await viewSukta(id, r.params);
     else if (a === 'search') await viewSearch();
     else if (a === 'settings') await viewSettings();
     else if (a === 'veda') await viewVedaGroup(id, sub);

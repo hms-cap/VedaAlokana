@@ -61,3 +61,12 @@ GRETIL texts are romanised, so their Devanagari and Kannada are converted and ca
 ## Dākṣiṇātya pāṭha of the Ṛgveda
 
 Not a separate text: `web/dakshinatya.js` rewrites the VedaWeb Ṛgveda by rule (dīrgha svarita, anusvāra for nasals inside a word, avagraha at pāda junctions, kampa). The dīrgha-svarita rules were checked against Dayananda Aithal's *Saswara Rigveda Samhita* (https://github.com/daithal/saswara-rigveda, no licence stated, so none of its text is included here); the others against printed Karnataka editions of four sūktas. Known limits: where the two texts differ in wording (166 ṛks) the marks follow our text; pāda junctions are found from syllable counts, so a ṛk with an irregular pāda can gain or miss an avagraha; a kampa on an anusvāra syllable is written शू॒ष्य(अं॒)१॒॑, since an anusvāra after the bracket would have no letter to sit on; pauses inside a half-verse, word splits such as इद्‌ दे॒वेषु and the commas some books print at vowel hiatus are not reproduced.
+
+
+## Śrī Sūkta
+
+Not part of any text above; kept in `scripts/sources/sri-sukta.json` and shown as a sūkta with two pāṭhas.
+
+- South Indian pāṭha (15 ṛks and phalaśruti, with svaras): Dayananda Aithal, *Saswara Rigveda Samhita*, `VisheshaSuktas/shrI-sUkta(Devanagari)-F1.html` (https://github.com/daithal/saswara-rigveda). No licence is stated there; it is used with credit, on the project owner's decision, and printed as published (its dīrgha svaritas and spellings kept).
+- Khila pāṭha: Ṛgveda Khila 2.6 after J. Scheftelowitz, *Die Apokryphen des Ṛgveda* (Breslau 1906), GRETIL input by Muneo Tokunaga (1995), via sanskrit/raw_etexts. Unaccented, words divided as in the edition.
+- The marked variants are found by program (verse matching and letter-level comparison); one-letter differences that sandhi explains are not marked.

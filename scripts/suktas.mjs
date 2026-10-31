@@ -14,6 +14,8 @@
 //                       section of the source; `in` narrows the search to a section, `n` takes
 //                       that many verses instead of `to`.
 //     ['rv 1.35.2', 'Sūrya', 'सूर्यः']  a part with a heading of its own
+//     { versions: 'sri-sukta' }  a sūkta not in the app's texts, given in several pāṭhas
+//                       (scripts/sources/, built by scripts/build-suktas.mjs)
 // Openings and endings are checked at build time; a part that is not found stops the build.
 
 const S = (veda, rows) => rows.map(([name, deva, devata, devataDeva, kind, label, ...parts]) => ({
@@ -48,6 +50,7 @@ export const SUKTAS = [
     ['Vāstu Sūkta', 'वास्तुसूक्तम्', 'Vāstoṣpati', 'वास्तोष्पतिः', '', '', 'rv 7.54'],
     ['Mahāmṛtyuñjaya Mantra', 'महामृत्युञ्जयमन्त्रः', 'Rudra', 'रुद्रः', 'mantra', '', 'rv 7.59.12'],
     ['Varuṇa Sūkta', 'वरुणसूक्तम्', 'Varuṇa', 'वरुणः', '', '', 'rv 7.86'],
+    ['Śrī Sūkta', 'श्रीसूक्तम्', 'Śrī (Lakṣmī)', 'श्रीः (लक्ष्मीः)', '', 'RV Khila 2.6', { versions: 'sri-sukta' }],
     ['Navagraha Sūkta', 'नवग्रहसूक्तम्', 'The nine grahas', 'नवग्रहाः', '', '',
       ['rv 1.35.2', 'Sūrya', 'सूर्यः'], ['rv 1.91.16', 'Candra', 'चन्द्रः'], ['rv 8.44.16', 'Aṅgāraka', 'अङ्गारकः'], ['yv 15.54', 'Budha', 'बुधः'],
       ['rv 2.23.15', 'Bṛhaspati', 'बृहस्पतिः'], ['rv 6.58.1', 'Śukra', 'शुक्रः'], ['rv 10.9.4', 'Śanaiścara', 'शनैश्चरः'], ['rv 4.31.1', 'Rāhu', 'राहुः'], ['rv 1.6.3', 'Ketu', 'केतुः']],

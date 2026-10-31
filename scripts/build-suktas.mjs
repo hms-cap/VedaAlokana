@@ -16,6 +16,76 @@ export const norm = (s) => s.normalize('NFC').replace(/ख्ष/g, 'क्ष')
   .replace(/[ऀ-ः़॑-॔᳐-᳿꣠-ꣿᳪऽ\s।॥|,.0-9०-९()\-:;'"‌‍?!\[\]{}*]/g, '')
   .replace(/(.)्\1/g, '$1').replace(/्/g, '');
 
+// ---- sūktas outside the app's texts, given in versions (pāṭhas): the Śrī Sūkta ----
+// Each version is a list of verses; the first version's verses are compared with the
+// second's (the critical text) letter by letter, and the words that differ are marked,
+// with the other text's reading noted under the verse.
+const lastC = (w) => w.replace(/[क-हळ]्$/, '');
+const VS = { 'ा': 'आ', 'ि': 'इ', 'ी': 'ई', 'ु': 'उ', 'ू': 'ऊ', 'ृ': 'ऋ', 'े': 'ए', 'ै': 'ऐ', 'ो': 'ओ', 'ौ': 'औ' };
+// letters of a word for comparing readings: vowel signs as vowels, so तामिहोप still holds इह and उप
+// (a word-initial अ is left out: sandhi swallows it, पुरुषानहम् for पुरुषान् अहम्, वृक्षोऽथ for वृक्षो अथ)
+const nw = (w) => [...norm(lastC(w.replace(/[॒॑᳚]/g, '')))].map((c) => VS[c] || c).join('').replace(/^अ/, '');
+function lcsPairs(a, b) {
+  const n = a.length; const m = b.length; const W = m + 1; const L = new Int16Array((n + 1) * W);
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) L[i * W + j] = a[i] === b[j] ? L[(i + 1) * W + j + 1] + 1 : Math.max(L[(i + 1) * W + j], L[i * W + j + 1]);
+  const pairs = []; let i = 0; let j = 0;
+  while (i < n && j < m) { if (a[i] === b[j]) { pairs.push([i, j]); i++; j++; } else if (L[(i + 1) * W + j] >= L[i * W + j + 1]) i++; else j++; }
+  return pairs;
+}
+// words → letters, each letter remembering its word
+const letters = (words) => { const s = []; const w = []; words.forEach((x, k) => { for (const c of nw(x)) { s.push(c); w.push(k); } }); return { s, w, n: words.length }; };
+function compare(aw, bw) {
+  const A = letters(aw); const B = letters(bw);
+  const pairs = lcsPairs(A.s, B.s);
+  const hitA = new Array(A.n).fill(0); const hitB = new Array(B.n).fill(0);
+  for (const [i, j] of pairs) { hitA[A.w[i]]++; hitB[B.w[j]]++; }
+  const lenA = aw.map((x) => nw(x).length); const lenB = bw.map((x) => nw(x).length);
+  return {
+    score: pairs.length / Math.max(A.s.length, B.s.length, 1),
+    // a word differs when two of its letters, or one of a short word, have no counterpart
+    offA: aw.map((x, k) => lenA[k] - hitA[k] >= 2 || (lenA[k] - hitA[k] >= 1 && hitA[k] / lenA[k] < 0.6)),
+    offB: bw.map((x, k) => lenB[k] - hitB[k] >= 2 || (lenB[k] - hitB[k] >= 1 && hitB[k] / lenB[k] < 0.6)),
+  };
+}
+const DIG = (n) => String(n).replace(/\d/g, (d) => '०१२३४५६७८९'[d]);
+
+function sriSukta() {
+  const src = JSON.parse(fs.readFileSync(new URL('./sources/sri-sukta.json', import.meta.url), 'utf8'));
+  const words = (lines) => lines.flatMap((l, li) => l.split(' ').map((w, wi) => ({ w, li, wi }))).filter((x) => !/^[।॥]$/.test(x.w));
+  const khila = src.khila.map((v) => ({ n: v.n.replace('%', ''), star: v.n.startsWith('%'), lines: v.lines.map((l) => l.join(' ')), words: v.lines.flat() }));
+  const used = new Set();
+  const south = src.south.map((lines, k) => {
+    const sw = words(lines);
+    let best = null;
+    khila.forEach((kv, x) => {
+      if (used.has(x)) return;
+      const c = compare(sw.map((o) => o.w), kv.words);
+      if (!best || c.score > best.c.score) best = { x, c };
+    });
+    const v = { n: k + 1, lines, ...(k === 15 ? { head: ['Phalaśruti', 'फलश्रुतिः'] } : {}) };
+    if (best && best.c.score >= 0.5) {
+      used.add(best.x);
+      const kv = khila[best.x];
+      // runs of differing words in the Khila text, each with the Khila's reading
+      const reads = []; let run = [];
+      kv.words.forEach((w, i) => { if (best.c.offB[i]) run.push(w); else if (run.length) { reads.push(run.join(' ')); run = []; } });
+      if (run.length) reads.push(run.join(' '));
+      v.khila = `${kv.n}${kv.star ? '*' : ''}`;
+      v.reads = reads;
+      // mark our words only where the Khila has a reading of its own (else it is sandhi or spelling)
+      v.marks = reads.length ? sw.filter((o, i) => best.c.offA[i]).map((o) => [o.li, o.wi]) : [];
+    }
+    return v;
+  });
+  return {
+    versions: [
+      { id: 'south', name: 'South Indian pāṭha', deva: 'दाक्षिणात्यपाठः', note: '15 ṛks and the phalaśruti, as recited in South India; svaras as in Dayananda Aithal’s Saswara Ṛgveda.', verses: south },
+      { id: 'khila', name: 'Khila pāṭha (Scheftelowitz)', deva: 'खिलपाठः', note: 'Ṛgveda Khila 2.6 in J. Scheftelowitz’s edition (1906), words divided as there, without svaras; verses marked * are his alternative readings. GRETIL, input by Muneo Tokunaga.', verses: khila.map((kv) => ({ n: `${kv.n}${kv.star ? '*' : ''}`, lines: kv.lines })) },
+    ],
+  };
+}
+const EXTRA = { 'sri-sukta': sriSukta };
+
 export function buildSuktas(OUT) {
   const cat = JSON.parse(fs.readFileSync(path.join(OUT, 'catalog.json'), 'utf8'));
   const meta = Object.fromEntries(cat.texts.map((t) => [t.id, t]));
@@ -131,6 +201,16 @@ export function buildSuktas(OUT) {
   const slug = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const seen = new Set();
   const out = SUKTAS.map((e) => {
+    if (e.parts[0]?.versions) {
+      const id = slug(e.name); seen.add(id);
+      const { versions } = EXTRA[e.parts[0].versions]();
+      const v0 = versions[0].verses;
+      return {
+        id, veda: e.veda, name: e.name, deva: e.deva, devata: e.devata, devataDeva: e.devataDeva, kind: e.kind,
+        ref: e.label, refs: [['rv', '']], text: 'rv', segs: [], versions, count: v0.length,
+        line: v0[0].lines[0].replace(/\s*[।॥]\s*$/, ''), roman: '', href: `#/s/${id}`, reader: '',
+      };
+    }
     // a part may be [where, title, title deva]: a heading in the sūkta (Navagraha: सूर्यः, चन्द्रः …)
     const segs = e.parts.flatMap((p) => {
       const [where, title, titleDeva] = Array.isArray(p) ? p : [p];

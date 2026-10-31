@@ -780,3 +780,13 @@ body.story-open { overflow: hidden; }
 .sk-acts .chip { display: inline-flex; align-items: center; text-decoration: none; }
 .sk-seg { font-size: 14px; font-weight: 600; margin: 22px 0 0; color: var(--muted); }
 .sk-seg a { color: var(--indigo); }
+mark.pv { background: color-mix(in srgb, var(--fire, #D9822B) 22%, transparent); color: inherit; border-radius: 4px; padding: 0 2px; }
+.pv-note { margin: 6px 0 0; font-size: 14px; color: var(--muted); }
+.pv-note [lang^="sa"] { font-family: var(--deva); font-size: 17px; color: var(--ink); }
+.sk-ver { margin: 6px 0 4px; }
+.sk-ver a { text-decoration: none; }
+.sk-note { font-size: 14px; }
+.wide-seg a { flex: 1; min-height: 42px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 15px; padding: 4px 8px; }
+.seg a { border-radius: 8px; color: var(--muted); }
+.seg a[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,0.08); font-weight: 500; }
+.seg a:hover { text-decoration: none; }
