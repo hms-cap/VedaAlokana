@@ -471,3 +471,4 @@ span.rb-step { background: transparent; }
 .sk-meta em { font-style: normal; opacity: 0.8; }
 @media (max-width: 899px) { .tabbar { grid-template-columns: repeat(5, minmax(0, 1fr)); } .tabbar a { font-size: 10.5px; } }
 @media (max-width: 899px) { .brand:not(.when-back) ~ .top-title { visibility: hidden; } }
+.tags[hidden] { display: none; }

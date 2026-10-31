@@ -41,7 +41,7 @@ const PREF_KEY = 'vedalokana.prefs';
 const prefs = (() => {
   // Default view is made for chanting: the text in script only, no romanisation or translation.
   // `v` is bumped when defaults change, so an earlier saved reading view moves to the new one once.
-  const d = { v: 2, script: 'deva', mode: 'samhita', tr: false, lipi: 'deva', svara: 'bold', suktaBy: 'veda' };
+  const d = { v: 2, script: 'deva', mode: 'samhita', tr: false, tags: true, lipi: 'deva', svara: 'bold', suktaBy: 'veda' };
   try {
     const saved = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
     if ((saved.v || 1) < 2) { delete saved.script; delete saved.tr; delete saved.mode; }
@@ -525,6 +525,7 @@ async function viewContainer(id, d1, d2, params) {
     hasDeva && hasRoman ? seg('Show', [['script', 'both', 'Both'], ['script', 'deva', 'Script'], ['script', 'roman', 'IAST']]) : '',
     hasPada ? seg('Text', [['mode', 'samhita', 'Saṃhitā'], ['mode', 'pada', 'Padapāṭha']]) : '',
     hasTr && (hasDeva || hasRoman) ? seg('Translation', [['tr', true, 'Translation'], ['tr', false, 'Hide']]) : '',
+    summary.length ? seg('Ṛṣi, devatā, chandas', [['tags', true, 'Ṛṣi · Devatā · Chandas'], ['tags', false, 'Hide']]) : '',
   ].join('');
 
   main.innerHTML = `<article class="col">
@@ -533,7 +534,7 @@ async function viewContainer(id, d1, d2, params) {
       <h1>${cref ? `${esc(meta.levels[1] || meta.levels[2])} ${esc(cref)}` : esc(meta.name)}</h1>
       ${c[2] && meta.refFmt !== 'label' ? `<div class="ctitle" lang="sa">${esc(c[2])}</div>` : ''}
     </div></div>
-    ${summary.length ? `<div class="tags">${summary.map(([f, e]) => `<a class="tag" href="${findHref(id, { [f]: e[0] })}"><em>${FACETS[f].label}</em>${e[2] ? `<span class="dv" lang="sa">${esc(e[2])}</span>` : ''}<span>${esc(cap(e[1]))}</span></a>`).join('')}</div>` : ''}
+    ${summary.length ? `<div class="tags" id="sumTags"${prefs.tags ? '' : ' hidden'}>${summary.map(([f, e]) => `<a class="tag" href="${findHref(id, { [f]: e[0] })}"><em>${FACETS[f].label}</em>${e[2] ? `<span class="dv" lang="sa">${esc(e[2])}</span>` : ''}<span>${esc(cap(e[1]))}</span></a>`).join('')}</div>` : ''}
     ${controls ? `<div class="controls">${controls}</div>` : ''}
     <div id="verses"></div>
     <nav class="pager" aria-label="Neighbouring ${esc(meta.levels[1].toLowerCase())}s">
@@ -549,10 +550,11 @@ async function viewContainer(id, d1, d2, params) {
     // The header shows each facet's main value; a verse repeats a tag only when it differs from
     // the one before it, so a long sūkta is not interrupted by the same chips under every verse.
     const shown = Object.fromEntries(summary.map(([f, e]) => [f, e[0]]));
+    $('#sumTags')?.toggleAttribute('hidden', !prefs.tags);
     $('#verses').innerHTML = verses.map(([v, deva, roman, pd, tr, label]) => {
       const r = rowOf.get(v);
       const tags = r ? FKEYS.filter((f) => {
-        if (r[COL[f]] < 0 || meta.tagLevel !== 'verse') return false;
+        if (!prefs.tags || r[COL[f]] < 0 || meta.tagLevel !== 'verse') return false;
         const key = x.facets[f][r[COL[f]]][0];
         if (shown[f] === key) return false;
         shown[f] = key; return true;
@@ -955,6 +957,8 @@ async function viewSettings() {
       <div class="seg wide-seg">${opt('mode', 'samhita', 'Saṃhitā')}${opt('mode', 'pada', 'Padapāṭha')}</div></section>
     <section class="set"><h2>Translations</h2>
       <div class="seg wide-seg">${opt('tr', true, 'Show')}${opt('tr', false, 'Hide')}</div></section>
+    <section class="set"><h2>Ṛṣi, devatā and chandas</h2><p>Shown at the top of a sūkta and again only where they change. Hide them for uninterrupted chanting.</p>
+      <div class="seg wide-seg">${opt('tags', true, 'Show')}${opt('tags', false, 'Hide')}</div></section>
     <section class="set"><h2>About</h2><p><a href="#/about">Sources, licences and known gaps</a></p></section>
   </div>`;
   main.querySelectorAll('[data-k]').forEach((b) => b.addEventListener('click', () => {
