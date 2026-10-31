@@ -294,6 +294,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.16.2', '2026-10-31', ['The shared picture opens with today’s brief pañcāṅga: date, place, māsa · pakṣa · tithi, saṃvatsara · ṛtu · ayana · vāra, nakṣatra and yoga.']],
   ['1.16.1', '2026-10-31', ['The shared picture is one card: all sections on one left edge, ivory on deep indigo with gold rules.']],
   ['1.16.0', '2026-10-31', ['Today’s mantra: a share button makes one picture of all its cards, and a star saves the mantra to My list. The pañcāṅga fold label no longer shows markup in the Sanskrit menu.']],
   ['1.15.0', '2026-10-31', ['The pañcāṅga card on Home folds to its first three lines — date and place, māsa · pakṣa · tithi, and saṃvatsara · ṛtu · ayana · vāra. Tap those lines or the button below them to show tithi, nakṣatra, yoga, karaṇa and sun times; the card remembers how you left it.']],
@@ -745,6 +746,21 @@ function paintDaily(ctx, cards, m, W, draw, hs = []) {
   if (draw) {
     ctx.beginPath(); ctx.roundRect(OUT, top, W - 2 * OUT, hs[0], 30); fill(C.card); ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = C.gold; ctx.stroke();
   }
+  if (cards.pc) {   // today's pañcāṅga: a tinted panel at the head of the card
+    const pc = cards.pc; const P = 30; const ph0 = cy;
+    let h = P + 30 + 18; const rows = [];
+    for (let i = 0; i < pc.lines.length; i++) {
+      const f = i === 0 ? `600 42px ${deva}` : `500 29px ${deva}`; ctx.font = f;
+      for (const l of wrap(pc.lines[i], cw - 2 * P)) { rows.push([l, f, i === 0 ? C.ink : C.muted, i === 0 ? 62 : 44]); h += rows[rows.length - 1][3]; }
+    }
+    h += P - 8;
+    if (draw) { ctx.beginPath(); ctx.roundRect(X - 8, ph0, cw + 16, h, 20); fill('#F6EEDA'); ctx.fill(); }
+    txt(pc.date, ph0 + P + 24, `700 26px ${SA() ? deva : ui}`, C.indigo, X + P - 8);
+    if (draw) { ctx.font = `600 24px ${ui}`; ctx.textAlign = 'right'; fill(C.saffron); ctx.fillText(pc.place, X + cw + 8 - P, ph0 + P + 24); ctx.textAlign = 'left'; }
+    let ry = ph0 + P + 30 + 18;
+    for (const [l, f, col, step] of rows) { txt(l, ry + step - 18, f, col, X + P - 8); ry += step; }
+    cy = ph0 + h + 36;
+  }
   cards.forEach((c, i) => {
     if (i) {   // a thin rule between sections
       cy += 8;
@@ -784,9 +800,19 @@ function paintDaily(ctx, cards, m, W, draw, hs = []) {
 async function dailyImage(m) {
   const cards = dailyPlain(m); const W = 1080;
   const css = getComputedStyle(document.body);
-  const faces = [`600 38px ${css.getPropertyValue('--deva')}`, `500 50px ${css.getPropertyValue('--deva')}`];
+  const faces = [`600 40px ${css.getPropertyValue('--deva')}`, `500 30px ${css.getPropertyValue('--deva')}`, `500 50px ${css.getPropertyValue('--deva')}`];
   const sample = cards.flatMap((c) => [...(c.lines || []), ...(c.words || []).map((w) => w[0]), ...(c.who || []).map((w) => w[1])]).join(' ');
   try { await Promise.all([...faces.map((f) => document.fonts.load(f, sample)), document.fonts.ready]); } catch { /* draw with what is there */ }
+  try {   // today's brief pañcāṅga for the place shown on Home
+    const pl = place(); const p = (await import('./panchanga.js')).panchanga(new Date(), pl.lat, pl.lon);
+    const lip = (x) => (dmKn() ? toKnda(x) : x);
+    const d = new Date();
+    cards.pc = {
+      date: SA() ? lip(dg(d.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric' }).replace(/\//g, '-'))) : d.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+      place: pl.name,
+      lines: [lip(`${p.masa} ${p.paksha} ${p.tithi}`), lip(`${p.samvatsara} संवत्सर · ${p.rtu} ऋतु · ${p.ayana} · ${p.vara}`), lip(`नक्षत्रम् ${p.nakshatra} · योगः ${p.yoga}`)],
+    };
+  } catch { /* the picture is fine without it */ }
   const probe = document.createElement('canvas').getContext('2d');
   const hs = [];
   const H = Math.ceil(paintDaily(probe, cards, m, W, false, hs));
