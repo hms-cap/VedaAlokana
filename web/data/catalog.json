@@ -1,5 +1,5 @@
 {
- "built": "2026-10-30",
+ "built": "2026-10-31",
  "layers": [
   "samhita",
   "brahmana",
@@ -132,12 +132,14 @@
     "svara": true,
     "roman": true,
     "pada": true,
-    "translation": "Griffith (1896)"
+    "translation": "Griffith (1896)",
+    "bhashya": "Sāyaṇa"
    },
    "tagLevel": "verse",
    "sources": [
     "vedaweb",
-    "anukramani"
+    "anukramani",
+    "wikisource"
    ],
    "id": "rv",
    "containers": 1028,

@@ -8,6 +8,7 @@
 | [WSC 2023 Anukramaṇī dataset](https://github.com/mahesh-ak/WSC2023), Krishna et al. | Ṛgveda ṛṣi, devatā and chandas for every ṛk | Apache-2.0 |
 | [DharmicData](https://github.com/bhavykhatri/DharmicData) | Atharvaveda (Śaunaka) and Vājasaneyi Mādhyandina text; Griffith's Sāmaveda | ODbL. Its AV and YV texts were taken from the [Vedic Heritage Portal](https://vedicheritage.gov.in/) (Ministry of Culture), which states no open licence |
 | [sanskrit/raw_etexts](https://github.com/sanskrit/raw_etexts) | Taittirīya Saṃhitā, Brāhmaṇa, Āraṇyaka and Upaniṣad; Aitareya Brāhmaṇa and Āraṇyaka; Sāmaveda Kauthuma Saṃhitā; Jaiminīya Upaniṣad Brāhmaṇa; Gopatha Brāhmaṇa; Kena and Muṇḍaka Upaniṣads | No licence stated; texts collected from public e-text sites (sanskritdocuments.org, eBharati Sampat and others) |
+| [Sanskrit Wikisource](https://sa.wikisource.org) via [Project Vyasa](https://github.com/project-vyasa/sa.wikisource.org) (`gh-pages`, `rigveda/rigveda.vyview`) | Sāyaṇa's Ṛgveda bhāṣya, per ṛk (10,545 of 10,552 ṛks) | CC BY-SA 4.0 — credit the Wikisource volunteers; the bhāṣya files (`web/data/rv/s*.json`) stay under CC BY-SA |
 | [GRETIL mirror](https://github.com/sanskrit/gretil-mirror) | Kauṣītaki, Śatapatha and Pañcaviṃśa Brāhmaṇas; Śāṅkhāyana Āraṇyaka; Aitareya, Īśa, Bṛhadāraṇyaka, Kaṭha, Śvetāśvatara, Chāndogya, Māṇḍūkya and Praśna Upaniṣads | "For reference purposes only; copyright as for source file" — research and teaching use |
 
 Griffith's translations (1895, 1896) are in the public domain.
@@ -33,6 +34,15 @@ GRETIL texts are romanised, so their Devanagari and Kannada are converted and ca
 - **Non-commercial only.** The VedaWeb texts are NC-SA: no ads or paid tiers, keep attribution, share the derived JSON under CC BY-NC-SA 4.0.
 - **Ask the Vedic Heritage Portal / IGNCA** for permission covering the AV and YV text (and audio, if wanted). Until then treat those Saṃhitās as provisional.
 - GRETIL has further Vedic e-texts (Sāmaveda Kauthuma, Śāṅkhāyana Āraṇyaka, more Brāhmaṇas); its terms leave copyright with each contributor, so check per file.
+
+## Sāyaṇa bhāṣya
+
+`scripts/sayana.mjs` reads the Project Vyasa package of Sanskrit Wikisource (an SQLite file with zstd-compressed blocks; needs Node 22.5+ for `node:sqlite` and `zlib.zstdDecompressSync`) and matches each Wikisource ṛk to ours by its saṃhitā text. The bhāṣya is written in files of 20 sūktas (`s{maṇḍala}-{n}.json`) and fetched only when a reader turns it on. Words of the mantra quoted in the bhāṣya (pratīkas, marked “ in the source) are shown in bold.
+
+- RV 1.65 is printed in Wikisource as five double ṛks; each bhāṣya is attached to the first ṛk of its pair.
+- Seven ṛks have no bhāṣya in the source.
+- No open digital Sāyaṇa bhāṣya was found for the other Saṃhitās (the Wikisource Taittirīya, Sāmaveda and Atharvaveda texts carry none).
+- H. H. Wilson's English translation (which follows Sāyaṇa) is public domain but only available as scans on archive.org; it is not included yet.
 
 ## Known gaps
 

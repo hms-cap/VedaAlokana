@@ -11,6 +11,7 @@ import path from 'node:path';
 import { iastToDeva, devaToIast, isoToIast, stripRomanAccents, nameKey } from './translit.mjs';
 import { extraTexts } from './texts.mjs';
 import { SUKTAS } from './suktas.mjs';
+import { buildSayana } from './sayana.mjs';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, all) => {
   if (a.startsWith('--')) acc.push([a.slice(2), all[i + 1]]);
@@ -385,6 +386,12 @@ const LAYERS = ['samhita', 'brahmana', 'aranyaka', 'upanishad'];
 
 fs.mkdirSync(OUT, { recursive: true });
 const texts = [buildRigveda(), buildYajurveda(), buildSamaveda(), buildAtharvaveda()];
+// optional: --sayana <rigveda.vyview> adds Sāyaṇa's bhāṣya to the Ṛgveda (see scripts/sayana.mjs)
+if (args.sayana) {
+  await buildSayana(args.sayana, OUT);
+  texts[0].has.bhashya = 'Sāyaṇa';
+  texts[0].sources.push('wikisource');
+}
 for (const def of extraTexts({ raw: args.raw, gretil: args.gretil })) texts.push(buildExtra(def));
 // the Sanskrit Sāmaveda first, its translation after
 texts.sort((a, b) => (a.id === 'sv' && b.id === 'svs' ? 1 : a.id === 'svs' && b.id === 'sv' ? -1 : 0));

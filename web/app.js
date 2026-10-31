@@ -25,7 +25,7 @@ const LEVEL_DEVA = {
 const $ = (s, el = document) => el.querySelector(s);
 const main = $('#main');
 const rail = $('#rail');
-const cache = { catalog: null, index: {}, text: {} };
+const cache = { catalog: null, index: {}, text: {}, bhashya: {} };
 
 // Routing: the URL hash by default; an in-memory route when embedded where
 // path-like hashes can't be used (set window.VEDA_MEMORY_ROUTER before loading).
@@ -41,7 +41,7 @@ const PREF_KEY = 'vedalokana.prefs';
 const prefs = (() => {
   // Default view is made for chanting: the text in script only, no romanisation or translation.
   // `v` is bumped when defaults change, so an earlier saved reading view moves to the new one once.
-  const d = { v: 2, script: 'deva', mode: 'samhita', tr: false, tags: true, lipi: 'deva', svara: 'bold', suktaBy: 'veda' };
+  const d = { v: 2, script: 'deva', mode: 'samhita', tr: false, tags: true, bhashya: false, lipi: 'deva', svara: 'bold', suktaBy: 'veda' };
   try {
     const saved = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
     if ((saved.v || 1) < 2) { delete saved.script; delete saved.tr; delete saved.mode; }
@@ -120,6 +120,14 @@ async function text(id, d1) {
   return (cache.text[k] ||= await json(`data/${id}/t${d1}.json`));
 }
 
+// Sāyaṇa's bhāṣya comes in files of 20 sūktas (scripts/sayana.mjs), fetched on demand.
+async function bhashya(id, d1, d2) {
+  const k = `${id}/s${d1}-${Math.floor((d2 - 1) / 20)}`;
+  try { return ((cache.bhashya[k] ||= await json(`data/${k}.json`)) || {})[d2] || {}; } catch { return {}; }
+}
+// “word marks a word of the mantra being explained (pratīka); shown in bold.
+const bhashyaHTML = (t) => esc(t).replace(/[“"]([^\s।॥,;:()'‘’“”"]+)”?/g, '<b>$1</b>');
+
 function refOf(meta, d1, d2, v, label) {
   if (meta.refFmt === 'label' && label) return label;
   const parts = meta.refFmt === 'v' ? [v] : meta.refFmt === 'd2.v' ? [d2, v] : [d1, d2, v];
@@ -155,6 +163,7 @@ function badgesHTML(meta) {
     ['IAST', meta.has.roman],
     ['Padapāṭha', meta.has.pada],
     [meta.has.translation ? `English · ${meta.has.translation}` : 'English', !!meta.has.translation],
+    ...(meta.has.bhashya ? [[`${meta.has.bhashya} bhāṣya`, true]] : []),
     ...(tagged ? [
       ['Ṛṣi', meta.facets.includes('rishi')],
       ['Devatā', meta.facets.includes('devata')],
@@ -514,6 +523,7 @@ async function viewContainer(id, d1, d2, params) {
   const hasRoman = verses.some((v) => v[2].length);
   const hasPada = verses.some((v) => v[3].length);
   const hasTr = verses.some((v) => v[4]);
+  const hasBh = !!meta.has?.bhashya;
   const hl = Number(params.get('v')) || null;
 
   // neighbours across groups
@@ -528,6 +538,7 @@ async function viewContainer(id, d1, d2, params) {
     hasDeva && hasRoman ? seg('Show', [['script', 'both', 'Both'], ['script', 'deva', 'Script'], ['script', 'roman', 'IAST']]) : '',
     hasPada ? seg('Text', [['mode', 'samhita', 'Saṃhitā'], ['mode', 'pada', 'Padapāṭha']]) : '',
     hasTr && (hasDeva || hasRoman) ? seg('Translation', [['tr', true, 'Translation'], ['tr', false, 'Hide']]) : '',
+    hasBh ? seg('Bhāṣya', [['bhashya', true, `${meta.has.bhashya} bhāṣya`], ['bhashya', false, 'Hide']]) : '',
     summary.length ? seg('Ṛṣi, devatā, chandas', [['tags', true, 'Ṛṣi · Devatā · Chandas'], ['tags', false, 'Hide']]) : '',
   ].join('');
 
@@ -574,12 +585,24 @@ async function viewContainer(id, d1, d2, params) {
         if (showRoman) body += `<div class="roman" lang="sa-Latn">${roman.map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
       }
       if (tr && (prefs.tr || (!hasDeva && !hasRoman))) body += `<p class="tr" lang="en">${esc(tr)}</p>`;
+      const bh = !(hasBh && prefs.bhashya) ? '' : `<details class="bh" data-bh="${v}"><summary>${esc(meta.has.bhashya)} bhāṣya <span class="dv" lang="sa">सायणभाष्यम्</span></summary><div class="bh-text" lang="sa"><p class="bh-wait">Loading…</p></div></details>`;
       return `<section class="verse${v === hl ? ' hl' : ''}" id="v${v}" aria-label="${esc(meta.ref)} ${esc(ref)}">
         <div class="vnum"><a href="#/v/${id}/c/${d1}/${d2}?v=${v}">${esc(ref)}</a></div>
-        <div>${label && meta.refFmt !== 'label' ? `<div class="vlabel">${esc(label)}</div>` : ''}${body}${tags ? `<div class="tags">${tags}</div>` : ''}</div>
+        <div>${label && meta.refFmt !== 'label' ? `<div class="vlabel">${esc(label)}</div>` : ''}${body}${tags ? `<div class="tags">${tags}</div>` : ''}${bh}</div>
         <button class="icon-btn copy" data-copy="${v}" aria-label="Copy ${esc(meta.ref)} ${esc(ref)}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/></svg></button>
       </section>`;
     }).join('');
+    if (hasBh && prefs.bhashya) {
+      bhashya(id, d1, d2).then((b) => main.querySelectorAll('[data-bh]').forEach((el) => {
+        const t = b[el.dataset.bh];
+        const box = el.querySelector('.bh-text');
+        box.innerHTML = t
+          ? t.split(/(?<=॥)\s+/).map((p) => `<p lang="sa">${bhashyaHTML(p)}</p>`).join('')
+          : `<p class="bh-none">${id === 'rv' && d1 === 1 && d2 === 65 && b[el.dataset.bh - 1]
+            ? 'Explained together with the previous ṛk (this sūkta is in two-line pairs).'
+            : 'Not available for this ṛk in the Wikisource text.'}</p>`;
+      }));
+    }
     main.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', async () => {
       const v = Number(b.dataset.copy);
       const vs = verses.find((e) => e[0] === v);
@@ -629,6 +652,7 @@ const SOURCES = {
   dharmic: 'DharmicData (ODbL), text from the Vedic Heritage Portal',
   raw: 'sanskrit/raw_etexts on GitHub, collected from public e-text sites',
   gretil: 'GRETIL, Göttingen (reference and research use)',
+  wikisource: 'Sāyaṇa bhāṣya: Sanskrit Wikisource volunteers (CC BY-SA 4.0), via Project Vyasa',
 };
 async function viewAbout() {
   setTitle('Sources and licences');

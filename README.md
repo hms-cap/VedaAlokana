@@ -1,6 +1,6 @@
 # VedaAlokana — Vedālokana
 
-A web app for browsing the Vedas — Ṛgveda, Śukla and Kṛṣṇa Yajurveda, Sāmaveda and Atharvaveda — across all four layers: **Saṃhitā**, **Brāhmaṇa**, **Āraṇyaka** and **Upaniṣad**. Saṃhitās can also be browsed by **ṛṣi**, **devatā** and **chandas** where an index exists; filters combine, so you can ask for every ṛk to Agni in Gāyatrī by Medhātithi Kāṇva. Text is shown in **Devanagari or Kannada** (with svara marks), with IAST, Padapāṭha and translation where the source has them.
+A web app for browsing the Vedas — Ṛgveda, Śukla and Kṛṣṇa Yajurveda, Sāmaveda and Atharvaveda — across all four layers: **Saṃhitā**, **Brāhmaṇa**, **Āraṇyaka** and **Upaniṣad**. Saṃhitās can also be browsed by **ṛṣi**, **devatā** and **chandas** where an index exists; filters combine, so you can ask for every ṛk to Agni in Gāyatrī by Medhātithi Kāṇva. Text is shown in **Devanagari or Kannada** (with svara marks), with IAST, Padapāṭha and translation where the source has them, and Sāyaṇa's bhāṣya for the Ṛgveda.
 
 It is a static site: plain HTML, CSS and JavaScript with pre-built JSON, no framework and no server.
 
@@ -41,7 +41,9 @@ node scripts/build-data.mjs \
   --dharmic DharmicData \
   --raw raw_etexts \
   --gretil gretil-mirror \
+  --sayana sa.wikisource.org/rigveda/rigveda.vyview \
   --out web/data
+# --sayana is optional: git clone -b gh-pages https://github.com/project-vyasa/sa.wikisource.org
 ```
 
 ## Fonts

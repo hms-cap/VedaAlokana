@@ -491,3 +491,15 @@ main { overflow-x: clip; }
   padding: 10px 16px; border-radius: 999px; background: var(--ink); color: var(--ground); font-size: 13.5px; text-align: center; transition: opacity .4s; }
 .swipe-tip.out { opacity: 0; }
 @media (prefers-reduced-motion: reduce) { .swipe-hint { transition: none; } }
+
+/* Sāyaṇa bhāṣya under a ṛk: closed until tapped, so the mantras stay together for chanting */
+.bh { margin-top: 12px; border: 1px solid var(--line-soft); border-radius: 12px; background: var(--surface); }
+.bh summary { cursor: pointer; padding: 10px 14px; font-size: 14px; font-weight: 500; color: var(--indigo); list-style: none; display: flex; align-items: center; gap: 8px; }
+.bh summary::-webkit-details-marker { display: none; }
+.bh summary::before { content: '›'; font-size: 18px; line-height: 1; transition: transform .15s; }
+.bh[open] summary::before { transform: rotate(90deg); }
+.bh summary .dv { font-family: var(--deva); color: var(--muted); font-weight: 400; }
+.bh-text { padding: 0 16px 12px; font-family: var(--deva); font-size: 17px; line-height: 1.85; color: var(--ink); }
+.bh-text p { margin: 0 0 10px; }
+.bh-text b { color: var(--fire); font-weight: 600; }
+.bh-wait, .bh-none { font-family: var(--ui); font-size: 14px; color: var(--muted); }
