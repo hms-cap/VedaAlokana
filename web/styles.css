@@ -232,10 +232,11 @@ h1 { margin: 0; font-size: clamp(28px, 4vw, 40px); line-height: 1.1; font-weight
 @media (max-width: 599px) {
   .controls { position: static; gap: 6px; margin: 14px 0 4px; }
   .seg button { padding: 0 10px; }
-  .verse { grid-template-columns: 48px minmax(0, 1fr); gap: 0 14px; scroll-margin-top: 76px; }
+  /* phones: the reference sits above the mantra, so the text gets the full width */
+  .verse { grid-template-columns: minmax(0, 1fr); gap: 2px; padding: 16px 0 18px; scroll-margin-top: 76px; }
   .verse.hl { padding-left: 10px; padding-right: 10px; margin: 0 -10px; }
   .deva { font-size: 22px; }
-  .vnum { padding-top: 8px; }
+  .vnum { padding-top: 0; font-size: 12.5px; }
 }
 
 /* ---- Kannada script ---- */
@@ -396,13 +397,16 @@ body.sheet-open { overflow: hidden; }
   .tabbar a { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; min-height: 48px; color: var(--muted); font-size: 11px; font-weight: 500; }
   .tabbar a:hover { text-decoration: none; }
   .tabbar a[aria-current="page"] { color: var(--indigo); }
-  body.reading .tabbar { display: none; }
-  body.reading .readerbar:not([hidden]) { display: grid; grid-template-columns: 56px minmax(0, 1fr) 56px; align-items: center; gap: 6px; position: fixed; z-index: 30; left: 0; right: 0; bottom: 0;
-    padding: 8px max(10px, env(safe-area-inset-left, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-right, 0px));
+  /* In the reader the main tabs stay at the bottom, so Home is always one tap away; the
+     previous · section · next bar sits directly above them. */
+  body.reading main { padding-bottom: calc(150px + env(safe-area-inset-bottom, 0px)); }
+  body.reading .readerbar:not([hidden]) { display: grid; grid-template-columns: 48px minmax(0, 1fr) 48px; align-items: center; gap: 6px; position: fixed; z-index: 30; left: 0; right: 0;
+    bottom: calc(65px + env(safe-area-inset-bottom, 0px));
+    padding: 6px max(10px, env(safe-area-inset-left, 0px)) 6px max(10px, env(safe-area-inset-right, 0px));
     background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(12px); border-top: 1px solid var(--line-soft); }
-  .rb-step { width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center; border-radius: 14px; color: var(--ink); background: var(--ground); }
+  .rb-step { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border-radius: 14px; color: var(--ink); background: var(--ground); }
   .rb-step:hover { text-decoration: none; }
-  .rb-pick { height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); font-size: 15px; font-weight: 500; cursor: pointer; min-width: 0; }
+  .rb-pick { height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); font-size: 15px; font-weight: 500; cursor: pointer; min-width: 0; }
   .rb-pick span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   body.reading .pager { display: none; }
   .pathbar ol { padding: 6px 10px; }
