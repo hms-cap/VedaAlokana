@@ -741,3 +741,6 @@ body.story-open { overflow: hidden; }
 @media (max-width: 380px) { .qbtn span { display: none; } .qbtn { width: 40px; padding: 0; justify-content: center; } }
 .upd-out { grid-column: 1 / -1; margin: 0; min-height: 1.2em; font-size: 14px; color: var(--muted); }
 .upd-out:empty { display: none; }
+
+/* ---- Ṛgveda svara style switch in the reader ---- */
+.patha-seg .pt-m { font-family: var(--deva); font-size: 1.15em; margin-right: 6px; opacity: .8; }

@@ -56,3 +56,8 @@ GRETIL texts are romanised, so their Devanagari and Kannada are converted and ca
 - Source debris removed during the build: ITRANS letters left in Devanagari (`j`/`k` for the "gum" anusvāra, `H` for visarga), backticks for avagraha, editorial notes in brackets, file headers. Two isolated typos remain (one each in the Śatapatha Brāhmaṇa and Taittirīya Āraṇyaka).
 - Mantra counts differ slightly from traditional totals (e.g. YV 1,966 vs 1,975) where the source splits verses differently.
 - The Atharvaveda has no Āraṇyaka; the Śukla Yajurveda's Āraṇyaka is the Bṛhadāraṇyaka, listed under Upaniṣads.
+
+
+## Dīrgha-svarita (Kāñcī · Mādhva) style of the Ṛgveda
+
+Not a separate text: `web/dirgha.js` rewrites the svara marks of the VedaWeb Ṛgveda by rule. The rules were checked against Dayananda Aithal's *Saswara Rigveda Samhita* (https://github.com/daithal/saswara-rigveda, no licence stated, so none of its text is included here). Known limits: where the two texts differ in wording (166 ṛks) the marks follow our text; pauses inside a half-verse, word splits such as इद्‌ दे॒वेषु and the commas some books print at vowel hiatus are not reproduced.

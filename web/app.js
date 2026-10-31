@@ -3,6 +3,7 @@
 // Data lives in ./data (built by scripts/build-data.mjs); routing is hash-based.
 
 import { toKnda } from './lipi.js';
+import { dirghaLine } from './dirgha.js';
 
 const FACETS = {
   rishi: { label: 'Ṛṣi', deva: 'ऋषि', plural: 'seers', one: 'seer' },
@@ -64,7 +65,7 @@ const PREF_KEY = 'vedalokana.prefs';
 const prefs = (() => {
   // Default view is made for chanting: the text in script only, no romanisation or translation.
   // `v` is bumped when defaults change, so an earlier saved reading view moves to the new one once.
-  const d = { v: 2, script: 'deva', mode: 'samhita', tr: false, tags: true, bhashya: false, lipi: 'deva', svara: 'bold', suktaBy: 'veda', theme: 'system', menu: 'script' };
+  const d = { v: 2, script: 'deva', mode: 'samhita', tr: false, tags: true, bhashya: false, lipi: 'deva', svara: 'bold', suktaBy: 'veda', theme: 'system', menu: 'script', patha: 'std' };
   try {
     const saved = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
     if ((saved.v || 1) < 2) { delete saved.script; delete saved.tr; delete saved.mode; }
@@ -113,6 +114,10 @@ function setLipi(l) {
 function paintLipiToggle() {
   document.querySelectorAll('#lipiToggle [data-lipi]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lipi === prefs.lipi)));
 }
+// ---------- Ṛgveda svara style: single svarita (as printed) or dīrgha svarita (South Indian books) ----------
+const PATHA = { std: ['Śṛṅgeri style', 'शृङ्गेरी पाठः'], dirgha: ['Kāñcī · Mādhva style', 'काञ्ची · माध्व पाठः'] };
+const svaraLines = (textId, lines) => (prefs.patha === 'dirgha' && textId === 'rv' ? lines.map(dirghaLine) : lines);
+
 // ---------- menus in the reading script, or English ----------
 const SA = () => prefs.menu !== 'en';
 const dg = (x) => String(x).replace(/[0-9]/g, (d) => '०१२३४५६७८९'[d]);
@@ -175,6 +180,8 @@ applyTheme();
 // ---------- version, installing and offline ----------
 const APP = self.VEDALOKANA || { version: '0.0.0', released: '' };
 const CHANGES = [
+  ['1.3.0', '2026-10-31', [
+    'Ṛgveda svara style: Śṛṅgeri (one stroke for every svarita) or Kāñcī · Mādhva (dīrgha svarita ᳚ on heavy syllables, kampa vowels spelled out), in the reader and in Settings.']],
   ['1.2.1', '2026-10-31', ['Check for updates now asks the server for the published version, downloads it and offers a restart; installed copies also notice new versions sooner.']],
   ['1.2.0', '2026-10-31', [
     'One-tap icons at the top of each sūkta to show or hide ṛṣi · devatā · chandas, the translation and the Sāyaṇa bhāṣya.',
@@ -505,7 +512,7 @@ async function viewHome() {
     <section class="hero" aria-labelledby="todayH">
       ${SUN_SVG}
       <h1 id="todayH" class="hero-k">${T('Today’s mantra', 'अद्यतनमन्त्रः')}</h1>
-      <div class="hero-m" lang="sa">${m.lines.map((l) => `<div>${esc(l)}</div>`).join('')}</div>
+      <div class="hero-m" lang="sa">${svaraLines('rv', m.lines).map((l) => `<div>${esc(l)}</div>`).join('')}</div>
       <div class="hero-f">
         <span class="hero-r"><b>${SA() ? `<span lang="sa">ऋग्वेदः ${esc(dg(m.ref))}</span>` : `Ṛgveda ${esc(m.ref)}`}</b><span>${T(m.tags, m.tagsSa)}</span></span>
         <a class="hero-go" href="${m.href}" aria-label="Open Ṛgveda ${esc(m.ref)} in the reader">${ARROW}</a>
@@ -924,6 +931,7 @@ async function viewContainer(id, d1, d2, params) {
     hasDeva ? seg('Script', [['lipi', 'deva', 'देवनागरी'], ['lipi', 'knda', 'ಕನ್ನಡ']]).replace('class="seg"', 'class="seg lipi-seg"') : '',
     hasDeva && hasRoman ? seg('Show', [['script', 'both', T('Both', 'उभयम्')], ['script', 'deva', T('Script', 'लिपिः')], ['script', 'roman', 'IAST']]) : '',
     hasPada ? seg('Text', [['mode', 'samhita', T('Saṃhitā', 'संहितापाठः')], ['mode', 'pada', T('Padapāṭha', 'पदपाठः')]]) : '',
+    id === 'rv' && hasDeva ? seg('Svara style', Object.entries(PATHA).map(([k, [en, sa]]) => ['patha', k, `<span class="pt-m" lang="sa" aria-hidden="true">${k === 'dirgha' ? 'ई᳚' : 'ई॑'}</span>${T(en.replace(' style', ''), sa)}`])).replace('class="seg"', 'class="seg patha-seg"') : '',
     // translation, bhāṣya and ṛṣi · devatā · chandas: the one-tap toggles above (.quick)
   ].join('');
 
@@ -980,7 +988,7 @@ async function viewContainer(id, d1, d2, params) {
       if (pada) {
         body += `<div class="pada" lang="sa-Latn">${pd.map((w) => `<span>${esc(w)}</span>`).join('<span aria-hidden="true">|</span>')}</div>`;
       } else {
-        if (showDeva) body += `<div class="deva" lang="sa">${deva.map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
+        if (showDeva) body += `<div class="deva" lang="sa">${svaraLines(id, deva).map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
         if (showRoman) body += `<div class="roman" lang="sa-Latn">${roman.map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
       }
       if (tr && (prefs.tr || (!hasDeva && !hasRoman))) body += `<p class="tr" lang="en">${esc(tr)}</p>`;
@@ -1005,7 +1013,7 @@ async function viewContainer(id, d1, d2, params) {
     main.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', async () => {
       const v = Number(b.dataset.copy);
       const vs = verses.find((e) => e[0] === v);
-      const txt = [...vs[1].map((l) => (prefs.lipi === 'knda' ? toKnda(l) : l)), ...vs[2], vs[4], `— ${meta.ref} ${refOf(meta, d1, d2, v, vs[5])}`].filter(Boolean).join('\n');
+      const txt = [...svaraLines(id, vs[1]).map((l) => (prefs.lipi === 'knda' ? toKnda(l) : l)), ...vs[2], vs[4], `— ${meta.ref} ${refOf(meta, d1, d2, v, vs[5])}`].filter(Boolean).join('\n');
       try { await navigator.clipboard.writeText(txt); b.setAttribute('aria-label', 'Copied'); b.style.color = 'var(--indigo)'; } catch { /* clipboard blocked */ }
     }));
   };
@@ -1427,6 +1435,9 @@ async function viewSettings() {
       <div class="seg wide-seg">${opt('menu', 'script', 'In the reading script')}${opt('menu', 'en', 'English')}</div></section>
     <section class="set"><h2>Script for Sanskrit text</h2><p>Names, headings and mantras switch together. Svara marks are kept.</p>
       <div class="seg wide-seg">${opt('lipi', 'deva', 'देवनागरी', 'dvb')}${opt('lipi', 'knda', 'ಕನ್ನಡ', 'knb')}</div></section>
+    <section class="set"><h2>Ṛgveda svara style</h2><p>Śṛṅgeri style writes every svarita with one stroke, as in most printed editions. Kāñcī · Mādhva style, as in South Indian recitation books, writes a svarita on a heavy syllable with two strokes (dīrgha svarita <span lang="sa">ई᳚</span>) and spells out the vowel of a kampa: <span lang="sa">रा॒यो॒३॑(ओ॒)वनिः</span>.</p>
+      <div class="seg wide-seg">${opt('patha', 'std', esc(PATHA.std[0]))}${opt('patha', 'dirgha', esc(PATHA.dirgha[0]))}</div>
+      <p class="svara-demo" lang="sa">${esc(svaraLines('rv', ['अ॒ग्निमी॑ळे पु॒रोहि॑तं य॒ज्ञस्य॑ दे॒वमृ॒त्विज॑म्'])[0])}</p></section>
     <section class="set"><h2>Svara marks</h2><p>Bold marks are drawn heavier so ॑ and ॒ stand out at reading size.</p>
       <div class="seg wide-seg">${opt('svara', 'bold', 'Bold')}${opt('svara', 'std', 'Standard')}</div>
       <p class="svara-demo" lang="sa">अ॒ग्निमी॑ळे पु॒रोहि॑तं य॒ज्ञस्य॑ दे॒वमृ॒त्विज॑म्</p></section>
@@ -1451,6 +1462,7 @@ async function viewSettings() {
     prefs[k] = raw === 'true' ? true : raw === 'false' ? false : raw;
     savePrefs();
     if (k === 'svara') applyLipiClass();
+    if (k === 'patha') { const y = window.scrollY; route().then(() => window.scrollTo(0, y)); return; }
     b.parentElement.querySelectorAll('button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
   }));
 }
@@ -1667,7 +1679,7 @@ function openStory(st, start) {
       el.querySelector('.st-next')?.addEventListener('click', (e) => { e.preventDefault(); storyResume = 0; close(); swipeIn = 1; go(st.next.href); });
     } else {
       const [v, deva] = verses[i];
-      body.innerHTML = `<div class="st-m" lang="sa">${deva.map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
+      body.innerHTML = `<div class="st-m" lang="sa">${svaraLines(meta.id, deva).map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
       el.querySelector('.st-t small').textContent = SA() ? inLipi(dg(refOf(meta, st.d1, st.d2, v, verses[i][5]))) : `${refOf(meta, st.d1, st.d2, v, verses[i][5])}`;
     }
     el.querySelector('.st-count').textContent = end() ? '' : SA() ? inLipi(dg(`${i + 1} / ${verses.length}`)) : `${i + 1} / ${verses.length}`;

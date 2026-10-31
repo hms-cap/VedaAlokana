@@ -2,7 +2,7 @@
 
 A web app for browsing the Vedas — Ṛgveda, Śukla and Kṛṣṇa Yajurveda, Sāmaveda and Atharvaveda — across all four layers: **Saṃhitā**, **Brāhmaṇa**, **Āraṇyaka** and **Upaniṣad**. Saṃhitās can also be browsed by **ṛṣi**, **devatā** and **chandas** where an index exists; filters combine, so you can ask for every ṛk to Agni in Gāyatrī by Medhātithi Kāṇva. Text is shown in **Devanagari or Kannada** (with svara marks), with IAST, Padapāṭha and translation where the source has them, and Sāyaṇa's bhāṣya for the Ṛgveda.
 
-It is a static site: plain HTML, CSS and JavaScript with pre-built JSON, no framework and no server. It installs as an app and works offline (see below). Current version: **1.2.1** — see [CHANGELOG.md](CHANGELOG.md).
+It is a static site: plain HTML, CSS and JavaScript with pre-built JSON, no framework and no server. It installs as an app and works offline (see below). Current version: **1.3.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Run it locally
 
@@ -68,10 +68,20 @@ python3 scripts/make-fonts.py path/to/google-fonts web/fonts --audit /tmp/afonts
 node scripts/audit-marks.mjs /tmp/afonts   # anudātta clearance and line extents over all the data (Playwright)
 ```
 
+## Ṛgveda svara styles
+
+The Ṛgveda can be shown in two svara styles (Settings, or the switch in the reader):
+
+- **Śṛṅgeri** — the text as published by VedaWeb (after Aufrecht): every svarita with one stroke ॑; a kampa as १/३ with anudātta and svarita.
+- **Kāñcī · Mādhva** — as in South Indian recitation books: a svarita on a heavy syllable gets the double stroke ᳚ (dīrgha svarita), and a kampa is written as the numeral with svarita followed by the elided vowel, रा॒यो॒३॑(ओ॒)वनिः.
+
+The second style is computed in the browser by `web/dirgha.js`; the rules are written out at the top of that file. They were derived from, and are tested against, Dayananda Aithal's [Saswara Rigveda Samhita](https://github.com/daithal/saswara-rigveda), whose dīrgha svaritas were themselves added by program: on all 10,552 ṛks they agree on 99.99% of svarita marks. No text is copied from that site.
+
 ## Tests
 
 ```sh
 node scripts/test-lipi.mjs   # Devanagari → Kannada: word checks + every line of the data
+node scripts/test-dirgha.mjs path/to/saswara-rigveda   # dīrgha-svarita rules vs. Aithal's edition
 ```
 
 ## Layout
