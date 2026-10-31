@@ -233,6 +233,16 @@ async function renderRail(rt) {
 
 // ---------- views ----------
 // ---------- home ----------
+const VEDA_ICON = {
+  rv: '<path d="M24 6c6 7 10 11 10 18a10 10 0 0 1-20 0c0-4 2-7 4-9 0 4 2 6 4 6-2-6 0-11 2-15z"/><path d="M24 22c3 3 4 5 4 8a4 4 0 0 1-8 0c0-3 2-5 4-8z"/><path d="M10 40h28M14 44h20"/>',
+  syv: '<circle cx="24" cy="16" r="8"/><path d="M24 3v3M9 16h3M36 16h3M14 6l2 2M34 6l-2 2"/><path d="M8 30h32l-4 6H12z"/><path d="M12 36v6h24v-6"/><path d="M20 30c-1-3 1-5 4-7 3 2 5 4 4 7"/>',
+  kyv: '<path d="M14 5a7 7 0 1 0 6 11 6 6 0 1 1-6-11z"/><path d="M33 20a5 5 0 1 1 7 4l-4 2c1 6-4 13-14 13-8 0-13-5-14-10l-3-4 6 1c3-5 9-7 15-6z"/><path d="M41 18l3 1-3 1"/><path d="M18 30c3 2 7 2 10 0M20 34c2 1 5 1 7 0" stroke-width="1.5"/><path d="M20 39l-1 5M27 39l1 5"/><circle cx="37.5" cy="19.5" r=".6" fill="currentColor"/>',
+  sv: '<path d="M6 30c5-10 9-10 13 0s8 10 12 0 8-10 11 0"/><circle cx="8" cy="14" r="2"/><circle cx="15" cy="10" r="2"/><circle cx="22" cy="8" r="2"/><circle cx="29" cy="10" r="2"/><circle cx="36" cy="14" r="2"/><path d="M10 40h28"/>',
+  av: '<circle cx="24" cy="24" r="19" stroke-dasharray="3 4"/><path d="M24 38V18"/><path d="M24 26c-6 0-10-4-10-10 6 0 10 4 10 10zM24 22c5 0 9-3 9-9-5 0-9 3-9 9z"/><path d="M18 38h12"/>',
+};
+const vedaIcon = (id, cls) => VEDA_ICON[id] ? `<svg class="${cls}" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${VEDA_ICON[id]}</svg>` : '';
+// Line drawing of an āśrama at dawn — banyan, parṇaśālā, a ṛṣi seated by the homa fire — shown faintly behind Home.
+const ASHRAMA_SVG = `<div class="home-scene" aria-hidden="true"><svg class="scene" viewBox="0 0 800 300" preserveAspectRatio="xMidYMax meet" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <g class="sun-g"> <path d="M520 196a60 60 0 0 1 120 0"/> <path d="M580 120v-18M535 136l-11-13M625 136l11-13M507 166l-15-7M653 166l15-7M496 196h-16M664 196h16" stroke-width="1.6"/> </g> <path d="M430 92q7-6 13 0q6-6 13 0M470 70q5-5 10 0q5-5 10 0M398 118q5-4 9 0q5-4 9 0" stroke-width="1.5"/> <path d="M0 214c70-34 120-46 190-24s110 4 170-20 120-26 190 6 130 30 250 0" /> <path d="M0 236c90-16 160-6 250 2s160-10 260-6 170 14 290 2" stroke-width="1.5" opacity=".7"/> <g> <path d="M96 252c4-30 6-54 2-80M112 252c-2-32 0-56 8-82"/> <path d="M98 176c-14-10-30-12-44-4M118 172c12-12 30-16 46-8M104 172c0-14 2-24 8-34"/> <path d="M40 166c-22-6-28-30-10-42-8-20 10-38 30-32 6-22 34-28 50-14 16-16 44-10 50 10 22-2 34 20 24 36 16 12 8 38-14 40-6 14-26 20-40 12-14 10-36 10-50 0-16 8-36 2-40-10z"/> <path d="M58 168v40M76 172v54M140 170v44M158 166v30" stroke-width="1.2" opacity=".8"/> </g> <g> <path d="M232 252v-62h104v62"/> <path d="M216 194l68-58 68 58"/> <path d="M234 178l-6 8M252 162l-8 12M270 148l-8 14M298 148l8 14M316 162l8 12M334 178l6 8" stroke-width="1.4"/> <path d="M270 252v-38a14 14 0 0 1 28 0v38"/> <path d="M216 194h136" stroke-width="1.4"/> </g> <g> <circle cx="430" cy="196" r="9"/> <path d="M425 188c0-8 10-10 12-3"/> <path d="M430 186c4-8 10-9 12-4" stroke-width="1.4"/> <path d="M420 212c-4 10-6 20-6 30M440 212c4 10 6 20 6 30"/> <path d="M420 212c6-6 14-6 20 0"/> <path d="M402 250c10-10 46-10 56 0c-18 6-38 6-56 0z"/> <path d="M418 226c6 6 18 6 24 0" stroke-width="1.4"/> </g> <g> <path d="M478 252h44l-6-12h-32z"/> <path d="M500 238c-10-8-6-18 0-26 2 8 8 8 6 16 4-2 6-6 5-10 6 8 4 18-11 20z"/> </g> <g><path d="M372 252h22l4-22h-30z"/><path d="M383 230v-14M383 222l-7-6M383 218l7-6M383 226l6-4" stroke-width="1.4"/></g> <path d="M0 270c80-6 140 8 230 4s170-12 260-6 190 10 310 0" stroke-width="1.4" opacity=".7"/> <path d="M120 286c70-4 130 4 200 2M480 288c80-4 150 2 240-2" stroke-width="1.2" opacity=".5"/> </svg></div>`;
 const VEDA_GLYPH = { rv: 'ऋ', syv: 'य', kyv: 'य', sv: 'सा', av: 'अ' };
 const HOME_SUKTAS = ['Puruṣa Sūkta', 'Śrī Rudram', 'Nāsadīya Sūkta', 'Medhā Sūkta', 'Durgā Sūkta', 'Hiraṇyagarbha Sūkta', 'Śānti Mantra'];
 const SUN_SVG = `<svg class="hero-sun" width="260" height="260" viewBox="0 0 260 260" aria-hidden="true"><circle cx="130" cy="130" r="46"/><circle cx="130" cy="130" r="70" class="r1"/><circle cx="130" cy="130" r="94" class="r2"/><circle cx="130" cy="130" r="118" class="r3"/></svg>`;
@@ -258,7 +268,7 @@ async function viewHome() {
   try { suk = (cache.suktas ||= await json('data/suktas.json')); } catch { /* optional */ }
   const chips = HOME_SUKTAS.map((n) => suk.find((s) => s.name.startsWith(n))).filter(Boolean).slice(0, 6);
   const pct = last?.of ? Math.min(1, last.v / last.of) : 0;
-  main.innerHTML = `<div class="home">
+  main.innerHTML = `${ASHRAMA_SVG}<div class="home">
     <section class="pc" id="pc" aria-label="Today’s pañcāṅga"></section>
     <section class="hero" aria-labelledby="todayH">
       ${SUN_SVG}
@@ -277,7 +287,7 @@ async function viewHome() {
     <div class="vtiles">${cat.vedas.map((v) => {
     const s = v.layers.samhita.map((i) => byId[i]).find((x) => x.has.svara || x.has.roman) || byId[v.layers.samhita[0]];
     return `<a class="vtile" href="#/veda/${v.id}" style="--vc: var(--v-${v.id})">
-        <span class="vt-g" lang="sa">${VEDA_GLYPH[v.id] || esc(v.deva[0])}</span>
+        ${VEDA_ICON[v.id] ? vedaIcon(v.id, 'vt-i') + vedaIcon(v.id, 'vt-w') : `<span class="vt-g" lang="sa">${esc(VEDA_GLYPH[v.id] || v.deva[0])}</span>`}
         <span class="vt-n"><b>${esc(v.name)}</b><small>${s ? `${fmt(s.verses)} ${esc(unitName(s))}` : ''}</small></span></a>`;
   }).join('')}</div>
     ${chips.length ? `<div class="sec-h"><h2>Sūktas</h2><a href="#/suktas">All ${suk.length}</a></div>

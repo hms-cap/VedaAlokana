@@ -643,3 +643,22 @@ body.story-open { overflow: hidden; }
 .st-nav { width: 56px; height: 56px; border-radius: 28px; border: 1px solid rgba(255, 255, 255, .45); background: rgba(255, 255, 255, .08); color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
 .st-nav:disabled { opacity: .3; cursor: default; }
 .st-count { font-size: 14px; opacity: .85; font-variant-numeric: tabular-nums; }
+
+/* ---- Veda tile icons ---- */
+.vtile { position: relative; overflow: hidden; isolation: isolate; }
+.vt-i { width: 44px; height: 44px; stroke-width: 2; }
+.vt-w { position: absolute; right: -30px; bottom: -28px; width: 124px; height: 124px; stroke-width: 1.1; opacity: .16; z-index: -1; }
+.vtile:hover .vt-w { opacity: .24; transform: rotate(-4deg) scale(1.04); }
+.vt-w { transition: opacity .25s, transform .4s; }
+@media (prefers-reduced-motion: reduce) { .vt-w { transition: none; } .vtile:hover .vt-w { transform: none; } }
+
+/* ---- Home background: āśrama at dawn ---- */
+.home { position: relative; z-index: 1; padding-bottom: clamp(150px, 34vw, 260px); }
+.home-scene { position: fixed; z-index: 0; left: 0; right: 0; bottom: 0; height: min(42vh, 340px); pointer-events: none;
+  color: var(--ink); background: radial-gradient(60% 75% at 72% 100%, color-mix(in srgb, var(--sun) 9%, transparent), transparent 70%); }
+.home-scene .scene { position: absolute; left: 50%; bottom: 0; width: min(1100px, 150vw); height: 100%; transform: translateX(-50%); opacity: .13; }
+.home-scene .sun-g { stroke: var(--sun); }
+:root[data-theme="dark"] .home-scene .scene { opacity: .2; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .home-scene .scene { opacity: .2; } }
+@media (max-width: 899px) { .home-scene .scene { bottom: calc(62px + env(safe-area-inset-bottom, 0px)); height: calc(100% - 62px); } }
+@media (min-width: 900px) { .home-scene { left: var(--rail); } }
