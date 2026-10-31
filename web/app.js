@@ -546,9 +546,17 @@ async function viewContainer(id, d1, d2, params) {
     const showDeva = hasDeva && prefs.script !== 'roman';
     const showRoman = hasRoman && (prefs.script !== 'deva' || !hasDeva);
     const pada = hasPada && prefs.mode === 'pada';
+    // The header shows each facet's main value; a verse repeats a tag only when it differs from
+    // the one before it, so a long sūkta is not interrupted by the same chips under every verse.
+    const shown = Object.fromEntries(summary.map(([f, e]) => [f, e[0]]));
     $('#verses').innerHTML = verses.map(([v, deva, roman, pd, tr, label]) => {
       const r = rowOf.get(v);
-      const tags = r ? FKEYS.filter((f) => r[COL[f]] >= 0 && meta.tagLevel === 'verse').map((f) => {
+      const tags = r ? FKEYS.filter((f) => {
+        if (r[COL[f]] < 0 || meta.tagLevel !== 'verse') return false;
+        const key = x.facets[f][r[COL[f]]][0];
+        if (shown[f] === key) return false;
+        shown[f] = key; return true;
+      }).map((f) => {
         const e = x.facets[f][r[COL[f]]];
         return `<a class="tag" href="${findHref(id, { [f]: e[0] })}"><em>${FACETS[f].label}</em><span>${esc(cap(e[1]))}</span></a>`;
       }).join('') : '';
