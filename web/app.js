@@ -294,6 +294,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.15.0', '2026-10-31', ['The pañcāṅga card on Home folds to its first three lines — date and place, māsa · pakṣa · tithi, and saṃvatsara · ṛtu · ayana · vāra. Tap those lines or the button below them to show tithi, nakṣatra, yoga, karaṇa and sun times; the card remembers how you left it.']],
   ['1.14.1', '2026-10-31', ['Check for updates no longer says you have the latest version when it couldn’t reach the server; it says it couldn’t check.']],
   ['1.14.0', '2026-10-31', ['Today’s mantra is now a set of up to five cards to swipe through in a loop: the mantra, its meaning, words and grammar, ṛṣi · devatā · chandas, and its use and significance — in English, or Kannada when the script is Kannada. 365 mantras from all four Vedas and the Upaniṣads, one for each day of the year; ↻ shows another.']],
   ['1.13.0', '2026-10-31', ['An options bar under the top bar holds every setting that applies to the page: script, menus, theme, pāṭha, padapāṭha, IAST, ṛṣi · devatā · chandas, translation, bhāṣya, text size, save and chant. ⋯ opens the same options with their names, plus svara marks and font. On phones it slides away while you read down and returns when you scroll up.', 'My sūktas has its own tab in the bottom bar (in place of Search, which stays at the top).']],
@@ -1089,6 +1090,7 @@ const hm = (t, base) => {
   return esc(next ? `${s} tomorrow` : s);
 };
 const till = (t, base) => (SA() ? `${hm(t, base)} <span lang="sa">पर्यन्तम्</span>` : `till ${hm(t, base)}`);
+const PC_OPEN = 'vedalokana.pcOpen';
 async function renderPanchanga() {
   const el = document.getElementById('pc'); if (!el) return;
   const pl = place();
@@ -1105,6 +1107,7 @@ async function renderPanchanga() {
     </div>
     <div class="pc-main"><span lang="sa">${esc(p.masa)} ${esc(p.paksha)} ${esc(p.tithi)}</span></div>
     <div class="pc-sub" lang="sa">${esc(p.samvatsara)} संवत्सर · ${esc(p.rtu)} ऋतु · ${esc(p.ayana)} · ${esc(p.vara)}</div>
+    <div class="pc-more" id="pcMore"><div>
     <dl class="pc-grid">
       <div><dt>${T('Tithi', 'तिथिः')}</dt><dd><span lang="sa">${esc(p.tithi)}</span><small>${till(p.tithiEnd, now)}</small></dd></div>
       <div><dt>${T('Nakṣatra', 'नक्षत्रम्')}</dt><dd><span lang="sa">${esc(p.nakshatra)}</span><small>${till(p.nakshatraEnd, now)}</small></dd></div>
@@ -1112,7 +1115,20 @@ async function renderPanchanga() {
       <div><dt>${T('Karaṇa', 'करणम्')}</dt><dd><span lang="sa">${esc(p.karana)}</span><small>${T('at sunrise', 'सूर्योदये')}</small></dd></div>
       <div class="pc-sun"><dt>${T('Sun', 'सूर्यः')}</dt><dd><span>↑ ${hm(p.sunrise, now)}</span><small>↓ ${p.sunset ? hm(p.sunset, now) : '–'}</small></dd></div>
     </dl>
-    ${pl.guess ? `<p class="pc-note">${T('Times for the place shown. Tap it to use your location.', 'दर्शितस्थानस्य कालाः। स्वस्थानाय स्पृशतु।')}</p>` : ''}`;
+    ${pl.guess ? `<p class="pc-note">${T('Times for the place shown. Tap it to use your location.', 'दर्शितस्थानस्य कालाः। स्वस्थानाय स्पृशतु।')}</p>` : ''}
+    </div>
+    <button class="pc-tog" type="button" aria-controls="pcMore"><span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>`;
+  const setOpen = (o) => {
+    el.classList.toggle('open', o);
+    const b = el.querySelector('.pc-tog');
+    b.setAttribute('aria-expanded', o);
+    b.firstChild.textContent = o ? T('Less', 'न्यूनम्') : T('Tithi, nakṣatra, yoga, karaṇa, sun', 'तिथिः नक्षत्रं योगः करणं सूर्यः');
+  };
+  let open = false; try { open = localStorage.getItem(PC_OPEN) === '1'; } catch { /* storage unavailable */ }
+  setOpen(open);
+  const flip = () => { open = !open; setOpen(open); try { localStorage.setItem(PC_OPEN, open ? '1' : '0'); } catch { /* storage unavailable */ } };
+  el.querySelector('.pc-tog').addEventListener('click', flip);
+  el.querySelectorAll('.pc-main, .pc-sub').forEach((n) => n.addEventListener('click', flip));
   el.querySelector('.pc-loc').addEventListener('click', () => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition((pos) => {

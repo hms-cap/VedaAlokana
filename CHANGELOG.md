@@ -2,6 +2,9 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.15.0 — 2026-10-31
+- **Pañcāṅga card folds.** On Home it shows its first three lines — date and place, māsa · pakṣa · tithi, and saṃvatsara · ṛtu · ayana · vāra. Tap those lines, or the button under them, to open the tithi, nakṣatra, yoga, karaṇa and sun cards; tap again to fold. The card remembers how you left it (folded at first).
+
 ## 1.14.1 — 2026-10-31
 - Check for updates no longer reports "latest version" when it couldn't reach the server; it says it couldn't check.
 - The Pages workflow now publishes the whole repository, same as the branch build, so the app at `/web/` is always present whichever deployment finishes last.
