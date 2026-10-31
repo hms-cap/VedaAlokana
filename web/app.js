@@ -294,6 +294,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.16.0', '2026-10-31', ['Today’s mantra: a share button makes one picture of all its cards, and a star saves the mantra to My list. The pañcāṅga fold label no longer shows markup in the Sanskrit menu.']],
   ['1.15.0', '2026-10-31', ['The pañcāṅga card on Home folds to its first three lines — date and place, māsa · pakṣa · tithi, and saṃvatsara · ṛtu · ayana · vāra. Tap those lines or the button below them to show tithi, nakṣatra, yoga, karaṇa and sun times; the card remembers how you left it.']],
   ['1.14.1', '2026-10-31', ['Check for updates no longer says you have the latest version when it couldn’t reach the server; it says it couldn’t check.']],
   ['1.14.0', '2026-10-31', ['Today’s mantra is now a set of up to five cards to swipe through in a loop: the mantra, its meaning, words and grammar, ṛṣi · devatā · chandas, and its use and significance — in English, or Kannada when the script is Kannada. 365 mantras from all four Vedas and the Upaniṣads, one for each day of the year; ↻ shows another.']],
@@ -689,6 +690,133 @@ function dailyCards(m) {
   if (m.u) cards.push({ k: T('Use and significance', 'विनियोगः महत्त्वं च'), html: `<p class="dm-p">${dmL(m.u)}</p>` });
   return cards;
 }
+
+// ---------- save a daily mantra to My list; share its cards as one picture ----------
+const SHARE_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M8 7l4-4 4 4M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>';
+const dmVeda = { rv: 'rv', av: 'av', yv: 'syv', ts: 'kyv', ta: 'kyv', sv: 'sv', svs: 'sv' };
+// a sūkta item is saved as that sūkta; a single mantra as an entry of its own
+function dmSaveKey(m) {
+  if (m.href?.startsWith('#/s/')) return { id: m.href.slice(4) };
+  const first = plain(m.lines[0]);
+  return { id: `dm-${m.t}-${m.ref}`, entry: { id: `dm-${m.t}-${m.ref}`, veda: dmVeda[m.t] || '', name: m.src, deva: first.split(' ').slice(0, 3).join(' '), devata: m.d?.[1] ? cap(m.d[1]) : '',
+    kind: 'mantra', ref: m.src, count: 1, line: first, href: m.href } };
+}
+const dmRefPlain = (m) => (m.t === 'sk' ? Tp(m.src, m.srcSa) : SA() ? inLipi(`${REF_SA[m.t] || m.src.split(' ')[0]} ${dg(m.ref)}`) : m.src);
+const dmTagsPlain = (m) => [m.d, m.r, m.c].filter(Boolean).map((x) => (SA() ? inLipi(x[2] || x[1]) : cap(x[1]))).join(' · ');
+// the cards as plain text, in the script and language the app is showing
+function dailyPlain(m) {
+  const kn = dmKn(); const lip = (x) => (kn ? toKnda(x) : x);
+  const lines = (m.t === 'sk' ? m.lines : svaraLines(m.t, m.lines, m.pada)).map(lip);
+  const out = [{ k: Tp('Mantra', 'मन्त्रः'), lines, ref: dmRefPlain(m), tags: dmTagsPlain(m) }];
+  const pair = (x) => x?.[kn ? 1 : 0] || x?.[0] || '';
+  if (m.m) out.push({ k: Tp('Meaning', 'अर्थः'), text: pair(m.m) });
+  if (m.w?.length) out.push({ k: Tp('Words and grammar', 'पदानि व्याकरणं च'), words: m.w.map((w) => [lip(w[0]), w[kn ? 2 : 1] || w[1]]) });
+  const g = dmIndex?.gloss || {};
+  const who = [['r', 'rishi', 'Ṛṣi', 'ऋषिः'], ['d', 'devata', 'Devatā', 'देवता'], ['c', 'chandas', 'Chandas', 'छन्दः']].filter(([f]) => m[f]);
+  if (m.m && who.length) out.push({ k: Tp('Ṛṣi · devatā · chandas', 'ऋषिः · देवता · छन्दः'), who: who.map(([f, kind, en, sa]) => { const x = m[f]; const note = g[kind]?.[x[0]]; return [Tp(en, sa), lip(x[2] || x[1]), note ? pair(note) : '']; }) });
+  if (m.u) out.push({ k: Tp('Use and significance', 'विनियोगः महत्त्वं च'), text: pair(m.u) });
+  return out;
+}
+// one tall picture of every card: draw=false only measures, so the canvas can be sized first
+function paintDaily(ctx, cards, m, W, draw, hs = []) {
+  const css = getComputedStyle(document.body);
+  const deva = css.getPropertyValue('--deva').trim() || 'serif'; const ui = css.fontFamily;
+  const body = dmKn() ? deva : ui;
+  const PAD = 56; const IN = 40; const cw = W - 2 * PAD - 2 * IN;
+  const wrap = (t, max) => {
+    const out = []; let cur = '';
+    for (const w of String(t).split(/\s+/)) { const tr = cur ? `${cur} ${w}` : w; if (cur && ctx.measureText(tr).width > max) { out.push(cur); cur = w; } else cur = tr; }
+    if (cur) out.push(cur); return out;
+  };
+  const C = { bg: '#FBF7EE', card: '#FFFFFF', line: '#E3DCCB', ink: '#1F2430', muted: '#5B6070', indigo: '#2B3990', saffron: '#C2410C' };
+  let y = 0;
+  const fill = (c) => { ctx.fillStyle = c; };
+  const txt = (t, x, yy, font, color, align = 'left') => { if (!draw) return; ctx.font = font; fill(color); ctx.textAlign = align; ctx.textBaseline = 'alphabetic'; ctx.fillText(t, x, yy); };
+  if (draw) { fill(C.bg); ctx.fillRect(0, 0, W, 4000); }
+  // header band
+  const HEAD = 150;
+  if (draw) {
+    fill(C.indigo); ctx.fillRect(0, 0, W, HEAD);
+    ctx.save(); ctx.translate(PAD, 38); ctx.scale(3.4, 3.4); fill('#F59E0B'); ctx.fill(new Path2D('M12 3c3 4 5 6.5 5 10a5 5 0 0 1-10 0c0-3.5 2-6 5-10z')); fill(C.indigo); ctx.fill(new Path2D('M12 11c1.2 1.6 2 2.6 2 4a2 2 0 0 1-4 0c0-1.4.8-2.4 2-4z')); ctx.restore();
+  }
+  txt(Tp('Vedāvalokanam', 'वेदावलोकनम्'), PAD + 96, 78, `600 44px ${SA() ? deva : ui}`, '#FFFFFF');
+  txt(m.today ? Tp('Today’s mantra', 'अद्यतनमन्त्रः') : Tp('A mantra', 'मन्त्रः'), PAD + 96, 118, `500 26px ${SA() ? deva : ui}`, '#C9D0F5');
+  y = HEAD + 40;
+  const known = draw ? [...hs] : null;
+  for (const c of cards) {
+    const top = y; let cy = top + IN;
+    if (draw) {   // the card first, its height known from the measuring pass
+      ctx.beginPath(); ctx.roundRect(PAD, top, W - 2 * PAD, known.shift(), 28); fill(C.card); ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = C.line; ctx.stroke();
+    }
+    txt(SA() ? c.k : c.k.toUpperCase(), PAD + IN, cy + 24, `700 24px ${SA() ? deva : ui}`, C.indigo);
+    cy += 24 + 30;
+    if (c.lines) {
+      for (const l of c.lines) {   // each line as large as fits the card; a very long one wraps
+        ctx.font = `500 50px ${deva}`;
+        const sz = Math.max(32, Math.min(50, Math.floor(50 * cw / Math.max(ctx.measureText(l).width, 1))));
+        const f = `500 ${sz}px ${deva}`; ctx.font = f;
+        for (const part of wrap(l, cw)) { txt(part, W / 2, cy + sz, f, C.ink, 'center'); cy += Math.round(sz * 1.72); }
+      }
+      cy += 6;
+      ctx.font = `700 30px ${ui}`; txt(c.ref, W / 2, cy + 30, `700 30px ${SA() ? deva : ui}`, C.saffron, 'center'); cy += 46;
+      if (c.tags) { ctx.font = `500 28px ${SA() ? deva : ui}`; for (const l of wrap(c.tags, cw)) { txt(l, W / 2, cy + 28, `500 28px ${SA() ? deva : ui}`, C.muted, 'center'); cy += 42; } }
+    } else if (c.text) {
+      ctx.font = `400 32px ${body}`;
+      for (const l of wrap(c.text, cw)) { txt(l, PAD + IN, cy + 32, `400 32px ${body}`, C.ink); cy += 52; }
+    } else if (c.words) {
+      for (const [w, g] of c.words) {
+        ctx.font = `600 38px ${deva}`; txt(w, PAD + IN, cy + 38, `600 38px ${deva}`, C.ink); cy += 56;
+        ctx.font = `400 29px ${body}`;
+        for (const l of wrap(g, cw)) { txt(l, PAD + IN, cy + 29, `400 29px ${body}`, C.muted); cy += 44; }
+        cy += 14;
+      }
+      cy -= 14;
+    } else if (c.who) {
+      for (const [kind, name, note] of c.who) {
+        ctx.font = `600 38px ${deva}`; txt(`${kind} · ${name}`, PAD + IN, cy + 38, `600 38px ${deva}`, C.ink); cy += 56;
+        ctx.font = `400 29px ${body}`;
+        for (const l of wrap(note, cw)) { txt(l, PAD + IN, cy + 29, `400 29px ${body}`, C.muted); cy += 44; }
+        cy += 14;
+      }
+      cy -= 14;
+    }
+    cy += IN;
+    if (!draw) hs.push(cy - top);
+    y = cy + 28;
+  }
+  txt(Tp('Veda mantras with svara marks', 'स्वरचिह्नसहिताः वेदमन्त्राः'), W / 2, y + 40, `500 24px ${SA() ? deva : ui}`, C.muted, 'center');
+  return y + 80;
+}
+async function dailyImage(m) {
+  const cards = dailyPlain(m); const W = 1080;
+  const css = getComputedStyle(document.body);
+  const faces = [`600 38px ${css.getPropertyValue('--deva')}`, `500 50px ${css.getPropertyValue('--deva')}`];
+  const sample = cards.flatMap((c) => [...(c.lines || []), ...(c.words || []).map((w) => w[0]), ...(c.who || []).map((w) => w[1])]).join(' ');
+  try { await Promise.all([...faces.map((f) => document.fonts.load(f, sample)), document.fonts.ready]); } catch { /* draw with what is there */ }
+  const probe = document.createElement('canvas').getContext('2d');
+  const hs = [];
+  const H = Math.ceil(paintDaily(probe, cards, m, W, false, hs));
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+  paintDaily(ctx, cards, m, W, true, hs);
+  return new Promise((res, rej) => cv.toBlob((b) => (b ? res(b) : rej(new Error('no image'))), 'image/png'));
+}
+async function shareDaily(btn, m) {
+  btn.disabled = true; btn.setAttribute('aria-busy', 'true');
+  try {
+    const blob = await dailyImage(m);
+    const name = `vedavalokanam-${String(m.src || m.ref).replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '')}.png`;
+    const file = new File([blob], name, { type: 'image/png' });
+    if (navigator.canShare?.({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: dmRefPlain(m) }); return; }
+      catch (e) { if (e?.name === 'AbortError') return; /* fall through to saving it */ }
+    }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    toast(esc(Tp('Picture saved to your downloads.', 'चित्रं सङ्गृहीतम्।')));
+  } catch { toast(esc('Couldn’t make the picture. Try again.')); }
+  finally { btn.disabled = false; btn.removeAttribute('aria-busy'); }
+}
 function dailyHTML(m) {
   const cards = dailyCards(m);
   const kick = m.today ? T('Today’s mantra', 'अद्यतनमन्त्रः') : T('Another mantra', 'अन्यो मन्त्रः');
@@ -699,7 +827,11 @@ function dailyHTML(m) {
     <div class="dm-view" aria-live="polite">${cards.map((c, i) => `<div class="dm-card${i ? '' : ' on'}" role="group" aria-roledescription="slide" aria-label="${i + 1} / ${cards.length}"${i ? ' aria-hidden="true"' : ''}>${c.html}</div>`).join('')}</div>
     <div class="hero-f dm-f">
       ${cards.length > 1 ? `<div class="dm-dots" role="tablist">${cards.map((c, i) => `<button type="button" role="tab" data-i="${i}" aria-selected="${String(!i)}" aria-label="${esc(c.k.replace(/<[^>]+>/g, ''))}"></button>`).join('')}</div>` : '<span></span>'}
-      <a class="hero-go" href="${esc(m.href)}" aria-label="Open in the reader">${ARROW}</a>
+      <span class="dm-acts">
+        <button type="button" class="dm-ico dm-star" aria-pressed="${String(isSaved(dmSaveKey(m).id))}" aria-label="${esc(Tp('Save to my list', 'सङ्गृहाण'))}" title="${esc(Tp('Save to my list', 'सङ्गृहाण'))}">${STAR(isSaved(dmSaveKey(m).id))}</button>
+        <button type="button" class="dm-ico dm-share" aria-label="${esc(Tp('Share as a picture', 'चित्ररूपेण प्रेषय'))}" title="${esc(Tp('Share as a picture', 'चित्ररूपेण प्रेषय'))}">${SHARE_ICON}</button>
+        <a class="hero-go" href="${esc(m.href)}" aria-label="Open in the reader">${ARROW}</a>
+      </span>
     </div>`;
 }
 function wireDaily(m) {
@@ -747,6 +879,13 @@ function wireDaily(m) {
     redraw({ k });
   });
   box.querySelector('.dm-today')?.addEventListener('click', () => redraw(null));
+  const star = box.querySelector('.dm-star');
+  star?.addEventListener('click', () => {
+    const k = dmSaveKey(m); toggleSaved(k.id, k.entry);
+    const on = isSaved(k.id); star.innerHTML = STAR(on); star.setAttribute('aria-pressed', String(on));
+    toast(esc(on ? Tp('Saved to my list.', 'सङ्गृहीतम्।') : Tp('Removed from my list.', 'सङ्ग्रहात् अपनीतम्।')), 2200);
+  });
+  box.querySelector('.dm-share')?.addEventListener('click', (e) => shareDaily(e.currentTarget, m));
 }
 
 async function viewHome() {
@@ -801,7 +940,7 @@ async function viewHome() {
 
 // ---------- My sūktas on Home: Saved · Recent · Frequent ----------
 function myChips(suk, k) {
-  return myList(k, suk).map((e) => `<a class="schip" href="${esc(e.href)}${k === 'saved' ? '?from=my' : ''}"><span lang="sa">${esc(e.deva)}</span><small>${sukRef(e)}</small></a>`).join('');
+  return myList(k, suk).map((e) => `<a class="schip" href="${esc(k === 'saved' ? fromMy(e.href) : e.href)}"><span lang="sa">${esc(e.deva)}</span><small>${sukRef(e)}</small></a>`).join('');
 }
 function homeMy(suk) {
   const have = MY_LISTS.filter(([k]) => myList(k, suk).length);
@@ -832,7 +971,7 @@ function sukVedaButtons(cat, suk, cur, as, href) {
 const MY_KEY = 'vedalokana.my';
 const MY_LISTS = [['saved', 'My list', 'मम सङ्ग्रहः'], ['recent', 'Recent', 'अचिरपठितानि'], ['frequent', 'Frequent', 'बहुपठितानि']];
 const my = (() => {
-  const d = { saved: [], hist: {}, keep: true };
+  const d = { saved: [], hist: {}, dm: {}, keep: true };
   try { return { ...d, ...JSON.parse(localStorage.getItem(MY_KEY) || '{}') }; } catch { return d; }
 })();
 const saveMy = () => { try { localStorage.setItem(MY_KEY, JSON.stringify(my)); } catch { /* storage unavailable */ } };
@@ -846,12 +985,14 @@ function visitSukta(sid) {
   saveMy();
 }
 const isSaved = (sid) => my.saved.includes(sid);
-function toggleSaved(sid) {
-  my.saved = isSaved(sid) ? my.saved.filter((x) => x !== sid) : [...my.saved, sid];
+function toggleSaved(sid, entry) {
+  if (isSaved(sid)) { my.saved = my.saved.filter((x) => x !== sid); delete my.dm[sid]; }
+  else { my.saved = [...my.saved, sid]; if (entry) my.dm[sid] = entry; }   // a single mantra keeps its own entry; a sūkta is looked up by id
   saveMy();
 }
+const fromMy = (href) => `${href}${href.includes('?') ? '&' : '?'}from=my`;
 function myList(kind, all) {
-  const byId = new Map(all.map((e) => [e.id, e]));
+  const byId = new Map([...all, ...Object.values(my.dm || {})].map((e) => [e.id, e]));
   const now = Date.now();
   const ids = kind === 'saved' ? my.saved
     : kind === 'recent' ? Object.entries(my.hist).sort((a, b) => b[1].t - a[1].t).slice(0, 20).map(([k]) => k)
@@ -884,7 +1025,7 @@ const obChant = (fn) => ({ id: 'chant', label: Tp('Chant view', 'पाराय
 function listNeighbours(sid, all) {
   const l = myList('saved', all); const k = l.findIndex((e) => e.id === sid);
   if (k < 0) return {};
-  const at = (e) => e && { href: `${e.href}?from=my`, label: e.deva };
+  const at = (e) => e && { href: fromMy(e.href), label: e.deva };
   return { prev: at(l[k - 1]), next: at(l[k + 1]), pos: k, of: l.length };
 }
 
@@ -963,7 +1104,7 @@ function wireMyList(all) {
   }));
   $('#chantList')?.addEventListener('click', () => {
     const first = myList('saved', all)[0];
-    if (first) { chantResume = 0; go(`${first.href}?from=my`); }
+    if (first) { chantResume = 0; go(fromMy(first.href)); }
   });
 }
 
@@ -1122,7 +1263,7 @@ async function renderPanchanga() {
     el.classList.toggle('open', o);
     const b = el.querySelector('.pc-tog');
     b.setAttribute('aria-expanded', o);
-    b.firstChild.textContent = o ? T('Less', 'न्यूनम्') : T('Tithi, nakṣatra, yoga, karaṇa, sun', 'तिथिः नक्षत्रं योगः करणं सूर्यः');
+    b.firstChild.textContent = o ? Tp('Less', 'न्यूनम्') : Tp('Tithi, nakṣatra, yoga, karaṇa, sun', 'तिथिः नक्षत्रं योगः करणं सूर्यः');
   };
   let open = false; try { open = localStorage.getItem(PC_OPEN) === '1'; } catch { /* storage unavailable */ }
   setOpen(open);
@@ -2156,7 +2297,7 @@ async function viewSuktas(params) {
   main.querySelectorAll('[data-by]').forEach((a) => a.addEventListener('click', () => { prefs.suktaBy = a.dataset.by; savePrefs(); }));
 }
 // one row of a sūkta list
-const sukRow = (by, listK) => (e) => `<a class="sk-row" href="${e.href}${listK === 'saved' ? '?from=my' : ''}">
+const sukRow = (by, listK) => (e) => `<a class="sk-row" href="${listK === 'saved' ? fromMy(e.href) : e.href}">
       <span class="sk-top"><span class="sk-name"><span class="dv" lang="sa">${esc(e.deva)}</span><span class="ia">${esc(e.name)}</span></span><span class="sk-ref">${esc(e.ref)}</span></span>
       <span class="sk-line" lang="sa">${esc(e.line)}</span>
       <span class="sk-meta">${by !== 'devata' ? `<span><em>Devatā</em> ${esc(e.devata)}</span>` : ''}${by !== 'veda' ? `<span>${esc(VEDA_SHORT[e.veda])}</span>` : ''}<span>${esc((KIND[e.kind] || KIND.sūkta)[0])}${e.count > 1 ? ` · ${fmt(e.count)} verses` : ''}</span></span>
@@ -2250,7 +2391,7 @@ async function viewSettings() {
   }));
   $('#myClear')?.addEventListener('click', () => { my.hist = {}; saveMy(); myMsg('Recent and frequent cleared.'); });
   $('#myExport')?.addEventListener('click', () => {
-    const blob = new Blob([JSON.stringify({ app: 'Vedavalokanam', list: my.saved }, null, 1)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify({ app: 'Vedavalokanam', list: my.saved, dm: my.dm }, null, 1)], { type: 'application/json' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'my-suktas.json';
     document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   });
@@ -2258,9 +2399,11 @@ async function viewSettings() {
     try {
       const d = JSON.parse(await e.target.files[0].text());
       const all = (cache.suktas ||= await json('data/suktas.json'));
-      const ids = (Array.isArray(d) ? d : d.list || []).filter((x) => all.some((s2) => s2.id === x));
+      const dmIn = d.dm && typeof d.dm === 'object' ? d.dm : {};
+      const ids = (Array.isArray(d) ? d : d.list || []).filter((x) => all.some((s2) => s2.id === x) || dmIn[x]?.href);
+      for (const x of ids) if (dmIn[x]?.href) my.dm[x] = dmIn[x];
       my.saved = [...new Set([...my.saved, ...ids])]; saveMy();
-      myMsg(`${ids.length} sūktas added to your list.`);
+      myMsg(`${ids.length} added to your list.`);
     } catch { myMsg('That file is not a list exported from this app.'); }
   });
   main.querySelectorAll('[data-k]').forEach((b) => b.addEventListener('click', () => {

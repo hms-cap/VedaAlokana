@@ -2,6 +2,11 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.16.0 — 2026-10-31
+- **Share the daily mantra as a picture.** The share button under Today's mantra draws every card (mantra, meaning, words and grammar, ṛṣi · devatā · chandas, use) into one tall image in the script and menu language you are using, and opens the phone's share sheet; where that isn't available the picture is saved to downloads.
+- **Star it.** The star saves that mantra to My list (the My sūktas tab), next to saved sūktas; a mantra from a sūkta (Śrī Sūkta) saves the sūkta. Exporting and importing the list carries saved mantras too.
+- Fixed: the pañcāṅga fold label showed raw `<span>` text in the Sanskrit menu.
+
 ## 1.15.0 — 2026-10-31
 - **Pañcāṅga card folds.** On Home it shows its first three lines — date and place, māsa · pakṣa · tithi, and saṃvatsara · ṛtu · ayana · vāra. Tap those lines, or the button under them, to open the tithi, nakṣatra, yoga, karaṇa and sun cards; tap again to fold. The card remembers how you left it (folded at first).
 

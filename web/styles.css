@@ -946,3 +946,11 @@ mark.pv { background: color-mix(in srgb, var(--fire, #D9822B) 22%, transparent);
 .pc.open .pc-tog svg { transform: rotate(180deg); }
 .pc-tog:focus-visible { outline: 2px solid var(--accent, currentColor); border-radius: 10px; }
 @media (prefers-reduced-motion: reduce) { .pc-more, .pc-tog svg { transition: none; } }
+
+/* daily mantra: save and share */
+.dm-acts { display: inline-flex; align-items: center; gap: 8px; }
+.dm-ico { flex: none; width: 36px; height: 36px; padding: 0; border: 1px solid rgba(255, 255, 255, .35); background: rgba(255, 255, 255, .12); color: var(--hero-ink);
+  border-radius: 18px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.dm-ico:hover { background: rgba(255, 255, 255, .22); }
+.dm-ico[aria-pressed="true"] { color: #FBBF24; border-color: rgba(251, 191, 36, .7); }
+.dm-ico[aria-busy="true"] { opacity: .55; cursor: progress; }
