@@ -2,6 +2,9 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.11.0 — 2026-10-31
+- Seven more, from Dayananda Aithal's Saswara Ṛgveda: **Gaṇeśa Atharvaśīrṣa** (under the Atharvaveda), **Medhā Sūkta** and **Pavamāna Pariśiṣṭam** (Ṛgveda Khila), **Pañcarudra Sūkta** (52 ṛks), **Navagraha Mantras** with their adhidevatās and pratyadhidevatās, **Vedapārāyaṇa Ārambha Mantras** and **Sandhyā Ṛk Mantras**. Their Ṛgveda ṛks are shown from the app's own Ṛgveda (so the pāṭha switch applies) with a link to each ṛk; the rest as printed there. `scripts/aithal-source.mjs` extracts them into `scripts/sources/aithal.json`.
+
 ## 1.10.0 — 2026-10-31
 - **Śrī Sūkta** under the Ṛgveda, in two pāṭhas with a switch: the **South Indian pāṭha** (15 ṛks and the phalaśruti, with svaras as in Dayananda Aithal's Saswara Ṛgveda; dīrgha svarita in the Dākṣiṇātya pāṭha, one stroke in the Antarjāla pāṭha) and the **Khila pāṭha** (Ṛgveda Khila 2.6 in Scheftelowitz's edition, 29 verses and his alternatives, from GRETIL). In the South Indian text the words that read differently in the Khila are marked, and the Khila's reading is given under the verse (प्र॒बोधि॑नीम् / प्रमोदिनीम्, कु॒ले / गृहे, पक्वाम् …). The two texts are matched verse by verse and compared letter by letter in `scripts/build-suktas.mjs`; `scripts/sri-sukta-source.mjs` extracts them into `scripts/sources/sri-sukta.json`.
 

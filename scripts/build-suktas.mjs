@@ -84,7 +84,24 @@ function sriSukta() {
     ],
   };
 }
-const EXTRA = { 'sri-sukta': sriSukta };
+// Sūktas from Dayananda Aithal's Saswara Ṛgveda (scripts/sources/aithal.json): a ṛk he labels with its
+// Ṛgveda place is taken from the app's own Ṛgveda, the rest as printed there.
+function aithal(name) {
+  const src = JSON.parse(fs.readFileSync(new URL('./sources/aithal.json', import.meta.url), 'utf8'))[name];
+  if (!src) throw new Error(`aithal ${name}: not in scripts/sources/aithal.json`);
+  let n = 0;
+  const verses = src.items.map((it) => {
+    if (it.head) return { head: [it.head, it.head], n: null };
+    n++;
+    if (it.ref) { const [d1, d2, v] = it.ref.split('.').map(Number); return { n, src: ['rv', d1, d2, v] }; }
+    return { n, lines: it.lines };
+  }).filter((v) => v.n !== null || v.head);
+  // a heading is shown above the next verse
+  const out = []; let head = null;
+  for (const v of verses) { if (!v.n) { head = v.head; continue; } out.push(head ? { ...v, head } : v); head = null; }
+  return { versions: [{ id: 'main', name: '', deva: '', note: `As in Dayananda Aithal’s Saswara Ṛgveda${out.some((v) => v.src) ? '; its ṛks of the Ṛgveda are shown from the app’s Ṛgveda, in the chosen pāṭha' : ', with its svaras'}.`, verses: out }] };
+}
+const EXTRA = { 'sri-sukta': sriSukta, aithal };
 
 export function buildSuktas(OUT) {
   const cat = JSON.parse(fs.readFileSync(path.join(OUT, 'catalog.json'), 'utf8'));
@@ -201,14 +218,15 @@ export function buildSuktas(OUT) {
   const slug = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const seen = new Set();
   const out = SUKTAS.map((e) => {
-    if (e.parts[0]?.versions) {
+    if (e.parts[0]?.versions || e.parts[0]?.aithal) {
       const id = slug(e.name); seen.add(id);
-      const { versions } = EXTRA[e.parts[0].versions]();
+      const { versions } = e.parts[0].aithal ? aithal(e.parts[0].aithal) : EXTRA[e.parts[0].versions]();
       const v0 = versions[0].verses;
       return {
         id, veda: e.veda, name: e.name, deva: e.deva, devata: e.devata, devataDeva: e.devataDeva, kind: e.kind,
-        ref: e.label, refs: [['rv', '']], text: 'rv', segs: [], versions, count: v0.length,
-        line: v0[0].lines[0].replace(/\s*[।॥]\s*$/, ''), roman: '', href: `#/s/${id}`, reader: '',
+        ref: e.label, refs: [], text: 'rv', segs: [], versions, count: v0.length,
+        line: (v0[0].lines ? v0[0].lines[0] : file(...v0[0].src.slice(0, 2))[v0[0].src[2]].find((x) => x[0] === v0[0].src[3])[1][0]).replace(/\s*[।॥]\s*$/, ''),
+        roman: '', href: `#/s/${id}`, reader: '',
       };
     }
     // a part may be [where, title, title deva]: a heading in the sūkta (Navagraha: सूर्यः, चन्द्रः …)

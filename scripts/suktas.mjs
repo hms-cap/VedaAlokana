@@ -15,6 +15,7 @@
 //                       that many verses instead of `to`.
 //     ['rv 1.35.2', 'Sūrya', 'सूर्यः']  a part with a heading of its own
 //     { versions: 'sri-sukta' }  a sūkta not in the app's texts, given in several pāṭhas
+//     { aithal: 'gaNeshAtharvashIrSha' }  a sūkta as printed in Aithal's Saswara Ṛgveda
 //                       (scripts/sources/, built by scripts/build-suktas.mjs)
 // Openings and endings are checked at build time; a part that is not found stops the build.
 
@@ -51,6 +52,12 @@ export const SUKTAS = [
     ['Mahāmṛtyuñjaya Mantra', 'महामृत्युञ्जयमन्त्रः', 'Rudra', 'रुद्रः', 'mantra', '', 'rv 7.59.12'],
     ['Varuṇa Sūkta', 'वरुणसूक्तम्', 'Varuṇa', 'वरुणः', '', '', 'rv 7.86'],
     ['Śrī Sūkta', 'श्रीसूक्तम्', 'Śrī (Lakṣmī)', 'श्रीः (लक्ष्मीः)', '', 'RV Khila 2.6', { versions: 'sri-sukta' }],
+    ['Medhā Sūkta (Ṛgveda Khila)', 'मेधासूक्तम्', 'Medhā', 'मेधा', '', 'RV Khila', { aithal: 'medhA-sUkta' }],
+    ['Pavamāna Pariśiṣṭam', 'पवमानपरिशिष्टम्', 'Pāvamānīḥ', 'पावमान्यः', '', 'RV Khila', { aithal: 'pavamAna-parishiShTam' }],
+    ['Pañcarudra Sūkta', 'पञ्चरुद्रसूक्तम्', 'Rudra', 'रुद्रः', '', 'RV 1.43, 1.114, 2.33, 7.46 …', { aithal: 'paMcharudra-sUkta' }],
+    ['Navagraha Mantras (with adhidevatās)', 'नवग्रहमन्त्राः', 'The nine grahas', 'नवग्रहाः', 'mantra', 'RV', { aithal: 'navagraha-mantras' }],
+    ['Vedapārāyaṇa Ārambha Mantras', 'वेदपारायणारम्भमन्त्राः', 'Gaṇapati and others', 'गणपत्यादयः', 'mantra', 'RV', { aithal: 'vedapArAyaNa-Arambha-mantrANi' }],
+    ['Sandhyā Ṛk Mantras', 'सन्ध्या ऋङ्मन्त्राः', 'Sandhyā', 'सन्ध्या', 'mantra', 'RV', { aithal: 'sandhyA-RikMantrani' }],
     ['Navagraha Sūkta', 'नवग्रहसूक्तम्', 'The nine grahas', 'नवग्रहाः', '', '',
       ['rv 1.35.2', 'Sūrya', 'सूर्यः'], ['rv 1.91.16', 'Candra', 'चन्द्रः'], ['rv 8.44.16', 'Aṅgāraka', 'अङ्गारकः'], ['yv 15.54', 'Budha', 'बुधः'],
       ['rv 2.23.15', 'Bṛhaspati', 'बृहस्पतिः'], ['rv 6.58.1', 'Śukra', 'शुक्रः'], ['rv 10.9.4', 'Śanaiścara', 'शनैश्चरः'], ['rv 4.31.1', 'Rāhu', 'राहुः'], ['rv 1.6.3', 'Ketu', 'केतुः']],
@@ -163,6 +170,7 @@ export const SUKTAS = [
     ['Abhaya Sūkta', 'अभयसूक्तम्', 'Indra', 'इन्द्रः', '', '', 'av 19.15'],
     ['Rāṣṭra Sūkta (bhadram icchantaḥ)', 'राष्ट्रसूक्तम्', 'Rāṣṭra', 'राष्ट्रम्', '', '', 'av 19.41'],
     ['Kāla Sūkta', 'कालसूक्तम्', 'Kāla', 'कालः', '', '', 'av 19.53'],
+    ['Gaṇeśa Atharvaśīrṣa', 'गणेशाथर्वशीर्षम्', 'Gaṇeśa', 'गणेशः', 'upaniṣad', 'Gaṇapati Atharvaśīrṣa Up.', { aithal: 'gaNeshAtharvashIrSha' }],
     ['Śānti Mantra (bhadraṃ karṇebhiḥ)', 'शान्तिमन्त्रः', 'Śānti', 'शान्तिः', 'śānti', 'Muṇḍaka Up.', { t: 'mu', from: 'भद्रं कर्णेभिः शृणुयाम', to: 'बृहस्पतिर्दधातु' }],
   ]),
 ];
