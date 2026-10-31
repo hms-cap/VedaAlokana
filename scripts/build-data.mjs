@@ -424,3 +424,6 @@ const suktas = SUKTAS.map((e) => {
 fs.writeFileSync(path.join(OUT, 'suktas.json'), JSON.stringify(suktas));
 console.log(`suktas: ${suktas.length} checked against the text`);
 console.log('wrote', OUT);
+
+// ---- per-Veda file lists for "Download for offline" (writes data/offline.json)
+await import('./offline-index.mjs');

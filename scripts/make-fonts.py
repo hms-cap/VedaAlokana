@@ -173,11 +173,54 @@ def audit_fonts(font, script, adir):
     print(f'{adir}: audit fonts for {script} ({len(anu)} anudātta glyphs)')
 
 
+# Interface fonts, bundled so the installed app looks the same offline (Latin + IAST only).
+UI_LATIN = 'U+0020-007E,U+00A0-017F,U+0300-036F,U+1E00-1EFF,U+2000-206F,U+20B9,U+2190-2193,U+2212'
+UI_SOURCES = [
+    ('IBMPlexSans-Var.woff', 'ofl/ibmplexsans/IBMPlexSans[wdth,wght].ttf', {'wdth': 100, 'wght': (400, 600)}),
+    ('GentiumBookPlus-Regular.woff', 'ofl/gentiumbookplus/GentiumBookPlus-Regular.ttf', None),
+    ('GentiumBookPlus-Italic.woff', 'ofl/gentiumbookplus/GentiumBookPlus-Italic.ttf', None),
+    ('GentiumBookPlus-Bold.woff', 'ofl/gentiumbookplus/GentiumBookPlus-Bold.ttf', None),
+]
+
+
+def build_ui(root, out):
+    import io
+    for dest, rel, axes in UI_SOURCES:
+        font = TTFont(root / rel, lazy=False)
+        if axes:
+            buf = io.BytesIO()
+            instantiateVariableFont(font, axes).save(buf)
+            buf.seek(0)
+            font = TTFont(buf, lazy=False)
+        opts = subset.Options()
+        opts.flavor = 'woff'
+        opts.hinting = False
+        opts.drop_tables += ['Silf', 'Glat', 'Gloc', 'Feat', 'Sill', 'DSIG']  # Graphite tables browsers ignore
+        sub = subset.Subsetter(opts)
+        sub.populate(unicodes=subset.parse_unicodes(UI_LATIN))
+        sub.subset(font)
+        font.flavor = 'woff'
+        font.save(out / dest)
+        print(f'{out / dest}')
+
+
 def build(root, out, adir=None):
     out.mkdir(parents=True, exist_ok=True)
+    build_ui(root, out)
     for script, rel, axes, unicodes in SOURCES:
         font = TTFont(root / rel)
         font = instantiateVariableFont(font, axes)
+        # "Standard marks" in Settings: the same subset with the stock svara marks.
+        std = subset.Options()
+        std.layout_features = ['*']
+        std.flavor = 'woff'
+        stock = subset.Subsetter(std)
+        plain = TTFont(root / rel)
+        plain = instantiateVariableFont(plain, axes)
+        stock.populate(unicodes=subset.parse_unicodes(unicodes))
+        stock.subset(plain)
+        plain.flavor = 'woff'
+        plain.save(out / f'NotoSerif{script}-Std.woff')
         if script == 'Kannada':
             deepen_kannada_stacks(font)
         changed = [n for n in font.getGlyphOrder() if is_svara_glyph(n) and strengthen(font, n, ANU_DROP[script], BAR_X[script])]

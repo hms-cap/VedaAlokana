@@ -116,6 +116,132 @@ document.getElementById('themeBtn')?.addEventListener('click', () => {
 darkMQ?.addEventListener?.('change', applyTheme);
 applyTheme();
 
+// ---------- version, installing and offline ----------
+const APP = self.VEDALOKANA || { version: '0.0.0', released: '' };
+const CHANGES = [
+  ['1.0.0', '2026-10-31', [
+    'Install Vedālokana as an app; it opens and works without a connection.',
+    'Download each Veda, and the Sāyaṇa bhāṣya, for offline reading from Settings.',
+    'All fonts are now part of the app, so offline looks the same as online.',
+    'About page with the version, what’s new and an update check.']],
+  ['0.9.0', '2026-10-31', [
+    'New Home: local pañcāṅga, today’s mantra, continue chanting, Veda tiles with their own icons and an āśrama-at-dawn background.',
+    'Each Veda’s page opens on a wheel of its maṇḍalas, kāṇḍas or adhyāyas, with its most addressed devatās.',
+    'Chant view: one mantra at a time, full screen, with swipe and tap to move on.',
+    'Light, dark or match-device theme, and higher-contrast buttons.']],
+  ['0.8.0', '2026-10-31', [
+    'Sāyaṇa’s bhāṣya for the whole Ṛgveda, beside each ṛk.',
+    'Swipe between sūktas and sections; the tab bar stays within reach in the reader.',
+    'Ṛṣi, devatā and chandas at the top and only where they change, with a switch to hide them.',
+    'Chant-friendly reading by default: the script alone, no translation.',
+    'Anudātta marks clear subscript consonants; stray “?” marks from the sources removed.']],
+  ['0.5.0', '2026-10-30', [
+    'Brāhmaṇas, Āraṇyakas, Upaniṣads and the Kṛṣṇa Yajurveda.',
+    'Kannada script with svara marks, switched in one tap; bolder svara marks.',
+    'Famous sūktas, and app-style navigation across the levels of each Veda.']],
+  ['0.1.0', '2026-10-30', ['First release: the four Saṃhitās with svara marks, browsable by ṛṣi, devatā and chandas.']],
+];
+const DATA_CACHE = 'vedalokana-data';
+const swOK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+const fmtMB = (b) => `${b >= 1e7 ? Math.round(b / 1e6) : (b / 1e6).toFixed(1)} MB`;
+const fmtDay = (d) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) : '');
+
+function toast(html, ms = 5000) {
+  const t = document.createElement('div');
+  t.className = 'swipe-tip app-toast'; t.innerHTML = html; t.setAttribute('role', 'status');
+  document.body.append(t);
+  if (ms) { setTimeout(() => t.classList.add('out'), ms); setTimeout(() => t.remove(), ms + 500); }
+  return t;
+}
+
+if (swOK) {
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register('sw.js').catch(() => { /* not available in this view */ });
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController) return;  // the first install: nothing to reload
+    const t = toast('A new version of Vedālokana is ready. <button type="button">Reload</button>', 0);
+    t.querySelector('button').addEventListener('click', () => location.reload());
+  });
+}
+
+async function offlineIndex() {
+  return (cache.offline ||= await json('data/offline.json'));
+}
+async function storedSet() {
+  if (!('caches' in window)) return null;
+  const c = await caches.open(DATA_CACHE);
+  return new Set((await c.keys()).map((r) => r.url));
+}
+const abs = (f) => new URL(f, document.baseURI).href;
+
+async function renderOffline(el) {
+  if (!el) return;
+  if (!('caches' in window)) { el.innerHTML = '<p>Offline storage isn’t available in this browser view. Open the app from its own address to install it.</p>'; return; }
+  let idx;
+  try { idx = await offlineIndex(); } catch { el.innerHTML = '<p>Connect once to see what can be downloaded.</p>'; return; }
+  const have = await storedSet();
+  const est = await navigator.storage?.estimate?.().catch(() => null);
+  const row = (p) => {
+    const n = p.files.filter((f) => have.has(abs(f))).length;
+    const done = n === p.files.length;
+    const state = done ? 'Downloaded' : n ? `${Math.round((n / p.files.length) * 100)}% stored` : 'Not downloaded';
+    return `<div class="off-row${p.of ? ' sub' : ''}" data-pack="${esc(p.id)}" style="--vc: var(--v-${esc(p.of || p.id)})">
+      <span class="off-dot" aria-hidden="true"></span>
+      <span class="off-t"><b>${esc(p.name)}</b><small>${fmtMB(p.bytes)} · <span class="off-s">${state}</span></small>
+        <span class="off-bar" hidden><i></i></span></span>
+      ${done ? `<button type="button" class="off-btn ghost" data-act="rm">Remove</button>` : `<button type="button" class="off-btn" data-act="get">${n ? 'Finish' : 'Download'}</button>`}
+    </div>`;
+  };
+  const total = idx.packs.reduce((a, p) => a + p.bytes, 0);
+  const allDone = idx.packs.every((p) => p.files.every((f) => have.has(abs(f))));
+  el.innerHTML = `${idx.packs.map(row).join('')}
+    <div class="off-foot"><span>${est?.usage ? `Using ${fmtMB(est.usage)} on this device` : ''}</span>
+    ${allDone ? '' : `<button type="button" class="off-btn ghost" data-act="all">Download everything · ${fmtMB(total)}</button>`}</div>
+    ${navigator.onLine ? '' : '<p class="off-note">You are offline: downloads will start when you reconnect.</p>'}`;
+  const run = async (pack, rowEl) => {
+    const bar = rowEl.querySelector('.off-bar'); const fill = bar.querySelector('i'); const st = rowEl.querySelector('.off-s');
+    rowEl.querySelector('.off-btn').disabled = true;
+    bar.hidden = false;
+    navigator.storage?.persist?.().catch(() => {});
+    const c = await caches.open(DATA_CACHE);
+    const todo = pack.files.filter((f) => !have.has(abs(f)));
+    let done = pack.files.length - todo.length; let failed = 0;
+    const tick = () => { fill.style.width = `${(done / pack.files.length) * 100}%`; st.textContent = `Downloading… ${Math.round((done / pack.files.length) * 100)}%`; };
+    tick();
+    const worker = async () => {
+      while (todo.length) {
+        const f = todo.shift();
+        try { const r = await fetch(f); if (!r.ok) throw new Error(r.status); await c.put(abs(f), r); have.add(abs(f)); } catch { failed++; }
+        done++; tick();
+      }
+    };
+    await Promise.all(Array.from({ length: 6 }, worker));
+    return failed;
+  };
+  el.querySelectorAll('[data-act]').forEach((b) => b.addEventListener('click', async () => {
+    const act = b.dataset.act;
+    if (act === 'all') {
+      b.disabled = true;
+      let failed = 0;
+      for (const p of idx.packs) {
+        const r = el.querySelector(`[data-pack="${CSS.escape(p.id)}"]`);
+        if (p.files.some((f) => !have.has(abs(f)))) failed += await run(p, r);
+      }
+      if (failed) toast(`${failed} files could not be downloaded. Try again when the connection is steadier.`);
+      return renderOffline(el);
+    }
+    const rowEl = b.closest('.off-row'); const p = idx.packs.find((x) => x.id === rowEl.dataset.pack);
+    if (act === 'get') {
+      const failed = await run(p, rowEl);
+      if (failed) toast(`${failed} files could not be downloaded. Try again when the connection is steadier.`);
+    } else {
+      const c = await caches.open(DATA_CACHE);
+      await Promise.all(p.files.map((f) => c.delete(abs(f))));
+    }
+    renderOffline(el);
+  }));
+}
+
 // ---------- helpers ----------
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmt = (n) => Number(n).toLocaleString('en-US');
@@ -251,16 +377,20 @@ const ARROW = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" strok
 async function viewHome() {
   setTitle('');
   const cat = await catalog();
-  const rv = await index('rv');
-  const meta = cat.texts.find((v) => v.id === 'rv');
-  const day = Math.floor(Date.now() / 86400000);
-  const row = rv.rows[(day * 7919) % rv.rows.length];
-  const t = await text('rv', row[0]);
-  const verse = t[row[1]].find((x) => x[0] === row[2]);
-  const dev = row[COL.devata] >= 0 ? rv.facets.devata[row[COL.devata]] : null;
-  const ris = row[COL.rishi] >= 0 ? rv.facets.rishi[row[COL.rishi]] : null;
-  const cha = row[COL.chandas] >= 0 ? rv.facets.chandas[row[COL.chandas]] : null;
-  const ref = refOf(meta, row[0], row[1], row[2]);
+  // Today's mantra comes from the Ṛgveda; offline, before the Ṛgveda is stored, show the Gāyatrī.
+  let m = { lines: ['तत्स॑वि॒तुर्वरे॑ण्यं॒ भर्गो॑ दे॒वस्य॑ धीमहि ।', 'धियो॒ यो नः॑ प्रचो॒दया॑त् ॥'], ref: '3.62.10', tags: 'Savitṛ · Viśvāmitra Gāthina · Gāyatrī', href: '#/v/rv/c/3/62?v=10' };
+  try {
+    const rv = await index('rv');
+    const meta = cat.texts.find((v) => v.id === 'rv');
+    const day = Math.floor(Date.now() / 86400000);
+    const row = rv.rows[(day * 7919) % rv.rows.length];
+    const t = await text('rv', row[0]);
+    const verse = t[row[1]].find((x) => x[0] === row[2]);
+    const dev = row[COL.devata] >= 0 ? rv.facets.devata[row[COL.devata]] : null;
+    const ris = row[COL.rishi] >= 0 ? rv.facets.rishi[row[COL.rishi]] : null;
+    const cha = row[COL.chandas] >= 0 ? rv.facets.chandas[row[COL.chandas]] : null;
+    m = { lines: verse[1], ref: refOf(meta, row[0], row[1], row[2]), tags: [dev, ris, cha].filter(Boolean).map((e) => cap(e[1])).join(' · '), href: `#/v/rv/c/${row[0]}/${row[1]}?v=${row[2]}` };
+  } catch { /* keep the Gāyatrī */ }
   const byId = Object.fromEntries(cat.texts.map((x) => [x.id, x]));
   let last = null;
   try { last = JSON.parse(localStorage.getItem('vedalokana.last') || 'null'); } catch { /* storage unavailable */ }
@@ -273,10 +403,10 @@ async function viewHome() {
     <section class="hero" aria-labelledby="todayH">
       ${SUN_SVG}
       <h1 id="todayH" class="hero-k">Today’s mantra</h1>
-      <div class="hero-m" lang="sa">${verse[1].map((l) => `<div>${esc(l)}</div>`).join('')}</div>
+      <div class="hero-m" lang="sa">${m.lines.map((l) => `<div>${esc(l)}</div>`).join('')}</div>
       <div class="hero-f">
-        <span class="hero-r"><b>Ṛgveda ${esc(ref)}</b><span>${[dev, ris, cha].filter(Boolean).map((e) => esc(cap(e[1]))).join(' · ')}</span></span>
-        <a class="hero-go" href="#/v/rv/c/${row[0]}/${row[1]}?v=${row[2]}" aria-label="Open Ṛgveda ${esc(ref)} in the reader">${ARROW}</a>
+        <span class="hero-r"><b>Ṛgveda ${esc(m.ref)}</b><span>${esc(m.tags)}</span></span>
+        <a class="hero-go" href="${m.href}" aria-label="Open Ṛgveda ${esc(m.ref)} in the reader">${ARROW}</a>
       </div>
     </section>
     ${last ? `<a class="cont" href="${esc(last.href)}">
@@ -292,7 +422,7 @@ async function viewHome() {
   }).join('')}</div>
     ${chips.length ? `<div class="sec-h"><h2>Sūktas</h2><a href="#/suktas">All ${suk.length}</a></div>
     <div class="schips">${chips.map((s) => `<a class="schip" href="${esc(s.href)}${s.v ? `?v=${s.v}` : ''}"><span lang="sa">${esc(s.deva)}</span><small>${esc(s.ref)}</small></a>`).join('')}</div>` : ''}
-    <p class="lede home-foot">Every text comes from an openly published digital edition. <a href="#/about">Sources and what is still missing.</a></p>
+    <p class="lede home-foot">Every text comes from an openly published digital edition. <a href="#/about">About Vedālokana ${esc(APP.version)}: sources and what’s new.</a></p>
   </div>`;
   renderPanchanga();
 }
@@ -807,14 +937,25 @@ const SOURCES = {
   wikisource: 'Sāyaṇa bhāṣya: Sanskrit Wikisource volunteers (CC BY-SA 4.0), via Project Vyasa',
 };
 async function viewAbout() {
-  setTitle('Sources and licences');
+  setTitle('About');
   const cat = await catalog();
   const byId = Object.fromEntries(cat.texts.map((x) => [x.id, x]));
   const rows = cat.vedas.flatMap((v) => cat.layers.flatMap((l) => v.layers[l].map((i) => byId[i])
     .map((t) => `<tr><td>${esc(v.name)}</td><td>${LAYERS[l].label}</td><td><a href="#/v/${t.id}">${esc(t.name)}</a></td><td>${t.sources.map((k) => esc(SOURCES[k] || k)).join('; ')}</td></tr>`))).join('');
-  main.innerHTML = `<div class="prose">
-    <h1>Sources and licences</h1>
-    <p class="lede">Vedālokana is a non-commercial browser built from openly published digital texts. Text and tags are shown as the sources give them; corrections belong upstream.</p>
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  main.innerHTML = `<div class="prose about">
+    <section class="app-card">
+      <img src="icons/icon.svg" alt="" width="72" height="72">
+      <div class="app-id"><h1>Vedālokana</h1>
+        <p class="app-v">Version <b>${esc(APP.version)}</b>${APP.released ? ` · ${esc(fmtDay(APP.released))}` : ''}</p>
+        <p class="app-v">Texts built ${esc(fmtDay(cat.built))}</p></div>
+      <div class="app-state" id="appState"><span class="dot"></span><span>Checking offline readiness…</span></div>
+      <div class="app-acts">${swOK ? '<button type="button" class="off-btn ghost" id="chkUpd">Check for updates</button>' : ''}<a class="off-btn ghost" href="#/settings?s=offline">Offline downloads</a></div>
+    </section>
+    <p class="lede">Vedālokana is a non-commercial browser for the Vedas, built from openly published digital texts. Text and tags are shown as the sources give them; corrections belong upstream.</p>
+    <h2>What’s new</h2>
+    <ol class="changes">${CHANGES.map(([v, d, items], i) => `<li${i ? '' : ' class="cur"'}><div class="ch-h"><b>${esc(v)}</b><span>${esc(fmtDay(d))}</span>${i ? '' : '<em>This version</em>'}</div>
+      <ul>${items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></li>`).join('')}</ol>
     <h2>Texts and where they come from</h2>
     <div class="table-wrap"><table class="src-table"><thead><tr><th>Veda</th><th>Layer</th><th>Text</th><th>Source</th></tr></thead><tbody>${rows}</tbody></table></div>
     <h2>Known gaps</h2>
@@ -825,9 +966,30 @@ async function viewAbout() {
       <li>Not found in an open edition yet: Maitrāyaṇī and Kāṭhaka texts beyond the Saṃhitā, Taittirīya numbering by anuvāka, the Kauṣītaki Upaniṣad.</li>
       <li>Audio recitation is not included: the Vedic Heritage Portal’s recordings need permission to reuse.</li>
     </ul>
-    <h2>Data build</h2>
-    <p>Built ${esc(cat.built)} by <code>scripts/build-data.mjs</code>. The source repositories and steps to rebuild are in the project README.</p>
+    <h2>Fonts</h2>
+    <p>Noto Serif Devanagari and Noto Serif Kannada (with strengthened svara marks), IBM Plex Sans and Gentium Book Plus, all under the SIL Open Font License; the licence texts are in the <code>fonts</code> folder.</p>
+    <h2>Building it</h2>
+    <p>The data is built by <code>scripts/build-data.mjs</code> and the fonts by <code>scripts/make-fonts.py</code>; the source repositories and steps are in the project README. ${standalone ? '' : 'To install, use your browser’s “Install app” or “Add to Home Screen”.'}</p>
   </div>`;
+  const st = document.getElementById('appState');
+  const set = (ok, text) => { st.classList.toggle('ok', ok); st.lastElementChild.textContent = text; };
+  if (!swOK) set(false, 'Offline use needs the app’s own https address.');
+  else {
+    const reg = await navigator.serviceWorker.getRegistration().catch(() => null);
+    if (navigator.serviceWorker.controller) set(true, `${standalone ? 'Installed · ' : ''}Ready to work offline`);
+    else if (reg) set(false, 'Getting ready for offline use…');
+    else set(false, 'Offline use isn’t available in this view.');
+    document.getElementById('chkUpd')?.addEventListener('click', async (e) => {
+      const b = e.currentTarget; b.disabled = true; b.textContent = 'Checking…';
+      try {
+        const r = await navigator.serviceWorker.getRegistration();
+        await r?.update();
+        const waiting = r?.installing || r?.waiting;
+        b.textContent = waiting ? 'Update found, installing…' : navigator.onLine ? 'You have the latest version' : 'Offline: try again later';
+      } catch { b.textContent = 'Couldn’t check right now'; }
+      setTimeout(() => { b.disabled = false; b.textContent = 'Check for updates'; }, 4000);
+    });
+  }
 }
 
 function notFound() {
@@ -1019,7 +1181,7 @@ function renderChrome(r, path) {
   back.hidden = !parentHref;
   if (parentHref) back.setAttribute('href', parentHref);
   $('#brand').classList.toggle('when-back', !!parentHref);
-  const named = { library: 'Library', suktas: 'Sūktas', search: 'Search', settings: 'Settings', about: 'Sources' }[page];
+  const named = { library: 'Library', suktas: 'Sūktas', search: 'Search', settings: 'Settings', about: 'About' }[page];
   $('#topTitle').textContent = path.length ? path[path.length - 1].label : (named || '');
   // tabs
   const tab = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 'about' ? 'settings' : page);
@@ -1140,8 +1302,13 @@ async function viewSettings() {
       <div class="seg wide-seg">${opt('tr', true, 'Show')}${opt('tr', false, 'Hide')}</div></section>
     <section class="set"><h2>Ṛṣi, devatā and chandas</h2><p>Shown at the top of a sūkta and again only where they change. Hide them for uninterrupted chanting.</p>
       <div class="seg wide-seg">${opt('tags', true, 'Show')}${opt('tags', false, 'Hide')}</div></section>
-    <section class="set"><h2>About</h2><p><a href="#/about">Sources, licences and known gaps</a></p></section>
+    <section class="set" id="offline"><h2>Offline</h2><p>Once installed, the app opens without a connection, and every text you have read stays available. Download a whole Veda to have all of it ready.</p>
+      <div class="off" id="offList"><p class="loading">Checking what is stored…</p></div></section>
+    <section class="set"><h2>About</h2><a class="about-link" href="#/about"><img src="icons/icon.svg" alt="" width="40" height="40"><span><b>Vedālokana</b><small>Version ${esc(APP.version)} · sources, licences, what’s new</small></span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a></section>
   </div>`;
+  renderOffline(document.getElementById('offList'));
+  if (parse().params.get('s') === 'offline') document.getElementById('offline')?.scrollIntoView();
   main.querySelectorAll('[data-k]').forEach((b) => b.addEventListener('click', () => {
     const k = b.dataset.k; const raw = b.dataset.v;
     if (k === 'lipi') { setLipi(raw); return; }
@@ -1183,7 +1350,10 @@ async function route() {
     await renderRail(r);
     renderChrome(r, await buildPath(r));
   } catch (err) {
-    main.innerHTML = `<div class="col"><h1>Couldn’t load this page</h1><p class="lede">${esc(err.message)}. Check your connection and reload.</p></div>`;
+    const off = !navigator.onLine || / \(503\)$/.test(err.message);
+    main.innerHTML = off
+      ? `<div class="col"><h1>Not downloaded yet</h1><p class="lede">You are offline, and this text hasn’t been stored on this device. Connect once to read it, or download the whole Veda in <a href="#/settings?s=offline">Settings → Offline</a>.</p></div>`
+      : `<div class="col"><h1>Couldn’t load this page</h1><p class="lede">${esc(err.message)}. Check your connection and reload.</p></div>`;
   }
   if (keepScrollY !== null) {
     const y = keepScrollY; const a = keepAnchor; keepScrollY = null; keepAnchor = null;

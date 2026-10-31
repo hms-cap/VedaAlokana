@@ -2,7 +2,7 @@
 
 A web app for browsing the Vedas — Ṛgveda, Śukla and Kṛṣṇa Yajurveda, Sāmaveda and Atharvaveda — across all four layers: **Saṃhitā**, **Brāhmaṇa**, **Āraṇyaka** and **Upaniṣad**. Saṃhitās can also be browsed by **ṛṣi**, **devatā** and **chandas** where an index exists; filters combine, so you can ask for every ṛk to Agni in Gāyatrī by Medhātithi Kāṇva. Text is shown in **Devanagari or Kannada** (with svara marks), with IAST, Padapāṭha and translation where the source has them, and Sāyaṇa's bhāṣya for the Ṛgveda.
 
-It is a static site: plain HTML, CSS and JavaScript with pre-built JSON, no framework and no server.
+It is a static site: plain HTML, CSS and JavaScript with pre-built JSON, no framework and no server. It installs as an app and works offline (see below). Current version: **1.0.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Run it locally
 
@@ -11,6 +11,18 @@ cd web
 python3 -m http.server 8000
 # open http://localhost:8000
 ```
+
+## Install and offline use
+
+Served over https (for example GitHub Pages), the app can be installed from the browser ("Install app" / "Add to Home Screen"). A service worker (`web/sw.js`) then:
+
+- stores the app shell — code, styles, all fonts and icons — on first visit, so the app always opens offline;
+- keeps every text that has been read (`data/*.json`) and refreshes it in the background when online;
+- lets Settings → Offline download a whole Veda, or the Sāyaṇa bhāṣya, ahead of time, using the file lists in `web/data/offline.json`.
+
+Nothing else needs the network: the pañcāṅga is computed on the device and location comes from the device.
+
+**Releasing a new version:** bump `version` (and `released`) in `web/version.js` and add an entry to `CHANGES` in `web/app.js` and to `CHANGELOG.md`. The version change makes installed copies fetch the new app shell on their next visit and offer a reload; stored texts are kept.
 
 ## What's included
 
@@ -43,12 +55,13 @@ node scripts/build-data.mjs \
   --gretil gretil-mirror \
   --sayana sa.wikisource.org/rigveda/rigveda.vyview \
   --out web/data
+# also writes web/data/offline.json (node scripts/offline-index.mjs does just that step)
 # --sayana is optional: git clone -b gh-pages https://github.com/project-vyasa/sa.wikisource.org
 ```
 
 ## Fonts
 
-`web/fonts/` holds Noto Serif Devanagari and Noto Serif Kannada subsets with heavier svara marks, built from a checkout of [google/fonts](https://github.com/google/fonts):
+`web/fonts/` holds Noto Serif Devanagari and Noto Serif Kannada subsets with heavier svara marks (`*-Vedic.woff`) and with the stock marks (`*-Std.woff`, for "Standard" in Settings), plus Latin/IAST subsets of IBM Plex Sans and Gentium Book Plus, so no font server is needed. All are built from a checkout of [google/fonts](https://github.com/google/fonts):
 
 ```sh
 python3 scripts/make-fonts.py path/to/google-fonts web/fonts --audit /tmp/afonts   # needs fontTools
@@ -64,7 +77,8 @@ node scripts/test-lipi.mjs   # Devanagari → Kannada: word checks + every line 
 ## Layout
 
 ```
-web/            the app (index.html, app.js, lipi.js, styles.css), fonts/ and data/
+web/            the app (index.html, app.js, lipi.js, panchanga.js, styles.css, version.js, sw.js,
+                manifest.webmanifest), icons/, fonts/ and data/
 scripts/        data pipeline, per-text parsers, Devanagari ⇄ IAST transliterator
 docs/           data sources, licences, gaps
 ```
