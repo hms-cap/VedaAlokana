@@ -8,7 +8,7 @@ const VERSION = self.VEDALOKANA.version;
 const SHELL = `vedalokana-shell-${VERSION}`;
 const DATA = 'vedalokana-data';
 const SHELL_FILES = [
-  './', 'index.html', 'app.js', 'lipi.js', 'panchanga.js', 'dirgha.js', 'styles.css', 'version.js', 'manifest.webmanifest',
+  './', 'index.html', 'app.js', 'lipi.js', 'panchanga.js', 'dakshinatya.js', 'styles.css', 'version.js', 'manifest.webmanifest',
   'fonts/IBMPlexSans-Var.woff', 'fonts/GentiumBookPlus-Regular.woff', 'fonts/GentiumBookPlus-Italic.woff', 'fonts/GentiumBookPlus-Bold.woff',
   'fonts/NotoSerifDevanagari-Vedic.woff', 'fonts/NotoSerifKannada-Vedic.woff',
   'fonts/NotoSerifDevanagari-Std.woff', 'fonts/NotoSerifKannada-Std.woff',

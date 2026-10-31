@@ -2,6 +2,10 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.7.0 — 2026-10-31
+- **Dākṣiṇātya pāṭha** (formerly Kāñcī · Mādhva) is now the default for the Ṛgveda, and follows Karnataka recitation books in three more ways: a class nasal inside a word is written as anusvāra (इंद्र, क्षु॒मंतं᳚; a word-final nasal keeps its letter, म॑घवञ्चि॒त्रम्); an avagraha marks the a swallowed where two pādas run together (दक्षि॑णेना॒ऽभि, वृ॒त्वाऽत्य॑तिष्ठत्, महि॒माऽतो॒); and a kampa is written र॒प्स्व(अ॒)न्१॒॑तः, the numeral keeping its anudātta. Word boundaries come from aligning each ṛk with its padapāṭha. `web/dirgha.js` is now `web/dakshinatya.js`; `node scripts/test-dakshinatya.mjs` checks it against printed Gaṇapati, Hiraṇyagarbha, Puruṣa and Devī sūktas.
+- Saved settings move to the new default once; Śṛṅgeri style stays one tap away in the reader and in Settings.
+
 ## 1.6.0 — 2026-10-31
 - Install instructions for Android, iPhone/iPad and computers (Settings → About), with a one-tap Install button where the browser offers one (Chrome and Edge). iOS has no one-tap install, so it gets the three-step Safari guide.
 

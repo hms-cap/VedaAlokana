@@ -58,6 +58,6 @@ GRETIL texts are romanised, so their Devanagari and Kannada are converted and ca
 - The Atharvaveda has no Āraṇyaka; the Śukla Yajurveda's Āraṇyaka is the Bṛhadāraṇyaka, listed under Upaniṣads.
 
 
-## Dīrgha-svarita (Kāñcī · Mādhva) style of the Ṛgveda
+## Dākṣiṇātya pāṭha of the Ṛgveda
 
-Not a separate text: `web/dirgha.js` rewrites the svara marks of the VedaWeb Ṛgveda by rule. The rules were checked against Dayananda Aithal's *Saswara Rigveda Samhita* (https://github.com/daithal/saswara-rigveda, no licence stated, so none of its text is included here). Known limits: where the two texts differ in wording (166 ṛks) the marks follow our text; pauses inside a half-verse, word splits such as इद्‌ दे॒वेषु and the commas some books print at vowel hiatus are not reproduced.
+Not a separate text: `web/dakshinatya.js` rewrites the VedaWeb Ṛgveda by rule (dīrgha svarita, anusvāra for nasals inside a word, avagraha at pāda junctions, kampa). The dīrgha-svarita rules were checked against Dayananda Aithal's *Saswara Rigveda Samhita* (https://github.com/daithal/saswara-rigveda, no licence stated, so none of its text is included here); the others against printed Karnataka editions of four sūktas. Known limits: where the two texts differ in wording (166 ṛks) the marks follow our text; pāda junctions are found from syllable counts, so a ṛk with an irregular pāda can gain or miss an avagraha; a kampa on an anusvāra syllable is written शू॒ष्य(अं॒)१॒॑, since an anusvāra after the bracket would have no letter to sit on; pauses inside a half-verse, word splits such as इद्‌ दे॒वेषु and the commas some books print at vowel hiatus are not reproduced.

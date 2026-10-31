@@ -68,20 +68,24 @@ python3 scripts/make-fonts.py path/to/google-fonts web/fonts --shobhika path/to/
 node scripts/audit-marks.mjs /tmp/afonts   # anudātta depth, clearance and line extents over all the data (Playwright)
 ```
 
-## Ṛgveda svara styles
+## Ṛgveda pāṭhas
 
-The Ṛgveda can be shown in two svara styles (Settings, or the switch in the reader):
+The Ṛgveda can be shown two ways (Settings, or the switch in the reader):
 
+- **Dākṣiṇātya pāṭha** (default) — as South Indian (Karnataka) recitation books print it:
+  - a svarita on a heavy syllable gets the double stroke ᳚ (dīrgha svarita);
+  - a class nasal inside a word is written as anusvāra (इंद्र, क्षु॒मंतं᳚), while one at the end of a word keeps its letter (म॑घवञ्चि॒त्रम्);
+  - where two pādas run together, the swallowed a gets an avagraha (दक्षि॑णेना॒ऽभि, वृ॒त्वाऽत्य॑तिष्ठत्);
+  - a kampa is written with its vowel in brackets, then the rest of the syllable and the numeral: र॒प्स्व(अ॒)न्१॒॑तः.
 - **Śṛṅgeri** — the text as published by VedaWeb (after Aufrecht): every svarita with one stroke ॑; a kampa as १/३ with anudātta and svarita.
-- **Kāñcī · Mādhva** — as in South Indian recitation books: a svarita on a heavy syllable gets the double stroke ᳚ (dīrgha svarita), and a kampa is written as the numeral with svarita followed by the elided vowel, रा॒यो॒३॑(ओ॒)वनिः.
 
-The second style is computed in the browser by `web/dirgha.js`; the rules are written out at the top of that file. They were derived from, and are tested against, Dayananda Aithal's [Saswara Rigveda Samhita](https://github.com/daithal/saswara-rigveda), whose dīrgha svaritas were themselves added by program: on all 10,552 ṛks they agree on 99.99% of svarita marks. No text is copied from that site.
+The Dākṣiṇātya pāṭha is computed in the browser by `web/dakshinatya.js`; the rules are written out at the top of that file. Word boundaries come from aligning each ṛk with its padapāṭha, and pāda boundaries from the syllable count of the half-verse. The dīrgha-svarita rules were derived from, and are tested against, Dayananda Aithal's [Saswara Rigveda Samhita](https://github.com/daithal/saswara-rigveda), whose dīrgha svaritas were themselves added by program: on all 10,552 ṛks they agree on 99.99% of svarita marks. No text is copied from that site. The other rules were read off printed Gaṇapati, Hiraṇyagarbha, Puruṣa and Devī sūktas, which the test reproduces exactly.
 
 ## Tests
 
 ```sh
 node scripts/test-lipi.mjs   # Devanagari → Kannada: word checks + every line of the data
-node scripts/test-dirgha.mjs path/to/saswara-rigveda   # dīrgha-svarita rules vs. Aithal's edition
+node scripts/test-dakshinatya.mjs [path/to/saswara-rigveda]   # Dākṣiṇātya pāṭha vs. printed sūktas (and Aithal's edition)
 ```
 
 ## Layout
