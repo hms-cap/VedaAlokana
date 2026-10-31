@@ -50,7 +50,7 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
   const path = rel(url);
-  if (path === null) return;
+  if (path === null || url.searchParams.has('fresh')) return;  // ?fresh: an update check, straight to the network
   if (e.request.mode === 'navigate') {
     e.respondWith((async () => (await caches.match('index.html', { cacheName: SHELL })) || fetch(e.request))());
   } else if (path.startsWith('data/')) {

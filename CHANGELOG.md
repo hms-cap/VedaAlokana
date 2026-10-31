@@ -2,6 +2,9 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.2.1 — 2026-10-31
+- Fix: Check for updates always said "latest" because the service worker's version check went through the HTTP cache. It now asks the server for the published version directly, downloads the update and offers a restart. The service worker is registered with `updateViaCache: 'none'`, so installed copies also pick up new versions on their next visit.
+
 ## 1.2.0 — 2026-10-31
 - One-tap icons at the top of each sūkta to show or hide ṛṣi · devatā · chandas, the translation and the Sāyaṇa bhāṣya (replacing the three switch rows below the title).
 - Reader buttons take the colour of their Veda.

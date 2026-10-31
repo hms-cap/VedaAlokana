@@ -739,3 +739,5 @@ body.story-open { overflow: hidden; }
 .qbtn [lang^="sa"] { font-size: 1.15em; line-height: 1.2; }
 .qbtn svg { flex: none; }
 @media (max-width: 380px) { .qbtn span { display: none; } .qbtn { width: 40px; padding: 0; justify-content: center; } }
+.upd-out { grid-column: 1 / -1; margin: 0; min-height: 1.2em; font-size: 14px; color: var(--muted); }
+.upd-out:empty { display: none; }

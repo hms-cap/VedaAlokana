@@ -175,6 +175,7 @@ applyTheme();
 // ---------- version, installing and offline ----------
 const APP = self.VEDALOKANA || { version: '0.0.0', released: '' };
 const CHANGES = [
+  ['1.2.1', '2026-10-31', ['Check for updates now asks the server for the published version, downloads it and offers a restart; installed copies also notice new versions sooner.']],
   ['1.2.0', '2026-10-31', [
     'One-tap icons at the top of each sūkta to show or hide ṛṣi · devatā · chandas, the translation and the Sāyaṇa bhāṣya.',
     'Reader buttons take the colour of their Veda.']],
@@ -218,11 +219,50 @@ function toast(html, ms = 5000) {
 
 if (swOK) {
   const hadController = !!navigator.serviceWorker.controller;
-  navigator.serviceWorker.register('sw.js').catch(() => { /* not available in this view */ });
+  // updateViaCache 'none': look past the HTTP cache for sw.js and for version.js, which it imports,
+  // so a new version is seen as soon as it is published.
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => { /* not available in this view */ });
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!hadController) return;  // the first install: nothing to reload
+    if (!hadController || document.getElementById('updOut')?.textContent.includes('ready')) return;  // first install, or About already offers it
     const t = toast('A new version of Vedālokana is ready. <button type="button">Reload</button>', 0);
     t.querySelector('button').addEventListener('click', () => location.reload());
+  });
+}
+
+// Compare a.b.c versions numerically.
+const newer = (a, b) => {
+  const x = a.split('.').map(Number); const y = b.split('.').map(Number);
+  for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0);
+  return false;
+};
+// Ask the server which version is published (past every cache), then fetch and switch to it.
+async function checkForUpdate(btn, out) {
+  const say = (t) => { out.textContent = t; };
+  btn.disabled = true; say('Checking…');
+  const finish = () => { btn.disabled = false; };
+  if (!navigator.onLine) { say('You are offline. Check again when connected.'); return finish(); }
+  let latest = null;
+  try {
+    const r = await fetch(`version.js?fresh=${Date.now()}`, { cache: 'no-store' });
+    latest = (await r.text()).match(/version:\s*'([^']+)'/)?.[1] || null;
+  } catch { /* handled below */ }
+  if (!latest) { say('Couldn’t reach the server. Try again in a moment.'); return finish(); }
+  if (!newer(latest, APP.version)) { say(`You have the latest version, ${APP.version}.`); return finish(); }
+  const restart = () => {
+    say(`Version ${latest} is ready.`);
+    btn.textContent = `Restart to use ${latest}`; btn.disabled = false;
+    btn.onclick = () => location.reload();
+  };
+  const reg = swOK ? await navigator.serviceWorker.getRegistration().catch(() => null) : null;
+  if (!reg) return restart();
+  say(`Downloading version ${latest}…`);
+  try { await reg.update(); } catch { /* fall through: a reload still fetches it */ }
+  const w = reg.installing || reg.waiting;
+  if (!w) return restart();
+  if (w.state === 'activated') return restart();
+  w.addEventListener('statechange', () => {
+    if (w.state === 'activated') restart();
+    if (w.state === 'redundant') { say('The update didn’t install. Try again in a moment.'); finish(); }
   });
 }
 
@@ -1049,7 +1089,8 @@ async function viewAbout() {
         <p class="app-v">Version <b>${esc(APP.version)}</b>${APP.released ? ` · ${esc(fmtDay(APP.released))}` : ''}</p>
         <p class="app-v">Texts built ${esc(fmtDay(cat.built))}</p></div>
       <div class="app-state" id="appState"><span class="dot"></span><span>Checking offline readiness…</span></div>
-      <div class="app-acts">${swOK ? '<button type="button" class="off-btn ghost" id="chkUpd">Check for updates</button>' : ''}<a class="off-btn ghost" href="#/settings?s=offline">Offline downloads</a></div>
+      <div class="app-acts"><button type="button" class="off-btn ghost" id="chkUpd">Check for updates</button><a class="off-btn ghost" href="#/settings?s=offline">Offline downloads</a></div>
+      <p class="upd-out" id="updOut" role="status" aria-live="polite"></p>
     </section>
     <p class="lede">Vedālokana is a non-commercial browser for the Vedas, built from openly published digital texts. Text and tags are shown as the sources give them; corrections belong upstream.</p>
     <h2>What’s new</h2>
@@ -1070,6 +1111,8 @@ async function viewAbout() {
     <h2>Building it</h2>
     <p>The data is built by <code>scripts/build-data.mjs</code> and the fonts by <code>scripts/make-fonts.py</code>; the source repositories and steps are in the project README. ${standalone ? '' : 'To install, use your browser’s “Install app” or “Add to Home Screen”.'}</p>
   </div>`;
+  const upd = document.getElementById('chkUpd');
+  upd.onclick = () => checkForUpdate(upd, document.getElementById('updOut'));
   const st = document.getElementById('appState');
   const set = (ok, text) => { st.classList.toggle('ok', ok); st.lastElementChild.textContent = text; };
   if (!swOK) set(false, 'Offline use needs the app’s own https address.');
@@ -1078,16 +1121,6 @@ async function viewAbout() {
     if (navigator.serviceWorker.controller) set(true, `${standalone ? 'Installed · ' : ''}Ready to work offline`);
     else if (reg) set(false, 'Getting ready for offline use…');
     else set(false, 'Offline use isn’t available in this view.');
-    document.getElementById('chkUpd')?.addEventListener('click', async (e) => {
-      const b = e.currentTarget; b.disabled = true; b.textContent = 'Checking…';
-      try {
-        const r = await navigator.serviceWorker.getRegistration();
-        await r?.update();
-        const waiting = r?.installing || r?.waiting;
-        b.textContent = waiting ? 'Update found, installing…' : navigator.onLine ? 'You have the latest version' : 'Offline: try again later';
-      } catch { b.textContent = 'Couldn’t check right now'; }
-      setTimeout(() => { b.disabled = false; b.textContent = 'Check for updates'; }, 4000);
-    });
   }
 }
 
