@@ -116,7 +116,28 @@ def glyph_bounds(font, name):
     return pen.bounds
 
 
-def level_anudatta(font, level, gap, deep=None):
+def letter_roots(font):
+    """Glyphs a ligature substitution makes from a letter and a sign: {ligature: the letter}.
+    Follows chains (ಜೊ = ಜೆ + ೂ, ಜೆ = ಜ + ೆ) back to the plain letter, which the fused glyph
+    draws at its own origin."""
+    first = {}
+    for lk in font['GSUB'].table.LookupList.Lookup:
+        for st in lk.SubTable:
+            t = st.ExtSubTable if lk.LookupType == 7 else st
+            for k, ls in (getattr(t, 'ligatures', None) or {}).items():
+                for l in ls:
+                    first.setdefault(l.LigGlyph, k)
+    gdef = font['GDEF'].table.GlyphClassDef.classDefs
+    roots = {}
+    for g in [g for g in first if gdef.get(g) == 1]:   # base glyphs only (not the reph, ottus or marks)
+        r, seen = first[g], {g}
+        while r in first and r not in seen:
+            seen.add(r); r = first[r]
+        roots[g] = r
+    return roots
+
+
+def level_anudatta(font, level, gap, deep=None, under_letter=False):
     """Put every anudātta at one height under the line.
 
     The source fonts hang the bar from each letter's own bottom: under ु, a
@@ -133,6 +154,11 @@ def level_anudatta(font, level, gap, deep=None):
             anchored at its level under every base (bases the font had left out
             included, the bar centred on them); mark-to-mark (the bar hung from ु,
             a subscript ...) no longer applies to it.
+
+    under_letter (Kannada): a letter fused with its vowel sign (ಜಾ ಪು ಪೂ ವೋ ಜೊ ...) or its
+    halant is one wide glyph, and the bar sat under the middle of the whole, i.e. under the
+    vowel sign, half under the next letter. It now takes the place it has under the letter
+    alone (ಜ, ಪ, ವ), as Kannada books print it.
     """
     from fontTools.ttLib.tables import otTables as ot
     deep = deep or {}
@@ -170,7 +196,7 @@ def level_anudatta(font, level, gap, deep=None):
     gdef = font['GDEF'].table.GlyphClassDef.classDefs if 'GDEF' in font else {}
     hmtx = font['hmtx'].metrics
     spacing = [g for g in font.getGlyphOrder() if gdef.get(g, 1) in (1, 2) and hmtx[g][0] > 0 and not g.startswith('.')]
-    n_base = n_added = n_mm = 0
+    n_base = n_added = n_mm = n_moved = 0
     for lk in font['GPOS'].table.LookupList.Lookup:
         for st in lk.SubTable:
             t = st.ExtSubTable if lk.LookupType == 9 else st
@@ -200,6 +226,13 @@ def level_anudatta(font, level, gap, deep=None):
                         br.BaseAnchor = [None] * (t.ClassCount - len(mine)) + [anchor(hmtx[g][0] / 2, y(g, bars[m])) for m in mine]
                         t.BaseCoverage.glyphs.append(g); t.BaseArray.BaseRecord.append(br)
                         n_added += 1
+                    if under_letter:
+                        recs = dict(zip(t.BaseCoverage.glyphs, t.BaseArray.BaseRecord))
+                        for g, root in letter_roots(font).items():
+                            if g in recs and root in recs:
+                                for m in mine:
+                                    a, r = recs[g].BaseAnchor[-len(mine) + list(mine).index(m)], recs[root].BaseAnchor[-len(mine) + list(mine).index(m)]
+                                    if a and r: a.XCoordinate = r.XCoordinate; n_moved += 1
                     order = font.getReverseGlyphMap()
                     pairs = sorted(zip(t.BaseCoverage.glyphs, t.BaseArray.BaseRecord), key=lambda p: order[p[0]])
                     t.BaseCoverage.glyphs = [p[0] for p in pairs]; t.BaseArray.BaseRecord = [p[1] for p in pairs]
@@ -219,7 +252,55 @@ def level_anudatta(font, level, gap, deep=None):
                     n_mm += 1
     print(f'  anudātta at {level} units below the baseline{" (" + ", ".join(f"{g} {v}" for g, v in deep.items()) + ")" if deep else ""}: '
           f'{dropped} substitutions dropped, {n_base} base anchors set, {n_added} bases added, '
-          f'removed from {n_mm} mark-to-mark subtables')
+          f'removed from {n_mm} mark-to-mark subtables' + (f', {n_moved} fused letters anchored under the letter' if under_letter else ''))
+
+
+def visarga_swap(font):
+    """Kannada: let a svara mark after a visarga move in front of it, as it already does after ಂ.
+
+    The font hangs a svara mark from the glyph before it. After ಂ, the reph and the length
+    mark ೕ it swaps the two (blws: [ಂ, mark] → [mark, ಂ], then reph, then ೕ), so the mark
+    reaches the letter. ಃ had no such rule, so in ತೀಃ॒, ನೋಃ॒, ರ್ಯಃ॒ the anudātta stopped at ೕ or the
+    reph and sat at the end of the letter, half under the next one. This adds ಃ to the
+    anusvāra rule: it takes the same slot in the syllable, so the later swaps carry the mark on.
+    """
+    from fontTools.ttLib.tables import otTables as ot
+    import copy
+    cm = font.getBestCmap()
+    anus, vis = cm.get(0x0C82), cm.get(0x0C83)
+    if not anus or not vis:
+        return
+    gsub = font['GSUB'].table
+    lookups = gsub.LookupList.Lookup
+    for lk in lookups:
+        if lk.LookupType != 5:
+            continue
+        for st in lk.SubTable:
+            if st.Format != 1 or anus not in st.Coverage.glyphs or vis in st.Coverage.glyphs:
+                continue
+            rs = st.SubRuleSet[st.Coverage.glyphs.index(anus)]
+            # each rule: (0, mark-from-ಂ lookup), (1, anything→ಂ lookup)
+            to_anus = {r.SubstLookupRecord[1].LookupListIndex for r in rs.SubRule}
+            if len(to_anus) != 1:
+                return
+            src = lookups[to_anus.pop()]
+            new = copy.deepcopy(src)
+            for t in new.SubTable:
+                t.mapping = {k: vis for k in t.mapping}
+            lookups.append(new)
+            gsub.LookupList.LookupCount = len(lookups)
+            vi = len(lookups) - 1
+            for r in rs.SubRule:   # the mark-from-ಂ lookups learn ಃ too
+                for t in lookups[r.SubstLookupRecord[0].LookupListIndex].SubTable:
+                    t.mapping[vis] = t.mapping[anus]
+            nrs = copy.deepcopy(rs)
+            for r in nrs.SubRule:
+                r.SubstLookupRecord[1].LookupListIndex = vi
+            pairs = sorted(zip(st.Coverage.glyphs + [vis], st.SubRuleSet + [nrs]), key=lambda x: font.getGlyphID(x[0]))
+            st.Coverage.glyphs = [x[0] for x in pairs]; st.SubRuleSet = [x[1] for x in pairs]
+            st.SubRuleSetCount = len(pairs)
+            print(f'  svara marks move in front of ಃ ({len(nrs.SubRule)} rules)')
+            return
 
 
 def blank(font, names):
@@ -314,7 +395,9 @@ def make(font, script, unicodes, strong, level, deep=None):
     changed = []
     if strong:
         changed = [n for n in font.getGlyphOrder() if is_svara_glyph(n) and strengthen(font, n, 0, BAR_X[script])]
-    level_anudatta(font, level, ANU_GAP, deep)
+    if script == 'Kannada':
+        visarga_swap(font)
+    level_anudatta(font, level, ANU_GAP, deep, under_letter=script == 'Kannada')
     opts = subset.Options()
     opts.layout_features = ['*']
     opts.flavor = 'woff'

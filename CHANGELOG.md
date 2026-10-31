@@ -2,6 +2,9 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.7.3 — 2026-10-31
+- Kannada: every anudātta now sits under its letter. Where a letter is fused with its vowel sign (ಜಾ ಪು ಪೂ ವೋ ಜೊ …) the bar used to sit under the middle of the whole glyph, i.e. under the vowel sign; and after a visarga (ತೀಃ॒ ನೋಃ॒ ರ್ಯಃ॒) it stopped at the length mark or the reph, half under the next letter. `scripts/make-fonts.py` now anchors the bar under the letter itself and lets svara marks move in front of ಃ as they already did in front of ಂ; letters and bar depth are unchanged.
+
 ## 1.7.2 — 2026-10-31
 - The single-stroke pāṭha is renamed again, to **Antarjāla pāṭha** (अन्तर्जालपाठः): the text as the online source (VedaWeb) gives it. Your choice of pāṭha is kept.
 

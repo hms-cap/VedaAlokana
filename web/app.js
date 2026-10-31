@@ -236,6 +236,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.7.3', '2026-10-31', ['Kannada: every anudātta sits under its own letter, also under letters joined with their vowel sign (ಜಾ ಪು ವೋ) and before a visarga (ತೀಃ), instead of drifting toward the next letter.']],
   ['1.7.2', '2026-10-31', ['The Ṛgveda’s single-stroke pāṭha is now called Antarjāla pāṭha: the text as the online source gives it.']],
   ['1.7.1', '2026-10-31', ['The Ṛgveda’s single-stroke pāṭha is now called Sāmānya pāṭha (previously Śṛṅgeri style).']],
   ['1.7.0', '2026-10-31', [
