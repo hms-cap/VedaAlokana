@@ -32,18 +32,11 @@
     <input id="q" autocomplete="off" placeholder="1.1.1, Agni, अग्नि, Kaṭha…">
     <div class="suggest" id="suggest" role="listbox" hidden></div>
   </form>
-  <div class="lipi-toggle" id="lipiToggle" role="group" aria-label="Script and menu language">
-    <button data-lipi="deva" lang="sa-Deva" aria-label="Devanagari" aria-pressed="true">अ</button><button data-lipi="knda" lang="sa-Knda" aria-label="Kannada" aria-pressed="false">ಅ</button><span class="lt-sep" aria-hidden="true"></span><button id="menuBtn" class="menu-en" type="button" aria-label="Menus in English" aria-pressed="false">En</button>
-  </div>
-  <button class="icon-btn theme-btn" id="themeBtn" data-t="system" aria-label="Theme: match device. Tap to change">
-    <svg class="i-sys" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
-    <svg class="i-light" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>
-    <svg class="i-dark" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg>
-  </button>
   <a href="#/search" class="icon-btn top-search" aria-label="Search">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
   </a>
 </header>
+<nav class="optbar" id="optbar" aria-label="Page options"></nav>
 <nav class="pathbar" id="pathbar" aria-label="Where you are" hidden></nav>
 <div class="shell">
   <nav class="rail" id="rail" aria-label="Vedas and texts"></nav>
@@ -53,7 +46,7 @@
   <a href="#/" data-tab="home"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M4 10.5L12 4l8 6.5V20h-5v-6H9v6H4z"/></svg><span>Home</span></a>
   <a href="#/library" data-tab="library"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4v16H5zM10 4h4v16h-4zM15.5 4.5l3.8-.9 3 15.6-3.8.8z"/></svg><span>Library</span></a>
   <a href="#/suktas" data-tab="suktas"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c2.6 3.4 4.4 5.6 4.4 8.6a4.4 4.4 0 0 1-8.8 0C7.6 8.6 9.4 6.4 12 3z"/><path d="M6 20h12"/></svg><span>Sūktas</span></a>
-  <a href="#/search" data-tab="search"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><span>Search</span></a>
+  <a href="#/my" data-tab="my"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8z"/></svg><span>My sūktas</span></a>
   <a href="#/settings" data-tab="settings"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span>Settings</span></a>
 </nav>
 <nav class="readerbar" id="readerbar" aria-label="Move between sections" hidden></nav>

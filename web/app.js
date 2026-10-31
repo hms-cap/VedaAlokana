@@ -44,7 +44,7 @@ const FACET_SA = { rishi: 'ऋषिः', devata: 'देवता', chandas: '�
 const VEDA_SA = { rv: 'ऋग्वेदः', syv: 'शुक्लयजुर्वेदः', kyv: 'कृष्णयजुर्वेदः', sv: 'सामवेदः', av: 'अथर्ववेदः' };
 const VEDA_SA_SHORT = { rv: 'ऋक्', syv: 'शुक्लयजुः', kyv: 'कृष्णयजुः', sv: 'साम', av: 'अथर्व' };
 const LAYER_SA = { samhita: 'संहिता', brahmana: 'ब्राह्मणम्', aranyaka: 'आरण्यकम्', upanishad: 'उपनिषत्' };
-const MENU_SA = { home: 'गृहम्', library: 'ग्रन्थालयः', suktas: 'सूक्तानि', search: 'अन्वेषणम्', settings: 'विन्यासः', about: 'परिचयः' };
+const MENU_SA = { home: 'गृहम्', library: 'ग्रन्थालयः', suktas: 'सूक्तानि', search: 'अन्वेषणम्', settings: 'विन्यासः', about: 'परिचयः', my: 'मम सूक्तानि' };
 
 const $ = (s, el = document) => el.querySelector(s);
 const main = $('#main');
@@ -163,18 +163,11 @@ function setLipi(l) {
   document.querySelectorAll('#brand span, #tabbar [data-tab] span').forEach((e) => { e.textContent = ''; });
   // remember which verse is at the top of the screen, not just the pixel offset,
   // because the two scripts wrap lines differently; measure before the font changes
-  const head = $('.topbar').getBoundingClientRect().bottom + ($('#pathbar').hidden ? 0 : $('#pathbar').offsetHeight);
-  const verses = [...document.querySelectorAll('.verse[id]')];
-  const anchor = verses.find((el) => el.getBoundingClientRect().top >= head - 4)
-    || verses.find((el) => el.getBoundingClientRect().bottom > head + 8);
-  keepScrollY = window.scrollY;
-  keepAnchor = anchor ? { id: anchor.id, top: anchor.getBoundingClientRect().top } : null;
+  keepPlace();
   prefs.lipi = l; savePrefs(); applyLipiClass(); applyMenu();
   route();
 }
-function paintLipiToggle() {
-  document.querySelectorAll('#lipiToggle [data-lipi]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lipi === prefs.lipi)));
-}
+function paintLipiToggle() { paintOptbar(); }
 // ---------- Ṛgveda pāṭha: as South Indian books print it (default) or as VedaWeb publishes it ----------
 const PATHA = { dakshinatya: ['Dākṣiṇātya pāṭha', 'दाक्षिणात्यपाठः'], std: ['Antarjāla pāṭha', 'अन्तर्जालपाठः'] };
 // lines: the half-verses of one ṛk; pada: its padapāṭha words (word boundaries for nasals and avagraha)
@@ -210,7 +203,7 @@ function setMenu(m) {
 function applyMenu() {
   document.querySelectorAll('#tabbar [data-tab]').forEach((a) => {
     const k = a.dataset.tab; const span = a.querySelector('span');
-    const en = { home: 'Home', library: 'Library', suktas: 'Sūktas', search: 'Search', settings: 'Settings' }[k];
+    const en = { home: 'Home', library: 'Library', suktas: 'Sūktas', my: 'My sūktas', search: 'Search', settings: 'Settings' }[k];
     span.innerHTML = T(en, MENU_SA[k]);
   });
   $('#brand span').innerHTML = T('Vedāvalokanam', 'वेदावलोकनम्');
@@ -301,6 +294,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.13.0', '2026-10-31', ['An options bar under the top bar holds every setting that applies to the page: script, menus, theme, pāṭha, padapāṭha, IAST, ṛṣi · devatā · chandas, translation, bhāṣya, text size, save and chant. ⋯ opens the same options with their names, plus svara marks and font. On phones it slides away while you read down and returns when you scroll up.', 'My sūktas has its own tab in the bottom bar (in place of Search, which stays at the top).']],
   ['1.12.1', '2026-10-31', ['The About link moved to the top of the start page, with a small info icon.']],
   ['1.12.0', '2026-10-31', ['Back goes to the view you came from; moving verse to verse or sūkta to sūkta does not add back steps; scroll is restored; sheets and the chant view close on Back; tabs remember where you were.', 'My sūktas: save sūktas with ☆, see them with Recent and Frequent on Home and in the Sūktas tab, reorder, chant through the list, export or import it.', 'Chant view laid out like a recitation book: running text with ॥n॥, invocation, title, source and anukramaṇī; larger or smaller text; one-at-a-time view kept.']],
   ['1.11.0', '2026-10-31', ['Gaṇeśa Atharvaśīrṣa, Medhā Sūkta (Khila), Pavamāna Pariśiṣṭam, Pañcarudra Sūkta, Navagraha Mantras with adhidevatās, Vedapārāyaṇa Ārambha and Sandhyā Ṛk mantras.']],
@@ -700,7 +694,6 @@ async function viewHome() {
         ${VEDA_ICON[v.id] ? vedaIcon(v.id, 'vt-i') + vedaIcon(v.id, 'vt-w') : `<span class="vt-g" lang="sa">${esc(VEDA_GLYPH[v.id] || v.deva[0])}</span>`}
         <span class="vt-n"><b>${T(v.name, VEDA_SA[v.id])}</b><small>${s ? `${F(s.verses)} ${unitHTML(s)}` : ''}</small></span></a>`;
   }).join('')}</div>
-    ${homeMy(suk)}
     ${suk.length ? `<div class="sec-h"><h2>${T('Sūktas', 'सूक्तानि')}</h2><a href="#/suktas">${SA() ? `<span lang="sa">सर्वाणि ${dg(suk.length)}</span>` : `All ${suk.length}`}</a></div>
     ${sukVedaButtons(cat, suk, homeVeda(suk), 'button')}
     <div class="schips" id="homeSk">${sukChips(suk, homeVeda(suk))}</div>` : ''}
@@ -795,6 +788,12 @@ function addStar(box, sid) {
   b.addEventListener('click', () => { toggleSaved(sid); paint(); });
   box.append(b);
 }
+// bar actions: save to My list, open the chant view
+function obStar(sid) {
+  return { id: 'star', get on() { return isSaved(sid); }, get label() { return isSaved(sid) ? Tp('In my list', 'सङ्गृहीतम्') : Tp('Save to my list', 'सङ्गृहाण'); },
+    get icon() { return STAR(isSaved(sid)); }, act() { toggleSaved(sid); paintOptbar(); } };
+}
+const obChant = (fn) => ({ id: 'chant', label: Tp('Chant view', 'पारायणम्'), icon: OB_ICON.chant, act: fn });
 // the next and previous items when a sūkta was opened from My list
 function listNeighbours(sid, all) {
   const l = myList('saved', all); const k = l.findIndex((e) => e.id === sid);
@@ -835,7 +834,7 @@ async function viewSuktaVersions(s, params) {
     <p class="sk-info">${T(VEDA_SHORT[s.veda] || '', VEDA_SA[s.veda])} · ${sukRef(s)} · ${T(k[0], k[1])} · ${SA() ? `<span lang="sa">${esc(s.devataDeva)}</span>` : `<em>Devatā</em> ${esc(s.devata)}`} · ${F(ver.verses.length)} ${T('verses', 'मन्त्राः')}</p>
     ${s.versions.length < 2 ? '' : `<div class="seg wide-seg sk-ver" role="group" aria-label="Pāṭha">${s.versions.map((v) => `<a data-r href="#/s/${s.id}${v === s.versions[0] ? '' : `?p=${v.id}`}" aria-pressed="${String(v === ver)}">${T(v.name, v.deva)}</a>`).join('')}</div>`}
     <p class="lede sk-note">${esc(ver.note)}${ver === s.versions[0] && s.versions.length > 1 ? ' Words that read differently in the Khila text are <mark class="pv">marked</mark>, with its reading under the verse.' : ''}</p>
-    <div class="sk-acts">${chantBtn()}<button type="button" class="chip" id="skCopy">${T('Copy', 'प्रतिलिपिः')}</button></div>
+    <div class="sk-acts"><button type="button" class="chip" id="skCopy">${T('Copy', 'प्रतिलिपिः')}</button></div>
     <div class="verses">${body}</div>
   </article>`;
   const cparts = [];
@@ -843,6 +842,7 @@ async function viewSuktaVersions(s, params) {
     if (!cparts.length || v.head) cparts.push({ title: v.head ? v.head[1] : '', group: s.veda === 'rv' ? 5 : 1, verses: [] });
     cparts[cparts.length - 1].verses.push({ n: v.n, lines: linesOf(v, j), label: v.src ? `RV ${v.src.slice(1).join('.')}` : '' });
   });
+  obAdd('patha');
   suktaExtras(s, all, params, cparts);
   $('#skCopy')?.addEventListener('click', async (e) => {
     const txt = [s.deva, ...ver.verses.flatMap((v, i) => linesOf(v, i).map((l) => (prefs.lipi === 'knda' ? toKnda(l) : l))), `— ${s.ref}`].join('\n');
@@ -891,12 +891,11 @@ function listBar(s, all, params) {
   const arrow = (d) => `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
   return `<nav class="list-bar" aria-label="My list">
     ${nb.prev ? `<a data-r href="${esc(nb.prev.href)}" aria-label="Previous in my list">${arrow('M15 5l-7 7 7 7')}</a>` : '<span></span>'}
-    <a href="#/suktas?list=saved"><b>${T('My list', 'मम सङ्ग्रहः')}</b> <small>${F(nb.pos + 1)} / ${F(nb.of)}</small></a>
+    <a href="#/my"><b>${T('My list', 'मम सङ्ग्रहः')}</b> <small>${F(nb.pos + 1)} / ${F(nb.of)}</small></a>
     ${nb.next ? `<a data-r href="${esc(nb.next.href)}" aria-label="Next in my list">${arrow('M9 5l7 7-7 7')}</a>` : '<span></span>'}</nav>`;
 }
 function suktaExtras(s, all, params, cparts) {
   visitSukta(s.id);
-  addStar(main.querySelector('.sk-acts'), s.id);
   const nb = params?.get('from') === 'my' ? listNeighbours(s.id, all) : {};
   sukNav = nb.pos !== undefined ? { prev: nb.prev, next: nb.next, sec: 'sūkta' } : null;
   readerNav = sukNav;
@@ -907,7 +906,7 @@ function suktaExtras(s, all, params, cparts) {
     onClose: (k) => document.getElementById(`sv${k + 1}`)?.scrollIntoView({ block: 'start' }),
     onPlace: (k) => { lastRead.v = k + 1; try { localStorage.setItem('vedalokana.last', JSON.stringify(lastRead)); } catch { /* storage unavailable */ } },
   });
-  main.querySelector('.chant-btn')?.addEventListener('click', () => openChant(model(), 0));
+  obAdd('tsize', obStar(s.id), obChant(() => openChant(model(), 0)));
   const v = Number(params?.get('v'));
   if (chantResume !== null) { const k = chantResume; chantResume = null; openChant(model(), k); }
   else if (v > 1) requestAnimationFrame(() => document.getElementById(`sv${v}`)?.scrollIntoView({ block: 'start' }));
@@ -961,7 +960,7 @@ async function viewSukta(sid, params) {
     ${listBar(s, all, params)}
     <h1>${SA() ? `<span lang="sa">${esc(s.deva)}</span>` : `${esc(s.name)}<span class="h1-deva" lang="sa">${esc(s.deva)}</span>`}</h1>
     <p class="sk-info">${T(vedaName?.name || '', VEDA_SA[s.veda])} · ${sukRef(s)} · ${T(k[0], k[1])} · ${SA() ? `<span lang="sa">${esc(s.devataDeva)}</span>` : `<em>Devatā</em> ${esc(s.devata)}`}${s.count > 1 ? ` · ${F(s.count)} ${T('verses', 'मन्त्राः')}` : ''}</p>
-    <div class="sk-acts">${chantBtn()}${s.reader ? `<a class="chip" href="${s.reader}">${T('Open in the reader', 'मूलग्रन्थे पठ')}</a>` : ''}<button type="button" class="chip" id="skCopy">${T('Copy', 'प्रतिलिपिः')}</button></div>
+    <div class="sk-acts">${s.reader ? `<a class="chip" href="${s.reader}">${T('Open in the reader', 'मूलग्रन्थे पठ')}</a>` : ''}<button type="button" class="chip" id="skCopy">${T('Copy', 'प्रतिलिपिः')}</button></div>
     <div class="verses">${body}</div>
   </article>`;
   // chant view: one part per place the sūkta is gathered from
@@ -978,6 +977,8 @@ async function viewSukta(sid, params) {
       verses: bs.map((b) => ({ n: ++cn, lines: svaraLines(b.g.t, b.lines, b.cut ? null : b.v[3]), label: refText(b.meta, refOf(b.meta, b.g.d1, b.g.d2, b.v[0], b.v[5])) })),
     };
   });
+  obAdd(s.segs.some((g) => PATHA_TEXTS.has(g.t)) && 'patha', blocks.some((b) => !b.cut && b.v[2]?.length && b.lines.length) && 'script',
+    blocks.some((b) => !b.cut && b.v[4]) && 'tr');
   suktaExtras(s, all, params, cparts);
   $('#skCopy')?.addEventListener('click', async (e) => {
     const txt = [s.deva, ...blocks.flatMap((b) => svaraLines(b.g.t, b.lines, b.cut ? null : b.v[3]).map((l) => (prefs.lipi === 'knda' ? toKnda(l) : l))), `— ${s.ref}`].join('\n');
@@ -1402,10 +1403,10 @@ async function viewContainer(id, d1, d2, params) {
     <div class="reader-head"><div>
       <h1>${cref ? (SA() && contSa(meta, cref) ? `<span lang="sa">${esc(contSa(meta, cref))}</span>` : `${esc(meta.levels[1] || meta.levels[2])} ${esc(cref)}`) : T(meta.name, meta.deva)}</h1>
       ${c[2] && meta.refFmt !== 'label' ? `<div class="ctitle" lang="sa">${esc(c[2])}</div>` : ''}
-    </div>${hasDeva ? `<button class="chant-btn" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10-6.5a1 1 0 0 0 0-1.8l-10-6.5A1 1 0 0 0 8 5.5z"/></svg>${T('Chant view', 'पारायणम्')}</button>` : ''}</div>
-    ${quick ? `<div class="quick" role="group" aria-label="${esc(Tp('Show or hide', 'दर्शय / गोपय'))}">${quick}</div>` : ''}
+    </div></div>
+
     ${summary.length ? `<div class="tags" id="sumTags"${prefs.tags ? '' : ' hidden'}>${summary.map(([f, e]) => `<a class="tag" href="${findHref(id, { [f]: e[0] })}"><em>${T(FACETS[f].label, FACET_SA[f])}</em>${e[2] ? `<span class="dv" lang="sa">${esc(e[2])}</span>` : ''}${SA() && e[2] ? '' : `<span>${esc(cap(e[1]))}</span>`}</a>`).join('')}</div>` : ''}
-    ${controls ? `<div class="controls">${controls}</div>` : ''}
+
     <div id="verses"></div>
     <nav class="pager" aria-label="Neighbouring ${esc(meta.levels[1].toLowerCase())}s">
       ${prev ? `<a href="#/v/${id}/c/${prev[0]}/${prev[1]}">‹ ${refHTML(meta, containerRef(meta, prev[0], prev[1], prev[2]))}</a>` : '<span></span>'}
@@ -1513,7 +1514,8 @@ async function viewContainer(id, d1, d2, params) {
   };
   // chant view: this section as a book page
   const sk = await sukOfSection(id, d1, d2, verses.length);
-  if (sk) addStar(main.querySelector('.reader-head'), sk.id);
+  obAdd(PATHA_TEXTS.has(id) && hasDeva && 'patha', hasPada && 'mode', hasDeva && hasRoman && 'script', summary.length && 'tags',
+    hasTr && (hasDeva || hasRoman) && 'tr', hasBh && 'bhashya', 'tsize', sk && obStar(sk.id), hasDeva && obChant(() => openChant(chantModel(), 0)));
   if (sk) visitSukta(sk.id);
   const chantModel = () => {
     const vs = verses.filter((v) => v[1].length);
@@ -1532,7 +1534,6 @@ async function viewContainer(id, d1, d2, params) {
       onPlace: (k) => { if (lastRead) { lastRead.v = k + 1; try { localStorage.setItem('vedalokana.last', JSON.stringify(lastRead)); } catch { /* storage unavailable */ } } },
     };
   };
-  main.querySelector('.chant-btn')?.addEventListener('click', () => openChant(chantModel(), 0));
   if (chantResume !== null) { const k = chantResume; chantResume = null; openChant(chantModel(), k); }
   if (swipeIn) {
     const dir = swipeIn; swipeIn = 0;
@@ -1794,6 +1795,152 @@ async function buildPath(r) {
   return path;
 }
 
+// ---------- the options bar: every setting that applies to this page, one tap away ----------
+// Global settings (script, menus, theme) are always there; a view adds its own with obAdd() while
+// it renders. "⋯" opens a panel with the same options labelled, plus text size, svara marks and font.
+const OB_ICON = {
+  theme: { system: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>',
+    light: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>',
+    dark: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg>' },
+  tags: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 12.2V4.8a1.3 1.3 0 0 1 1.3-1.3h7.4l8.3 8.3a1.3 1.3 0 0 1 0 1.8l-7.4 7.4a1.3 1.3 0 0 1-1.8 0z"/><circle cx="8.2" cy="8.2" r="1.6"/></svg>',
+  tr: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h9M7.5 3v2M10 5c-.8 3.6-3 6.4-6 8M6 8.5c1.2 2 2.9 3.6 5 4.6"/><path d="M12.5 21l4-10 4 10M14 17.5h5"/></svg>',
+  bhashya: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5c3-1.3 6-1.3 9 .8 3-2.1 6-2.1 9-.8v13c-3-1.3-6-1.3-9 .8-3-2.1-6-2.1-9-.8z"/><path d="M12 6.3v13" stroke-linecap="round"/></svg>',
+  chant: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10-6.5a1 1 0 0 0 0-1.8l-10-6.5A1 1 0 0 0 8 5.5z"/></svg>',
+  more: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>',
+};
+const TSIZES = [0.85, 1, 1.15, 1.3, 1.5, 1.75];
+function applySize() { document.documentElement.style.setProperty('--tz', String(prefs.tsize || 1)); }
+applySize();
+// a setting the bar or panel can change: k (pref), its choices [value, en, sa], how the icon looks
+const OB = {
+  lipi: { en: 'Script', sa: 'लिपिः', ch: [['deva', 'Devanagari', 'देवनागरी'], ['knda', 'Kannada', 'ಕನ್ನಡ']],
+    icon: (v) => `<span class="ob-l ${v}" aria-hidden="true">${v === 'knda' ? 'ಅ' : 'अ'}</span>`, on: () => false },
+  menu: { en: 'Menus', sa: 'सूचिभाषा', ch: [['script', 'In the script', 'संस्कृतम्'], ['en', 'English', 'English']],
+    icon: () => '<span class="ob-t" aria-hidden="true">En</span>', on: (v) => v === 'en' },
+  theme: { en: 'Theme', sa: 'वर्णविन्यासः', ch: [['system', 'Match device', 'यन्त्रानुसारम्'], ['light', 'Light', 'प्रकाशः'], ['dark', 'Dark', 'अन्धकारः']],
+    icon: (v) => OB_ICON.theme[v], on: () => false },
+  patha: { en: 'Pāṭha', sa: 'पाठः', ch: [['dakshinatya', 'Dākṣiṇātya', 'दाक्षिणात्यः'], ['std', 'Antarjāla', 'अन्तर्जालः']],
+    icon: (v) => `<span class="ob-l" lang="sa" aria-hidden="true">${v === 'dakshinatya' ? 'ई᳚' : 'ई॑'}</span>`, on: (v) => v === 'dakshinatya' },
+  mode: { en: 'Padapāṭha', sa: 'पदपाठः', ch: [['samhita', 'Saṃhitā', 'संहिता'], ['pada', 'Padapāṭha', 'पदपाठः']],
+    icon: () => '<span class="ob-l" lang="sa" aria-hidden="true">पद</span>', on: (v) => v === 'pada' },
+  script: { en: 'Show', sa: 'दर्शय', ch: [['deva', 'Script only', 'लिपिः'], ['both', 'Script and IAST', 'उभयम्'], ['roman', 'IAST only', 'IAST']],
+    icon: (v) => `<span class="ob-t ob-ia" aria-hidden="true">${v === 'both' ? '<span class="ob-l">अ</span>ā' : 'ā'}</span>`, on: (v) => v !== 'deva' },
+  tags: { en: 'Ṛṣi · devatā · chandas', sa: 'ऋषिः · देवता · छन्दः', ch: [[true, 'Show', 'दर्शय'], [false, 'Hide', 'गोपय']], icon: () => OB_ICON.tags, on: (v) => v },
+  tr: { en: 'Translation', sa: 'अनुवादः', ch: [[true, 'Show', 'दर्शय'], [false, 'Hide', 'गोपय']], icon: () => OB_ICON.tr, on: (v) => v },
+  bhashya: { en: 'Sāyaṇa bhāṣya', sa: 'सायणभाष्यम्', ch: [[true, 'Show', 'दर्शय'], [false, 'Hide', 'गोपय']], icon: () => OB_ICON.bhashya, on: (v) => v },
+  tsize: { en: 'Text size', sa: 'अक्षरमानम्', icon: () => '<span class="ob-t" aria-hidden="true">A<small>A</small></span>', on: () => (prefs.tsize || 1) !== 1 },
+  svara: { en: 'Svara marks', sa: 'स्वरचिह्नानि', ch: [['bold', 'Bold', 'स्थूलम्'], ['std', 'Standard', 'सामान्यम्']] },
+  dfont: { en: 'Devanagari font', sa: 'देवनागरीलिपिरूपम्', ch: [['noto', 'Noto Serif', 'Noto Serif'], ['shobhika', 'Shobhika', 'Shobhika']] },
+};
+const OB_GLOBAL = ['lipi', 'menu', 'theme'];
+let obPage = [];   // this page's options: pref keys, or { id, en, sa, icon, on, act } actions
+const obAdd = (...xs) => { obPage.push(...xs.filter(Boolean)); };
+let obPanel = null;
+const obLabel = (o, v) => {
+  const c = o.ch?.find(([x]) => x === v);
+  return `${Tp(o.en, o.sa)}${c ? `: ${Tp(c[1], c[2])}` : ''}`;
+};
+// the top of the reading area, under the bars, for keeping a verse in place while the page redraws
+function headBottom() {
+  return Math.max(...['.topbar', '#optbar', '#pathbar'].map((s) => { const e = $(s); return e && !e.hidden ? e.getBoundingClientRect().bottom : 0; }));
+}
+function keepPlace() {
+  const head = headBottom();
+  const verses = [...document.querySelectorAll('.verse[id]')];
+  const anchor = verses.find((el) => el.getBoundingClientRect().top >= head - 4) || verses.find((el) => el.getBoundingClientRect().bottom > head + 8);
+  keepScrollY = window.scrollY;
+  keepAnchor = anchor ? { id: anchor.id, top: anchor.getBoundingClientRect().top } : null;
+}
+function setPref(k, v) {
+  if (prefs[k] === v) return;
+  if (k === 'lipi') { setLipi(v); return; }
+  if (k === 'menu') { setMenu(v); return; }
+  if (k === 'theme') { setTheme(v); paintOptbar(); return; }
+  prefs[k] = v; savePrefs();
+  if (k === 'svara' || k === 'dfont') { applyLipiClass(); paintOptbar(); return; }
+  if (k === 'tsize') { keepPlace(); applySize(); const y = keepScrollY; const a = keepAnchor; keepScrollY = null; keepAnchor = null;
+    const el = a && document.getElementById(a.id); window.scrollTo(0, el ? window.scrollY + el.getBoundingClientRect().top - a.top : y); paintOptbar(); return; }
+  keepPlace(); route();
+}
+const obNext = (k) => { const o = OB[k]; const i = o.ch.findIndex(([x]) => x === prefs[k]); return o.ch[(i + 1) % o.ch.length][0]; };
+function paintOptbar() {
+  const bar = $('#optbar'); if (!bar) return;
+  const btn = (k) => {
+    if (typeof k === 'object') return `<button type="button" class="ob-b${k.on ? ' on' : ''}" data-act="${k.id}" aria-label="${esc(k.label)}" title="${esc(k.label)}"${k.on !== undefined ? ` aria-pressed="${String(!!k.on)}"` : ''}>${k.icon}</button>`;
+    const o = OB[k]; const v = prefs[k];
+    const lab = k === 'tsize' ? `${Tp(o.en, o.sa)}: ${Math.round((prefs.tsize || 1) * 100)}%` : obLabel(o, v);
+    return `<button type="button" class="ob-b${o.on(v) ? ' on' : ''}" data-ob="${k}" aria-label="${esc(lab)}" title="${esc(lab)}">${o.icon(v)}</button>`;
+  };
+  bar.innerHTML = `<div class="ob-in">${OB_GLOBAL.map(btn).join('')}${obPage.length ? `<span class="ob-sep" aria-hidden="true"></span>${obPage.map(btn).join('')}` : ''}</div>
+    <button type="button" class="ob-b ob-more" data-more aria-label="${esc(Tp('All options', 'सर्वे विकल्पाः'))}" title="${esc(Tp('All options', 'सर्वे विकल्पाः'))}" aria-haspopup="dialog">${OB_ICON.more}</button>`;
+  bar.querySelectorAll('[data-ob]').forEach((b) => b.addEventListener('click', () => {
+    const k = b.dataset.ob;
+    if (k === 'tsize') { openOptPanel('tsize'); return; }
+    setPref(k, obNext(k));
+  }));
+  bar.querySelectorAll('[data-act]').forEach((b) => b.addEventListener('click', () => obPage.find((x) => x.id === b.dataset.act)?.act(b)));
+  bar.querySelector('[data-more]').addEventListener('click', () => openOptPanel());
+  if (obPanel) obPanel.fill();
+}
+// the panel: the same options with their names, and the ones too rare for the bar
+function openOptPanel(only) {
+  if (obPanel) { obPanel.close(); return; }
+  const wrap = document.createElement('div');
+  wrap.className = 'ob-panel-wrap';
+  wrap.innerHTML = `<div class="ob-scrim"></div><section class="ob-panel" role="dialog" aria-modal="true" aria-label="${esc(Tp('Options', 'विकल्पाः'))}"></section>`;
+  document.body.append(wrap);
+  const panel = wrap.querySelector('.ob-panel');
+  const sizeRow = () => {
+    const i = Math.max(0, TSIZES.indexOf(prefs.tsize || 1));
+    return `<div class="ob-row"><span>${T(OB.tsize.en, OB.tsize.sa)}</span><div class="seg"><button type="button" data-tz="-1" aria-label="Smaller"${i === 0 ? ' disabled' : ''}>A−</button><button type="button" data-tz="0" class="ob-pct" aria-label="Reset text size">${Math.round(TSIZES[i] * 100)}%</button><button type="button" data-tz="1" aria-label="Larger"${i === TSIZES.length - 1 ? ' disabled' : ''}>A+</button></div></div>`;
+  };
+  const row = (k) => {
+    const o = OB[k];
+    if (k === 'tsize') return sizeRow();
+    return `<div class="ob-row"><span>${T(o.en, o.sa)}</span><div class="seg">${o.ch.map(([v, en, sa]) => `<button type="button" data-k="${k}" data-v="${String(v)}" aria-pressed="${String(prefs[k] === v)}">${k === 'lipi' ? `<span lang="${v === 'knda' ? 'sa-Knda' : 'sa-Deva'}" class="ob-l ${v}">${v === 'knda' ? 'ಕನ್ನಡ' : 'देवनागरी'}</span>` : T(en, sa)}</button>`).join('')}</div></div>`;
+  };
+  const fill = () => {
+    const pageKeys = obPage.filter((x) => typeof x === 'string');
+    const acts = obPage.filter((x) => typeof x === 'object');
+    panel.innerHTML = only === 'tsize' ? `<div class="ob-h">${T('Text size', 'अक्षरमानम्')}</div>${sizeRow()}`
+      : `<div class="ob-h">${T('Everywhere', 'सर्वत्र')}</div>${OB_GLOBAL.map(row).join('')}
+      ${pageKeys.length ? `<div class="ob-h">${T('This page', 'अस्मिन् पृष्ठे')}</div>${pageKeys.filter((k) => k !== 'tsize').map(row).join('')}` : ''}
+      ${pageKeys.includes('tsize') ? sizeRow() : ''}
+      ${acts.length ? `<div class="ob-acts">${acts.map((a) => `<button type="button" class="chip" data-pact="${a.id}"${a.on !== undefined ? ` aria-pressed="${String(!!a.on)}"` : ''}>${a.icon}<span>${esc(a.label)}</span></button>`).join('')}</div>` : ''}
+      <div class="ob-h">${T('Reading', 'पठनम्')}</div>${row('svara')}${row('dfont')}
+      <a class="ob-all" href="#/settings">${T('All settings', 'सर्वे विन्यासाः')} ›</a>`;
+    panel.querySelectorAll('[data-k]').forEach((b) => b.addEventListener('click', () => {
+      const k = b.dataset.k; const raw = b.dataset.v;
+      setPref(k, raw === 'true' ? true : raw === 'false' ? false : raw);
+      if (OB_GLOBAL.includes(k) || k === 'svara' || k === 'dfont') fill();
+    }));
+    panel.querySelectorAll('[data-tz]').forEach((b) => b.addEventListener('click', () => {
+      const d = Number(b.dataset.tz); const i = Math.max(0, TSIZES.indexOf(prefs.tsize || 1));
+      setPref('tsize', d === 0 ? 1 : TSIZES[Math.min(TSIZES.length - 1, Math.max(0, i + d))]); fill();
+    }));
+    panel.querySelectorAll('[data-pact]').forEach((b) => b.addEventListener('click', () => { const a = obPage.find((x) => x.id === b.dataset.pact); close(); a?.act(); }));
+    panel.querySelector('.ob-all')?.addEventListener('click', (e) => { e.preventDefault(); close(true); go('#/settings', { replace: true }); });
+  };
+  const shut = () => { wrap.remove(); obPanel = null; document.removeEventListener('keydown', onKey); };
+  const close = (leaving) => { shut(); overlayDone(leaving); };
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', onKey);
+  wrap.querySelector('.ob-scrim').addEventListener('click', () => close());
+  obPanel = { fill, close };
+  fill();
+  overlayOpen(shut);
+  panel.querySelector('button')?.focus({ preventScroll: true });
+}
+// on phones the bar slides away while reading down the page and comes back on scrolling up
+let obLastY = window.scrollY;
+window.addEventListener('scroll', () => {
+  const y = window.scrollY; const d = y - obLastY;
+  if (Math.abs(d) < 6) return;
+  obLastY = y;
+  if (routing || obPanel) return;
+  document.body.classList.toggle('ob-hide', d > 0 && y > 140);
+}, { passive: true });
+
 let tabLast = {};
 try { tabLast = JSON.parse(sessionStorage.getItem('vedalokana.tabs') || '{}'); } catch { /* storage unavailable */ }
 $('#backBtn').addEventListener('click', (e) => {
@@ -1828,20 +1975,20 @@ function renderChrome(r, path) {
   bar.scrollLeft = bar.scrollWidth;
   // back: the previous view; on the first view of a visit, the parent page
   const page = r.parts[0] || '';
-  const topLevel = ['', 'library', 'suktas', 'search', 'settings'].includes(page);
-  const parentHref = topLevel ? null : path.length >= 2 ? path[path.length - 2].href : page === 'about' ? '#/settings' : page === 's' ? '#/suktas' : '#/library';
+  const topLevel = ['', 'library', 'suktas', 'my', 'search', 'settings'].includes(page);
+  const parentHref = topLevel ? null : path.length >= 2 ? path[path.length - 2].href : page === 'about' ? '#/settings' : page === 's' ? (r.params.get('from') === 'my' ? '#/my' : '#/suktas') : '#/library';
   const back = $('#backBtn');
   back.hidden = !parentHref;
   if (parentHref) back.setAttribute('href', parentHref);
   $('#brand').classList.toggle('when-back', !!parentHref);
   // each tab remembers where you were in it
   const tabNow = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 'about' ? 'settings' : page === 's' ? 'suktas' : page);
-  if (tabNow === 'library' || tabNow === 'suktas') { tabLast[tabNow] = getHash(); try { sessionStorage.setItem('vedalokana.tabs', JSON.stringify(tabLast)); } catch { /* storage unavailable */ } }
+  if (tabNow === 'library' || tabNow === 'suktas' || tabNow === 'my') { tabLast[tabNow] = getHash(); try { sessionStorage.setItem('vedalokana.tabs', JSON.stringify(tabLast)); } catch { /* storage unavailable */ } }
   const named = { library: 'Library', suktas: 'Sūktas', s: 'Sūktas', search: 'Search', settings: 'Settings', about: 'About' }[page];
   const lastC = path[path.length - 1];
   $('#topTitle').textContent = lastC ? Tp(lastC.label, lastC.deva) : (named ? Tp(named, MENU_SA[page === 's' ? 'suktas' : page]) : '');
   // tabs
-  const tab = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 'about' ? 'settings' : page === 's' ? 'suktas' : page);
+  const tab = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 'about' ? 'settings' : page === 's' ? (r.params.get('from') === 'my' ? 'my' : 'suktas') : page);
   $('#tabbar').querySelectorAll('[data-tab]').forEach((a) => (a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
   document.body.classList.toggle('reading', page === 'v' && r.parts[2] === 'c');
   if (!(page === 'v' && r.parts[2] === 'c')) { $('#readerbar').hidden = true; readerNav = page === 's' ? sukNav : null; }
@@ -1892,27 +2039,40 @@ async function viewSuktas(params) {
     }
     groups = [...m.values()];
   }
-  const listK = MY_LISTS.some(([k]) => k === params.get('list')) ? params.get('list') : '';
-  const row = (e) => `<a class="sk-row" href="${e.href}${listK === 'saved' ? '?from=my' : ''}">
-      <span class="sk-top"><span class="sk-name"><span class="dv" lang="sa">${esc(e.deva)}</span><span class="ia">${esc(e.name)}</span></span><span class="sk-ref">${esc(e.ref)}</span></span>
-      <span class="sk-line" lang="sa">${esc(e.line)}</span>
-      <span class="sk-meta">${by !== 'devata' ? `<span><em>Devatā</em> ${esc(e.devata)}</span>` : ''}${by !== 'veda' ? `<span>${esc(VEDA_SHORT[e.veda])}</span>` : ''}<span>${esc((KIND[e.kind] || KIND.sūkta)[0])}${e.count > 1 ? ` · ${fmt(e.count)} verses` : ''}</span></span>
-    </a>`;
+  if (MY_LISTS.some(([k]) => k === params.get('list'))) { go(`#/my?list=${params.get('list')}`, { replace: true }); return; }
+  const listK = '';
+  const row = sukRow(by, listK);
   main.innerHTML = `<div class="col">
     <h1>${T('Sūktas', 'सूक्तानि')}${SA() ? '' : '<span class="h1-deva" lang="sa">सूक्तानि</span>'}</h1>
     <p class="lede">The sūktas, mantras and śānti pāṭhas of recitation books such as the Sasvara Vedamantrāḥ, from every Veda. Each opens as one piece, even when it is gathered from several places.</p>
-    <nav class="chips my-tabs" aria-label="My sūktas">${MY_LISTS.map(([k, en, sa]) => `<a class="chip" data-r href="#/suktas?list=${k}"${listK === k ? ' aria-current="true"' : ''}>${k === 'saved' ? STAR(listK === k) : ''}${T(en, sa)} <small>${F(myList(k, all).length)}</small></a>`).join('')}
-      <a class="chip" data-r href="#/suktas"${!listK ? ' aria-current="true"' : ''}>${T('All', 'सर्वाणि')} <small>${F(all.length)}</small></a></nav>
-    ${listK ? myListHTML(listK, all, row) : `
     ${sukVedaButtons(cat, all, vedaF, 'link', (k) => href({ veda: vedaF === k ? '' : k }))}
     <div class="seg sk-sort" role="group" aria-label="List by">
       ${[['veda', 'By Veda'], ['devata', 'By devatā'], ['az', 'A–Z']].map(([k, l]) => `<a data-r href="${href({ by: k })}" data-by="${k}" aria-pressed="${by === k}">${l}</a>`).join('')}
     </div>
     ${groups.map((g) => `<section class="sk-group"><h2>${esc(g.title)}${g.deva ? `<span class="h2-deva" lang="sa">${esc(g.deva)}</span>` : ''}<small>${g.items.length}</small></h2>
-      <div class="sk-list">${g.items.map(row).join('')}</div></section>`).join('')}`}
+      <div class="sk-list">${g.items.map(row).join('')}</div></section>`).join('')}
   </div>`;
-  if (listK === 'saved') wireMyList(all);
   main.querySelectorAll('[data-by]').forEach((a) => a.addEventListener('click', () => { prefs.suktaBy = a.dataset.by; savePrefs(); }));
+}
+// one row of a sūkta list
+const sukRow = (by, listK) => (e) => `<a class="sk-row" href="${e.href}${listK === 'saved' ? '?from=my' : ''}">
+      <span class="sk-top"><span class="sk-name"><span class="dv" lang="sa">${esc(e.deva)}</span><span class="ia">${esc(e.name)}</span></span><span class="sk-ref">${esc(e.ref)}</span></span>
+      <span class="sk-line" lang="sa">${esc(e.line)}</span>
+      <span class="sk-meta">${by !== 'devata' ? `<span><em>Devatā</em> ${esc(e.devata)}</span>` : ''}${by !== 'veda' ? `<span>${esc(VEDA_SHORT[e.veda])}</span>` : ''}<span>${esc((KIND[e.kind] || KIND.sūkta)[0])}${e.count > 1 ? ` · ${fmt(e.count)} verses` : ''}</span></span>
+    </a>`;
+// ---------- the My sūktas tab: My list · Recent · Frequent ----------
+async function viewMy(params) {
+  setTitle('My sūktas');
+  const all = (cache.suktas ||= await json('data/suktas.json'));
+  const k = MY_LISTS.some(([x]) => x === params.get('list')) ? params.get('list') : (prefs.myTab || 'saved');
+  if (prefs.myTab !== k) { prefs.myTab = k; savePrefs(); }
+  main.innerHTML = `<div class="col">
+    <h1>${T('My sūktas', 'मम सूक्तानि')}${SA() ? '' : '<span class="h1-deva" lang="sa">मम सूक्तानि</span>'}</h1>
+    <nav class="chips my-tabs" aria-label="My sūktas">${MY_LISTS.map(([x, en, sa]) => `<a class="chip" data-r href="#/my?list=${x}"${k === x ? ' aria-current="true"' : ''}>${x === 'saved' ? STAR(k === x) : ''}${T(en, sa)} <small>${F(myList(x, all).length)}</small></a>`).join('')}</nav>
+    ${myListHTML(k, all, sukRow('veda-none', k))}
+    <p class="my-foot">${T('Kept on this device. Export or import your list in', 'अस्मिन् यन्त्रे एव। सङ्ग्रहस्य निर्यातः आयातश्च')} <a href="#/settings?s=mysk">${T('Settings', 'विन्यासे')}</a>.</p>
+  </div>`;
+  if (k === 'saved') wireMyList(all);
 }
 
 async function viewSearch(params) {
@@ -2026,6 +2186,8 @@ async function route() {
   closeSheet(true);
   main.ontouchstart = null; main.ontouchend = null;
   main.innerHTML = '<p class="loading">Loading…</p>';
+  obPage = [];
+  if (keepScrollY === null) document.body.classList.remove('ob-hide');
   try {
     await renderRail(r);
     const [a, id, sub, p1, p2] = r.parts;
@@ -2033,6 +2195,7 @@ async function route() {
     else if (a === 'about') await viewAbout();
     else if (a === 'library') await viewLibrary();
     else if (a === 'suktas') await viewSuktas(r.params);
+    else if (a === 'my') await viewMy(r.params);
     else if (a === 's') await viewSukta(id, r.params);
     else if (a === 'search') await viewSearch(r.params);
     else if (a === 'settings') await viewSettings();
@@ -2045,6 +2208,7 @@ async function route() {
     else notFound();
     await renderRail(r);
     renderChrome(r, await buildPath(r));
+    paintOptbar();
   } catch (err) {
     const off = !navigator.onLine || / \(503\)$/.test(err.message);
     main.innerHTML = off
@@ -2063,7 +2227,7 @@ async function route() {
     if (!r.params.get('v') || r.params.get('v') === '1') window.scrollTo(0, 0);
     routing = false;
   }
-  paintLipiToggle();
+  paintOptbar();
   main.focus({ preventScroll: true });
 }
 if (MEMORY) {

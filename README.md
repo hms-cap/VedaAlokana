@@ -39,7 +39,8 @@ Details, licences and known gaps: [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md).
 ## Using the app
 
 - **Back** returns to the previous view (or the parent, when opened from a link); next/previous moves replace the view instead of adding back steps; sheets and the chant view close on Back.
-- **My sūktas**: ☆ on a sūkta page saves it; My list · Recent · Frequent appear on Home and in the Sūktas tab. Stored only on the device (`localStorage`, key `vedalokana.my`); export/import in Settings.
+- **Options bar**: under the top bar, the settings that apply to the page (script, menus, theme, pāṭha, padapāṭha, IAST, tags, translation, bhāṣya, text size, save, chant); ⋯ opens them all with labels.
+- **My sūktas**: ☆ in the options bar saves a sūkta; the My sūktas tab shows My list · Recent · Frequent. Stored only on the device (`localStorage`, key `vedalokana.my`); export/import in Settings.
 - **Chant view**: a book-style page (running text, ॥n॥, invocation, source, anukramaṇī) or one verse at a time.
 
 ## Rebuild the data
