@@ -294,6 +294,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.14.0', '2026-10-31', ['Today’s mantra is now a set of up to five cards to swipe through in a loop: the mantra, its meaning, words and grammar, ṛṣi · devatā · chandas, and its use and significance — in English, or Kannada when the script is Kannada. 365 mantras from all four Vedas and the Upaniṣads, one for each day of the year; ↻ shows another.']],
   ['1.13.0', '2026-10-31', ['An options bar under the top bar holds every setting that applies to the page: script, menus, theme, pāṭha, padapāṭha, IAST, ṛṣi · devatā · chandas, translation, bhāṣya, text size, save and chant. ⋯ opens the same options with their names, plus svara marks and font. On phones it slides away while you read down and returns when you scroll up.', 'My sūktas has its own tab in the bottom bar (in place of Search, which stays at the top).']],
   ['1.12.1', '2026-10-31', ['The About link moved to the top of the start page, with a small info icon.']],
   ['1.12.0', '2026-10-31', ['Back goes to the view you came from; moving verse to verse or sūkta to sūkta does not add back steps; scroll is restored; sheets and the chant view close on Back; tabs remember where you were.', 'My sūktas: save sūktas with ☆, see them with Recent and Frequent on Home and in the Sūktas tab, reorder, chant through the list, export or import it.', 'Chant view laid out like a recitation book: running text with ॥n॥, invocation, title, source and anukramaṇī; larger or smaller text; one-at-a-time view kept.']],
@@ -646,23 +647,113 @@ const VEDA_GLYPH = { rv: 'ऋ', syv: 'य', kyv: 'य', sv: 'सा', av: 'अ' 
 const SUN_SVG = `<svg class="hero-sun" width="260" height="260" viewBox="0 0 260 260" aria-hidden="true"><circle cx="130" cy="130" r="46"/><circle cx="130" cy="130" r="70" class="r1"/><circle cx="130" cy="130" r="94" class="r2"/><circle cx="130" cy="130" r="118" class="r3"/></svg>`;
 const ARROW = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 
+
+// ---------- the daily mantra: a set of up to five cards, swiped in a loop ----------
+// 1 the mantra · 2 its meaning · 3 words and grammar · 4 ṛṣi, devatā, chandas · 5 use and significance.
+// The notes are in English, or Kannada when the script is Kannada.
+let dmPick = null;   // { k } of a set chosen with "Another"; null = today's
+let dmIndex = null;
+const GAYATRI = { t: 'rv', ref: '3.62.10', src: 'RV 3.62.10', lines: ['तत्स॑वि॒तुर्वरे॑ण्यं॒ भर्गो॑ दे॒वस्य॑ धीमहि ।', 'धियो॒ यो नः॑ प्रचो॒दया॑त् ॥'], href: '#/v/rv/c/3/62?v=10',
+  d: ['savita', 'savitā', 'सविता'], r: ['gathino-visvamitra', 'gāthino viśvāmitraḥ', 'गाथिनो विश्वामित्रः'], c: ['gayatri', 'gāyatrī', 'गायत्री'] };
+async function dailyItem(pick) {
+  try {
+    const ix = (dmIndex ||= await json('data/daily/index.json'));
+    const now = new Date();
+    const day = Math.floor((now.getTime() - now.getTimezoneOffset() * 60000) / 86400000);
+    const k = pick ? pick.k : (day * 7919) % ix.n;
+    const items = await json(`data/daily/c${Math.floor(k / ix.chunk)}.json`);
+    return { ...items[k % ix.chunk], k, today: !pick };
+  } catch { return { ...GAYATRI, today: true }; }
+}
+const dmKn = () => prefs.lipi === 'knda';
+const dmL = (pair) => esc(pair?.[dmKn() ? 1 : 0] || pair?.[0] || '');
+function dailyCards(m) {
+  const ref = m.t === 'sk' ? T(m.src, m.srcSa) : SA() ? `<span lang="sa">${esc(`${REF_SA[m.t] || ''} ${dg(m.ref)}`)}</span>` : esc(m.t === 'rv' ? `Ṛgveda ${m.ref}` : m.src);
+  const names = [m.d, m.r, m.c].filter(Boolean);
+  const tags = SA() ? `<span lang="sa">${esc(names.map((x) => x[2] || x[1]).join(' · '))}</span>` : esc(names.map((x) => cap(x[1])).join(' · '));
+  const lines = m.t === 'sk' ? m.lines : svaraLines(m.t, m.lines, m.pada);
+  const cards = [{ k: T('Mantra', 'मन्त्रः'), html: `<div class="hero-m" lang="sa">${lines.map((l) => `<div>${esc(l)}</div>`).join('')}</div>
+      <div class="hero-r"><b>${ref}</b><span>${tags}</span></div>` }];
+  if (m.m) cards.push({ k: T('Meaning', 'अर्थः'), html: `<p class="dm-p">${dmL(m.m)}</p>` });
+  if (m.w?.length) cards.push({ k: T('Words and grammar', 'पदानि व्याकरणं च'), html: `<dl class="dm-w">${m.w.map((w) => `<div><dt lang="sa">${esc(w[0])}</dt><dd>${esc(w[dmKn() ? 2 : 1] || w[1])}</dd></div>`).join('')}</dl>` });
+  const g = dmIndex?.gloss || {};
+  const who = [['r', 'rishi', 'Ṛṣi', 'ऋषिः'], ['d', 'devata', 'Devatā', 'देवता'], ['c', 'chandas', 'Chandas', 'छन्दः']].filter(([f]) => m[f]);
+  if (m.m && who.length) {
+    cards.push({ k: T('Ṛṣi · devatā · chandas', 'ऋषिः · देवता · छन्दः'), html: `<dl class="dm-w dm-who">${who.map(([f, kind, en, sa]) => {
+      const x = m[f]; const note = g[kind]?.[x[0]];
+      return `<div><dt><small>${T(en, sa)}</small> <span lang="sa">${esc(x[2] || x[1])}</span></dt>${note ? `<dd>${esc(note[dmKn() ? 1 : 0])}</dd>` : ''}</div>`;
+    }).join('')}</dl>` });
+  }
+  if (m.u) cards.push({ k: T('Use and significance', 'विनियोगः महत्त्वं च'), html: `<p class="dm-p">${dmL(m.u)}</p>` });
+  return cards;
+}
+function dailyHTML(m) {
+  const cards = dailyCards(m);
+  const kick = m.today ? T('Today’s mantra', 'अद्यतनमन्त्रः') : T('Another mantra', 'अन्यो मन्त्रः');
+  return `${SUN_SVG}
+    <div class="dm-top"><h1 id="todayH" class="hero-k">${kick}<span class="dm-sub"> · <span id="dmK">${cards[0].k}</span></span></h1>
+      ${m.today ? '' : `<button type="button" class="dm-today">${T('Today’s', 'अद्यतनम्')}</button>`}
+      ${dmIndex ? `<button type="button" class="dm-new" aria-label="${esc(Tp('Another mantra', 'अन्यो मन्त्रः'))}" title="${esc(Tp('Another mantra', 'अन्यो मन्त्रः'))}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v5h-5"/></svg></button>` : ''}</div>
+    <div class="dm-view" aria-live="polite">${cards.map((c, i) => `<div class="dm-card${i ? '' : ' on'}" role="group" aria-roledescription="slide" aria-label="${i + 1} / ${cards.length}"${i ? ' aria-hidden="true"' : ''}>${c.html}</div>`).join('')}</div>
+    <div class="hero-f dm-f">
+      ${cards.length > 1 ? `<div class="dm-dots" role="tablist">${cards.map((c, i) => `<button type="button" role="tab" data-i="${i}" aria-selected="${String(!i)}" aria-label="${esc(c.k.replace(/<[^>]+>/g, ''))}"></button>`).join('')}</div>` : '<span></span>'}
+      <a class="hero-go" href="${esc(m.href)}" aria-label="Open in the reader">${ARROW}</a>
+    </div>`;
+}
+function wireDaily(m) {
+  const box = $('#dm'); if (!box) return;
+  const cards = [...box.querySelectorAll('.dm-card')]; const n = cards.length;
+  const kicks = dailyCards(m).map((c) => c.k);
+  let at = 0;
+  const show = (i, dir) => {
+    const j = ((i % n) + n) % n; if (j === at) return;
+    const from = cards[at]; const to = cards[j];
+    from.classList.remove('on'); from.setAttribute('aria-hidden', 'true');
+    to.classList.add('on'); to.removeAttribute('aria-hidden');
+    if (!REDUCED_MOTION()) {
+      to.animate([{ transform: `translateX(${dir * 40}px)`, opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 240, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    }
+    at = j;
+    box.querySelectorAll('.dm-dots button').forEach((b, k) => b.setAttribute('aria-selected', String(k === j)));
+    $('#dmK').innerHTML = kicks[j];
+  };
+  box.querySelectorAll('.dm-dots button').forEach((b) => b.addEventListener('click', () => { const i = Number(b.dataset.i); show(i, i > at ? 1 : -1); }));
+  const view = box.querySelector('.dm-view');
+  let x0 = null; let y0 = 0;
+  view.addEventListener('pointerdown', (e) => { x0 = e.clientX; y0 = e.clientY; });
+  view.addEventListener('pointerup', (e) => {
+    if (x0 === null) return;
+    const dx = e.clientX - x0; const dy = e.clientY - y0; x0 = null;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) show(at + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
+    else if (Math.abs(dx) < 8 && Math.abs(dy) < 8 && n > 1) show(at + 1, 1);   // a tap moves on
+  });
+  view.addEventListener('pointercancel', () => { x0 = null; });
+  box.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') { e.preventDefault(); e.stopPropagation(); show(at + 1, 1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); e.stopPropagation(); show(at - 1, -1); }
+  });
+  const redraw = async (pick) => {
+    dmPick = pick;
+    const m2 = await dailyItem(pick);
+    box.innerHTML = dailyHTML(m2);
+    wireDaily(m2);
+    if (!REDUCED_MOTION()) box.querySelector('.dm-view')?.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220 });
+  };
+  box.querySelector('.dm-new')?.addEventListener('click', () => {
+    if (!dmIndex) return;
+    let k; do { k = Math.floor(Math.random() * dmIndex.n); } while (dmIndex.n > 1 && k === m.k);
+    redraw({ k });
+  });
+  box.querySelector('.dm-today')?.addEventListener('click', () => redraw(null));
+}
+
 async function viewHome() {
   setTitle('');
   const cat = await catalog();
-  // Today's mantra comes from the Ṛgveda; offline, before the Ṛgveda is stored, show the Gāyatrī.
-  let m = { lines: ['तत्स॑वि॒तुर्वरे॑ण्यं॒ भर्गो॑ दे॒वस्य॑ धीमहि ।', 'धियो॒ यो नः॑ प्रचो॒दया॑त् ॥'], ref: '3.62.10', tags: 'Savitṛ · Viśvāmitra Gāthina · Gāyatrī', tagsSa: 'सविता · विश्वामित्रो गाथिनः · गायत्री', href: '#/v/rv/c/3/62?v=10' };
-  try {
-    const rv = await index('rv');
-    const meta = cat.texts.find((v) => v.id === 'rv');
-    const day = Math.floor(Date.now() / 86400000);
-    const row = rv.rows[(day * 7919) % rv.rows.length];
-    const t = await text('rv', row[0]);
-    const verse = t[row[1]].find((x) => x[0] === row[2]);
-    const dev = row[COL.devata] >= 0 ? rv.facets.devata[row[COL.devata]] : null;
-    const ris = row[COL.rishi] >= 0 ? rv.facets.rishi[row[COL.rishi]] : null;
-    const cha = row[COL.chandas] >= 0 ? rv.facets.chandas[row[COL.chandas]] : null;
-    m = { lines: verse[1], pada: verse[3], ref: refOf(meta, row[0], row[1], row[2]), tags: [dev, ris, cha].filter(Boolean).map((e) => cap(e[1])).join(' · '), tagsSa: [dev, ris, cha].filter(Boolean).map((e) => e[2] || e[1]).join(' · '), href: `#/v/rv/c/${row[0]}/${row[1]}?v=${row[2]}` };
-  } catch { /* keep the Gāyatrī */ }
+  // Today's mantra: a card set from data/daily (scripts/build-daily.mjs); offline, before it
+  // is stored, the Gāyatrī alone.
+  if (keepScrollY === null) dmPick = null;
+  const dm = await dailyItem(dmPick);
   const byId = Object.fromEntries(cat.texts.map((x) => [x.id, x]));
   let last = null;
   try { last = JSON.parse(localStorage.getItem('vedalokana.last') || 'null'); } catch { /* storage unavailable */ }
@@ -674,15 +765,7 @@ async function viewHome() {
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.6v.1"/></svg>
       <span>${T('About', 'परिचयः')}</span><small>${esc(APP.version)}</small></a>
     <section class="pc" id="pc" aria-label="Today’s pañcāṅga"></section>
-    <section class="hero" aria-labelledby="todayH">
-      ${SUN_SVG}
-      <h1 id="todayH" class="hero-k">${T('Today’s mantra', 'अद्यतनमन्त्रः')}</h1>
-      <div class="hero-m" lang="sa">${svaraLines('rv', m.lines, m.pada).map((l) => `<div>${esc(l)}</div>`).join('')}</div>
-      <div class="hero-f">
-        <span class="hero-r"><b>${SA() ? `<span lang="sa">ऋग्वेदः ${esc(dg(m.ref))}</span>` : `Ṛgveda ${esc(m.ref)}`}</b><span>${T(m.tags, m.tagsSa)}</span></span>
-        <a class="hero-go" href="${m.href}" aria-label="Open Ṛgveda ${esc(m.ref)} in the reader">${ARROW}</a>
-      </div>
-    </section>
+    <section class="hero dm" id="dm" aria-roledescription="carousel" aria-labelledby="todayH">${dailyHTML(dm)}</section>
     ${last ? `<a class="cont" href="${esc(last.v > 1 ? `${last.href}${last.href.includes('?') ? '&' : '?'}v=${last.v}` : last.href)}">
       <svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" class="ring-bg"/><circle cx="24" cy="24" r="20" class="ring" stroke-dasharray="${(pct * 125.7).toFixed(1)} 126" transform="rotate(-90 24 24)"/></svg>
       <span class="cont-t"><small>${T('Continue chanting', 'पाठम् अनुवर्तय')}</small><b>${SA() && last.whereSa ? `<span lang="sa">${esc(last.whereSa)}</span>` : esc(last.where)}</b><small>${SA() && last.textSa ? `<span lang="sa">${esc(last.textSa)}</span>` : esc(last.text)}${last.of ? ` · ${SA() ? `<span lang="sa">${dg(last.v)} / ${dg(last.of)}</span>` : `${last.v} of ${last.of}`}` : ''}</small></span>
@@ -700,6 +783,7 @@ async function viewHome() {
     <p class="lede home-foot">Every text comes from an openly published digital edition.</p>
   </div>`;
   renderPanchanga();
+  wireDaily(dm);
   main.querySelectorAll('[data-myk]').forEach((b) => b.addEventListener('click', () => {
     prefs.homeMy = b.dataset.myk; savePrefs();
     main.querySelectorAll('[data-myk]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
@@ -2271,7 +2355,7 @@ route();
 // the finger, an edge label names where it will go, and letting go past the threshold (or
 // with a quick flick) turns the page. Vertical scrolling is left to the browser. Arrow keys
 // do the same on a keyboard.
-const NO_SWIPE = '.controls, .pathbar, .tags, .chips, .sheet, input, textarea, select, .readerbar, .tabbar';
+const NO_SWIPE = '.dm, .controls, .pathbar, .tags, .chips, .sheet, input, textarea, select, .readerbar, .tabbar';
 (function swipeBetweenSections() {
   const hint = document.createElement('div');
   hint.className = 'swipe-hint'; hint.setAttribute('aria-hidden', 'true');

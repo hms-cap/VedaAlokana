@@ -404,6 +404,8 @@ fs.writeFileSync(path.join(OUT, 'catalog.json'), JSON.stringify({ built: new Dat
 // ---- sūktas: resolve each entry against the data (scripts/build-suktas.mjs)
 const suktas = buildSuktas(OUT);
 console.log(`suktas: ${suktas.length} found in the text`);
+// ---- daily mantra cards (scripts/build-daily.mjs reads scripts/daily/)
+(await import('node:child_process')).execFileSync(process.execPath, [path.join(path.dirname(new URL(import.meta.url).pathname), 'build-daily.mjs'), OUT], { stdio: 'inherit' });
 console.log('wrote', OUT);
 
 // ---- per-Veda file lists for "Download for offline" (writes data/offline.json)

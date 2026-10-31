@@ -910,3 +910,27 @@ mark.pv { background: color-mix(in srgb, var(--fire, #D9822B) 22%, transparent);
 .verse .pada-deva { font-size: calc(20px * var(--tz, 1)); }
 .verse .tr { font-size: calc(17px * var(--tz, 1)); }
 @media (max-width: 599px) { .verse .deva { font-size: calc(22px * var(--tz, 1)); } }
+
+/* ---- daily mantra cards ---- */
+.dm-top { position: relative; display: flex; align-items: center; gap: 8px; min-height: 36px; }
+.dm-top .hero-k { flex: 1; min-width: 0; }
+.dm-sub { color: var(--hero-ink); opacity: .85; }
+.dm-new, .dm-today { flex: none; position: relative; height: 36px; border: 1px solid rgba(255, 255, 255, .35); background: rgba(255, 255, 255, .12); color: var(--hero-ink);
+  border-radius: 18px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.dm-new { width: 36px; padding: 0; }
+.dm-today { padding: 0 12px; font: 600 12px var(--ui); }
+.dm-new:hover, .dm-today:hover { background: rgba(255, 255, 255, .22); }
+.dm-view { position: relative; display: grid; touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab; }
+.dm-card { grid-area: 1 / 1; visibility: hidden; display: flex; flex-direction: column; gap: 12px; justify-content: center; min-width: 0; }
+.dm-card.on { visibility: visible; }
+.dm-p { margin: 0; font-size: 17px; line-height: 1.6; }
+.kn .dm-p, .kn .dm-w dd { font-family: 'Noto Sans Kannada', var(--ui); }
+.dm-w { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.dm-w dt { font-family: var(--deva); font-size: 21px; line-height: 1.5; }
+.dm-w dd { margin: 2px 0 0; font-size: 14.5px; line-height: 1.5; color: var(--hero-soft); }
+.dm-who dt small { font: 600 11px var(--ui); letter-spacing: .06em; text-transform: uppercase; color: var(--hero-soft); margin-right: 6px; }
+.dm-dots { display: flex; gap: 2px; }
+.dm-dots button { width: 22px; height: 28px; border: 0; padding: 0; background: transparent; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.dm-dots button::after { content: ''; width: 8px; height: 8px; border-radius: 4px; background: var(--hero-soft); opacity: .45; transition: width .2s, opacity .2s; }
+.dm-dots button[aria-selected="true"]::after { width: 18px; opacity: 1; background: #FFFFFF; }
+.dm .hero-r { position: relative; }

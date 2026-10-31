@@ -74,3 +74,12 @@ Not part of any text above; kept in `scripts/sources/sri-sukta.json` and shown a
 - South Indian pāṭha (15 ṛks and phalaśruti, with svaras): Dayananda Aithal, *Saswara Rigveda Samhita*, `VisheshaSuktas/shrI-sUkta(Devanagari)-F1.html` (https://github.com/daithal/saswara-rigveda). No licence is stated there; it is used with credit, on the project owner's decision, and printed as published (its dīrgha svaritas and spellings kept).
 - Khila pāṭha: Ṛgveda Khila 2.6 after J. Scheftelowitz, *Die Apokryphen des Ṛgveda* (Breslau 1906), GRETIL input by Muneo Tokunaga (1995), via sanskrit/raw_etexts. Unaccented, words divided as in the edition.
 - The marked variants are found by program (verse matching and letter-level comparison); one-letter differences that sandhi explains are not marked.
+
+## Daily mantra cards
+
+365 mantras, one a day through the year (`scripts/daily/*.mjs`, built by `scripts/build-daily.mjs` into `web/data/daily/`): 197 from the Ṛgveda, 33 from the Atharvaveda, 53 from the Yajurveda (Vājasaneyi, Taittirīya Saṃhitā and Āraṇyaka), 2 from the Sāmaveda, 63 from the Upaniṣads and 17 from the Śrī Sūkta, Gaṇeśa Atharvaśīrṣa, Medhā Sūkta and Pavamāna Pariśiṣṭa as given in Aithal's Saswara Ṛgveda.
+
+- The mantra text is taken from the app's own data at build time (the reference, or the first and last words inside a long section), never retyped, so the svaras and the pāṭha switch are those of the reader.
+- Ṛṣi, devatā and chandas for the Ṛgveda and Atharvaveda come from their indexes; for the other texts they are given in the card file. The short notes on each ṛṣi, devatā and chandas are in `scripts/daily/gloss.mjs`.
+- The meaning, the word-and-grammar notes, and the use-and-significance note of each card are written for this app in English and Kannada. The meanings are plain paraphrases (not Griffith's translation); the grammar follows the standard Pāṇinian and Vedic analysis; the notes on use describe widespread practice (sandhyāvandana, pūjā, homa, saṃskāras) and where a verse is quoted in later texts. Practice differs between traditions and families — the notes describe common use, not a rule.
+- The day's card is the same for everyone: day number × 7919 mod 365, which visits every card once in 365 days.

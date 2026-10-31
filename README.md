@@ -41,6 +41,7 @@ Details, licences and known gaps: [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md).
 - **Back** returns to the previous view (or the parent, when opened from a link); next/previous moves replace the view instead of adding back steps; sheets and the chant view close on Back.
 - **Options bar**: under the top bar, the settings that apply to the page (script, menus, theme, pāṭha, padapāṭha, IAST, tags, translation, bhāṣya, text size, save, chant); ⋯ opens them all with labels.
 - **My sūktas**: ☆ in the options bar saves a sūkta; the My sūktas tab shows My list · Recent · Frequent. Stored only on the device (`localStorage`, key `vedalokana.my`); export/import in Settings.
+- **Daily mantra**: on Home, five cards to swipe through — mantra, meaning, words and grammar, ṛṣi · devatā · chandas, use and significance (English, or Kannada with the Kannada script); 365 mantras, ↻ for another. Built by `node scripts/build-daily.mjs` from `scripts/daily/`.
 - **Chant view**: a book-style page (running text, ॥n॥, invocation, source, anukramaṇī) or one verse at a time.
 
 ## Rebuild the data
