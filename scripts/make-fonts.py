@@ -1,27 +1,28 @@
 #!/usr/bin/env python3
-"""Build the app's Devanagari and Kannada web fonts with stronger svara marks.
+"""Build the app's Devanagari and Kannada web fonts.
 
-Starts from Noto Serif Devanagari and Noto Serif Kannada (SIL OFL, from
-github.com/google/fonts), fixes them at regular weight, and redraws every
-glyph of the svara marks so they read clearly at body size:
+Starts from Noto Serif Devanagari, Noto Serif Kannada (SIL OFL, from
+github.com/google/fonts) and Shobhika (SIL OFL, IIT Bombay; its release .otf),
+fixes them at regular weight, and for each writes two web fonts:
 
-  ॑ svarita (U+0951) and ᳚ double svarita (U+1CDA): strokes about twice as
-    thick and a quarter taller, growing upward from where they sit;
-  ॒ anudātta (U+0952): bar about twice as thick, growing downward from its
-    top edge, and a little wider.
+  *-Vedic.woff  svara marks redrawn to read clearly at body size:
+                ॑ svarita (U+0951) and ᳚ double svarita (U+1CDA): strokes about
+                twice as thick and a quarter taller, growing upward;
+                ॒ anudātta (U+0952): bar about twice as thick, growing downward;
+  *-Std.woff    the font's own marks ("Standard" in Settings).
 
-All positional variants are treated the same way (marks under subscript
-consonants, after a repha, combined with candrabindu), so placement by the
-fonts' own positioning rules is unchanged. Only the mark outlines change.
+In both, every anudātta is placed at one depth under the line (LEVEL). The source
+fonts hang it from each letter's own bottom, so along a line it stepped up and
+down; see level_anudatta().
 
-Usage: python3 scripts/make-fonts.py <google-fonts checkout> web/fonts [--audit DIR]
+Usage: python3 scripts/make-fonts.py <google-fonts checkout> web/fonts [--shobhika DIR] [--audit DIR]
 Needs fontTools (pip install fonttools).
 
---audit DIR also writes, per script, two TrueType fonts with identical shaping
+--audit DIR also writes, per font, two TrueType fonts with identical shaping
 and positioning: *-anu.ttf draws only the anudātta marks, *-rest.ttf draws
 everything else. scripts/audit-marks.mjs renders every accented word of the
-data with both and measures the real gap between each anudātta and the
-letters above it.
+data with both and measures the depth of each bar and the real gap between it
+and the letters above it.
 """
 import sys
 from pathlib import Path
@@ -34,9 +35,14 @@ STROKE_X_DOUBLE = 1.5  # double svarita: keep a gap between its two strokes
 STROKE_Y = 1.25    # svarita height
 BAR_Y = 2.0        # anudātta thickness
 BAR_X = {'Devanagari': 1.0, 'Kannada': 1.12}  # anudātta width (Devanagari stays narrow: ु/ू of the previous letter reach under it)
-# Extra drop for the anudātta (font units), so it clears subscript consonants
-# (ottakshara). Tuned with scripts/audit-marks.mjs.
-ANU_DROP = {'Devanagari': 165, 'Kannada': 110}
+# Where the top of every anudātta sits, in font units below the baseline: deep enough
+# to clear ु ू ृ and subscript consonants (ottakshara), so the bars run in one even
+# line. Tuned with scripts/audit-marks.mjs. ANU_GAP: the least room kept under a
+# letter that reaches deeper still (the bar then drops just for that letter).
+LEVEL = {'NotoSerifDevanagari': 400, 'NotoSerifKannada': 550, 'Shobhika': 420}
+# The font's own choice of a lower bar after Kannada's deepest subscripts (ಕ್ಷ, ಜ್ಞ) is kept, one level for all.
+DEEP = {'NotoSerifKannada': {'anudatta_deva.lower': 770}}
+ANU_GAP = 60
 
 SOURCES = [
     ('Devanagari', 'ofl/notoserifdevanagari/NotoSerifDevanagari[wdth,wght].ttf', {'wght': 400, 'wdth': 100},
@@ -94,60 +100,126 @@ def strengthen(font, name, drop=0, bar_x=1.0):
     return touched
 
 
-def deepen_kannada_stacks(font):
-    """Use the font's lowest anudātta under every stack that holds a deep subscript.
+def anu_family(font):
+    """The anudātta glyph the cmap gives, and every glyph a substitution can make from it."""
+    cm = font.getBestCmap()
+    base = cm.get(0x0952)
+    fam = {g for g in font.getGlyphOrder() if is_below(g)}
+    return base, fam
 
-    Noto Serif Kannada lowers ॒ under a deep subscript (ಕ್ಷ, ಜ್ಞ, ಛ, ಢ ...) only
-    when that subscript comes right before the mark. When another subscript
-    follows it (ಙ್ಕ್ಷ್ವ॒, ನ್ಕ್ಷ್ಮ॒) the plain bar was used and ran through the
-    deep one. These rules extend the font's own `blws` context to one or two
-    following subscripts, reusing its .lower substitution."""
-    from fontTools.otlLib.builder import buildCoverage
+
+def glyph_bounds(font, name):
+    from fontTools.pens.boundsPen import BoundsPen
+    gs = font.getGlyphSet()
+    pen = BoundsPen(gs)
+    gs[name].draw(pen)
+    return pen.bounds
+
+
+def level_anudatta(font, level, gap, deep=None):
+    """Put every anudātta at one height under the line.
+
+    The source fonts hang the bar from each letter's own bottom: under ु, a
+    subscript or a deep conjunct it drops, elsewhere it rises, so in running text
+    the bars step up and down. Here the bar is drawn with its top at `level`
+    (font units below the baseline) whatever letter it follows. It goes lower only
+    under a letter whose own ink reaches deeper (keeping `gap` clear), and for the
+    variants in `deep` ({glyph: level}), which the font itself picks after its
+    deepest subscripts (Kannada ಕ್ಷ, ಜ್ಞ).
+
+      GSUB: rules that swap the anudātta for another variant, or fuse it with a
+            neighbouring sign (ु + ॒, ः + ॒ ...), are dropped, so the bar stays one glyph;
+      GPOS: in mark-to-base / mark-to-ligature each kept bar gets a class of its own,
+            anchored at its level under every base (bases the font had left out
+            included, the bar centred on them); mark-to-mark (the bar hung from ु,
+            a subscript ...) no longer applies to it.
+    """
     from fontTools.ttLib.tables import otTables as ot
-    gsub = font['GSUB'].table
-    order = font.getGlyphOrder()
-    below = [g for g in order if g.endswith('_kannada.below')]
-    host = None
-    for lk in gsub.LookupList.Lookup:
+    deep = deep or {}
+    base, fam = anu_family(font)
+    bars = {base: level, **{g: lv for g, lv in deep.items() if g in fam}}
+    others = fam - set(bars)
+    dropped = 0
+    # --- GSUB: keep the plain bar
+    for lk in font['GSUB'].table.LookupList.Lookup:
         for st in lk.SubTable:
             t = st.ExtSubTable if lk.LookupType == 7 else st
-            if getattr(t, 'Format', None) == 3 and hasattr(t, 'InputCoverage') \
-                    and any('anudatta' in g for c in t.InputCoverage for g in c.glyphs) \
-                    and any('k_ssa_kannada.below' in c.glyphs for c in t.BacktrackCoverage):
-                host, lower, deep_rule = lk, t.SubstLookupRecord[0].LookupListIndex, t
-    if host is None:
-        print('Kannada: anudātta context rule not found; stacks left as they are')
-        return
-    deep = set()
-    for lk in [host]:
+            if hasattr(t, 'mapping'):
+                outs = lambda v: v if isinstance(v, list) else [v]
+                # anything that yields another variant or a fused form goes; rules that only move
+                # the bar (Kannada swaps it with reph / length / anusvāra to reorder it) stay
+                for k in [k for k, v in t.mapping.items() if any(o in others for o in outs(v))]:
+                    del t.mapping[k]; dropped += 1
+            if hasattr(t, 'ligatures'):
+                for k in list(t.ligatures):
+                    keep = [l for l in t.ligatures[k] if l.LigGlyph not in others]
+                    dropped += len(t.ligatures[k]) - len(keep)
+                    if keep: t.ligatures[k] = keep
+                    else: del t.ligatures[k]
+            if hasattr(t, 'alternates'):
+                for k in [k for k in t.alternates if k in bars]:
+                    del t.alternates[k]; dropped += 1
+    # --- GPOS
+    def anchor(x, y):
+        a = ot.Anchor(); a.Format = 1; a.XCoordinate = round(x); a.YCoordinate = round(y); return a
+    bottoms = {}
+    def bottom(g):
+        if g not in bottoms:
+            b = glyph_bounds(font, g); bottoms[g] = b[1] if b else 0
+        return bottoms[g]
+    gdef = font['GDEF'].table.GlyphClassDef.classDefs if 'GDEF' in font else {}
+    hmtx = font['hmtx'].metrics
+    spacing = [g for g in font.getGlyphOrder() if gdef.get(g, 1) in (1, 2) and hmtx[g][0] > 0 and not g.startswith('.')]
+    n_base = n_added = n_mm = 0
+    for lk in font['GPOS'].table.LookupList.Lookup:
         for st in lk.SubTable:
-            t = st.ExtSubTable if lk.LookupType == 7 else st
-            if t.SubstLookupRecord[0].LookupListIndex == lower:
-                for c in t.BacktrackCoverage:
-                    deep |= {g for g in c.glyphs if g != 'ra_kannada.below'}
-    gmap = font.getReverseGlyphMap()
-    deep = sorted(deep, key=gmap.get)
-    below = sorted(below, key=gmap.get)
-    for n in (1, 2):
-        t = ot.ChainContextSubst()
-        t.Format = 3
-        t.BacktrackGlyphCount = n + 1
-        t.BacktrackCoverage = [buildCoverage(below, gmap) for _ in range(n)] + [buildCoverage(deep, gmap)]
-        t.InputGlyphCount = 1
-        t.InputCoverage = [buildCoverage(deep_rule.InputCoverage[0].glyphs, gmap)]
-        t.LookAheadGlyphCount = 0
-        t.LookAheadCoverage = []
-        rec = ot.SubstLookupRecord()
-        rec.SequenceIndex, rec.LookupListIndex = 0, lower
-        t.SubstCount, t.SubstLookupRecord = 1, [rec]
-        if host.LookupType == 7:
-            ext = ot.ExtensionSubst()
-            ext.Format, ext.ExtensionLookupType, ext.ExtSubTable = 1, 6, t
-            host.SubTable.append(ext)
-        else:
-            host.SubTable.append(t)
-    host.SubTableCount = len(host.SubTable)
-    print(f'Kannada: .lower anudātta after a deep subscript followed by 1-2 more ({len(deep)} deep forms)')
+            t = st.ExtSubTable if lk.LookupType == 9 else st
+            ty = t.LookupType if lk.LookupType == 9 else lk.LookupType
+            if ty in (4, 5):
+                cov = t.MarkCoverage.glyphs
+                mine = [g for g in bars if g in cov]
+                if not mine: continue
+                cls = {}
+                for g in mine:
+                    rec = t.MarkArray.MarkRecord[cov.index(g)]
+                    cls[g] = (rec.Class, t.ClassCount)
+                    rec.Class = t.ClassCount
+                    t.ClassCount += 1
+                    rec.MarkAnchor = anchor(rec.MarkAnchor.XCoordinate, glyph_bounds(font, g)[3])
+                y = lambda g, lv: min(-lv, bottom(g) - gap)
+                if ty == 4:
+                    for g, br in zip(t.BaseCoverage.glyphs, t.BaseArray.BaseRecord):
+                        for m in mine:
+                            a = br.BaseAnchor[cls[m][0]]
+                            br.BaseAnchor.append(anchor(a.XCoordinate, y(g, bars[m])) if a else None)
+                        n_base += 1
+                    # letters the font gave no anchor at all: centre the bar under them
+                    have = set(t.BaseCoverage.glyphs)
+                    for g in [g for g in spacing if g not in have]:
+                        br = ot.BaseRecord()
+                        br.BaseAnchor = [None] * (t.ClassCount - len(mine)) + [anchor(hmtx[g][0] / 2, y(g, bars[m])) for m in mine]
+                        t.BaseCoverage.glyphs.append(g); t.BaseArray.BaseRecord.append(br)
+                        n_added += 1
+                    order = font.getReverseGlyphMap()
+                    pairs = sorted(zip(t.BaseCoverage.glyphs, t.BaseArray.BaseRecord), key=lambda p: order[p[0]])
+                    t.BaseCoverage.glyphs = [p[0] for p in pairs]; t.BaseArray.BaseRecord = [p[1] for p in pairs]
+                    t.BaseArray.BaseCount = len(pairs)
+                else:
+                    for g, la in zip(t.LigatureCoverage.glyphs, t.LigatureArray.LigatureAttach):
+                        for cr in la.ComponentRecord:
+                            for m in mine:
+                                a = cr.LigatureAnchor[cls[m][0]]
+                                cr.LigatureAnchor.append(anchor(a.XCoordinate, y(g, bars[m])) if a else None)
+            elif ty == 6:
+                cov = t.Mark1Coverage.glyphs
+                for g in [g for g in bars if g in cov]:
+                    i = cov.index(g)
+                    del cov[i]; del t.Mark1Array.MarkRecord[i]
+                    t.Mark1Array.MarkCount = len(t.Mark1Array.MarkRecord)
+                    n_mm += 1
+    print(f'  anudātta at {level} units below the baseline{" (" + ", ".join(f"{g} {v}" for g, v in deep.items()) + ")" if deep else ""}: '
+          f'{dropped} substitutions dropped, {n_base} base anchors set, {n_added} bases added, '
+          f'removed from {n_mm} mark-to-mark subtables')
 
 
 def blank(font, names):
@@ -204,39 +276,77 @@ def build_ui(root, out):
         print(f'{out / dest}')
 
 
-def build(root, out, adir=None):
+def otf_to_ttf(font):
+    """CFF outlines → TrueType (quadratic), so the same glyph edits apply."""
+    from fontTools.pens.cu2quPen import Cu2QuPen
+    from fontTools.pens.ttGlyphPen import TTGlyphPen
+    from fontTools.ttLib import newTable
+    order = font.getGlyphOrder()
+    gs = font.getGlyphSet()
+    glyf = newTable('glyf'); glyf.glyphOrder = order; glyf.glyphs = {}
+    for name in order:
+        pen = TTGlyphPen(gs)
+        gs[name].draw(Cu2QuPen(pen, 1.0, reverse_direction=True))
+        glyf.glyphs[name] = pen.glyph()
+    font['loca'] = newTable('loca')
+    font['glyf'] = glyf
+    del font['CFF ']
+    if 'VORG' in font: del font['VORG']
+    font['maxp'] = newTable('maxp'); font['maxp'].tableVersion = 0x00010000
+    for k in ('maxZones', 'maxTwilightPoints', 'maxStorage', 'maxFunctionDefs', 'maxInstructionDefs',
+              'maxStackElements', 'maxSizeOfInstructions', 'maxComponentElements', 'maxPoints', 'maxContours',
+              'maxCompositePoints', 'maxCompositeContours', 'maxComponentDepth'):
+        setattr(font['maxp'], k, 0)
+    font['maxp'].maxZones = 1
+    font['head'].glyphDataFormat = 0
+    font['post'].formatType = 2.0
+    font['post'].extraNames = []; font['post'].mapping = {}
+    font.sfntVersion = '\x00\x01\x00\x00'
+    for name in order:
+        glyf[name].recalcBounds(glyf)
+    return font
+
+
+def make(font, script, unicodes, strong, level, deep=None):
+    """One web font: subset, anudātta levelled, svara marks strengthened if `strong`."""
+    import io
+    buf = io.BytesIO(); font.save(buf); buf.seek(0); font = TTFont(buf)  # a fresh copy
+    changed = []
+    if strong:
+        changed = [n for n in font.getGlyphOrder() if is_svara_glyph(n) and strengthen(font, n, 0, BAR_X[script])]
+    level_anudatta(font, level, ANU_GAP, deep)
+    opts = subset.Options()
+    opts.layout_features = ['*']
+    opts.flavor = 'woff'
+    opts.name_IDs = ['*']
+    opts.notdef_outline = True
+    sub = subset.Subsetter(opts)
+    sub.populate(unicodes=subset.parse_unicodes(unicodes))
+    sub.subset(font)
+    return font, changed
+
+
+def build(root, out, adir=None, shobhika=None):
     out.mkdir(parents=True, exist_ok=True)
     build_ui(root, out)
-    for script, rel, axes, unicodes in SOURCES:
-        font = TTFont(root / rel)
-        font = instantiateVariableFont(font, axes)
-        # "Standard marks" in Settings: the same subset with the stock svara marks.
-        std = subset.Options()
-        std.layout_features = ['*']
-        std.flavor = 'woff'
-        stock = subset.Subsetter(std)
-        plain = TTFont(root / rel)
-        plain = instantiateVariableFont(plain, axes)
-        stock.populate(unicodes=subset.parse_unicodes(unicodes))
-        stock.subset(plain)
-        plain.flavor = 'woff'
-        plain.save(out / f'NotoSerif{script}-Std.woff')
-        if script == 'Kannada':
-            deepen_kannada_stacks(font)
-        changed = [n for n in font.getGlyphOrder() if is_svara_glyph(n) and strengthen(font, n, ANU_DROP[script], BAR_X[script])]
-        opts = subset.Options()
-        opts.layout_features = ['*']
-        opts.flavor = 'woff'
-        opts.name_IDs = ['*']
-        sub = subset.Subsetter(opts)
-        sub.populate(unicodes=subset.parse_unicodes(unicodes))
-        sub.subset(font)
-        if adir:
-            audit_fonts(font, script, adir)
-        dest = out / f'NotoSerif{script}-Vedic.woff'
-        font.flavor = 'woff'
-        font.save(dest)
-        print(f'{dest}: strengthened {len(changed)} svara glyphs ({", ".join(changed)})')
+    families = [(f'NotoSerif{script}', script, TTFont(root / rel), axes, unicodes)
+                for script, rel, axes, unicodes in SOURCES]
+    if shobhika:
+        families.append(('Shobhika', 'Devanagari', TTFont(Path(shobhika) / 'Shobhika-Regular.otf'), None, SOURCES[0][3]))
+    for name, script, font, axes, unicodes in families:
+        if axes:
+            font = instantiateVariableFont(font, axes)
+        if 'CFF ' in font:
+            font = otf_to_ttf(font)
+        level = LEVEL[name]
+        for tag, strong in (('Vedic', True), ('Std', False)):
+            f, changed = make(font, script, unicodes, strong, level, DEEP.get(name))
+            if adir and strong:
+                audit_fonts(f, name, adir)
+            dest = out / f'{name}-{tag}.woff'
+            f.flavor = 'woff'
+            f.save(dest)
+            print(f'{dest}' + (f': strengthened {len(changed)} svara glyphs' if strong else ': stock marks'))
 
 
 if __name__ == '__main__':
@@ -246,4 +356,9 @@ if __name__ == '__main__':
         i = args.index('--audit')
         adir = Path(args[i + 1])
         del args[i:i + 2]
-    build(Path(args[0]), Path(args[1]), adir)
+    shob = None
+    if '--shobhika' in args:
+        i = args.index('--shobhika')
+        shob = args[i + 1]
+        del args[i:i + 2]
+    build(Path(args[0]), Path(args[1]), adir, shob)

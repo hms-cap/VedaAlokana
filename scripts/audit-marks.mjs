@@ -17,8 +17,8 @@ import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 import { toKnda } from '../web/lipi.js';
 
-const [afonts, dataDir = 'web/data'] = process.argv.slice(2);
-if (!afonts) { console.error('usage: node scripts/audit-marks.mjs <audit-font dir> [web/data]'); process.exit(1); }
+const [afonts, dataDir = 'web/data', fontDir = 'web/fonts'] = process.argv.slice(2);
+if (!afonts) { console.error('usage: node scripts/audit-marks.mjs <audit-font dir> [web/data] [web/fonts]'); process.exit(1); }
 const require = createRequire(import.meta.url);
 let playwright;
 try { playwright = require('playwright'); } catch { playwright = require(path.join(execSync('npm root -g').toString().trim(), 'playwright')); }
@@ -34,11 +34,20 @@ for (const id of fs.readdirSync(dataDir).filter((d) => fs.statSync(path.join(dat
     }
   }
 }
-const deva = [...words];
+let deva = [...words];
+// AUDIT_SAMPLE=n checks every n-th word only (quicker while tuning)
+const every = Number(process.env.AUDIT_SAMPLE || 1);
+if (every > 1) deva = deva.filter((_, i) => i % every === 0);
+const knda = [...new Set(deva.map(toKnda))];
 const scripts = {
-  Devanagari: { words: deva, web: 'web/fonts/NotoSerifDevanagari-Vedic.woff' },
-  Kannada: { words: [...new Set(deva.map(toKnda))], web: 'web/fonts/NotoSerifKannada-Vedic.woff' },
+  NotoSerifDevanagari: { words: deva },
+  Shobhika: { words: deva },
+  NotoSerifKannada: { words: knda },
 };
+for (const [k, s] of Object.entries(scripts)) {
+  s.web = path.join(fontDir, `${k}-Vedic.woff`);
+  if (!fs.existsSync(s.web) || !fs.existsSync(path.join(afonts, `${k}-anu.ttf`))) delete scripts[k];
+}
 const b64 = (p) => fs.readFileSync(p).toString('base64');
 
 const browser = await playwright.chromium.launch();
@@ -60,7 +69,7 @@ for (const [script, s] of Object.entries(scripts)) {
       for (let i = 0; i < on.length; i++) on[i] = d[i * 4 + 3] > 90 ? 1 : 0;
       return on;
     };
-    const gaps = [], hist = {};
+    const gaps = [], hist = {}, levels = {}, lvEx = {};
     let asc = [], desc = [];
     cx.font = `${PX}px Web`;
     for (const t of words) { const m = cx.measureText(t); asc.push([m.actualBoundingBoxAscent / PX, t]); desc.push([m.actualBoundingBoxDescent / PX, t]); }
@@ -69,6 +78,13 @@ for (const [script, s] of Object.entries(scripts)) {
       cx.font = `${PX}px Web`;
       const w = Math.ceil(cx.measureText(t).width) + 12;
       const a = ink('Anu', t, w), rest = ink('Rest', t, w);
+      // the top of each bar (a run of columns with anudātta ink), as em below the baseline
+      for (let x = 0, run = null; x <= w; x++) {
+        let top = -1;
+        if (x < w) for (let y = 0; y < H; y++) if (a[y * w + x]) { top = y; break; }
+        if (top >= 0) run = run === null ? top : Math.min(run, top);
+        else if (run !== null) { const lv = Math.round((run - BASE) / PX * 100) / 100; levels[lv] = (levels[lv] || 0) + 1; if (!lvEx[lv]) lvEx[lv] = t; run = null; }
+      }
       let worst = Infinity;
       for (let x = 0; x < w; x++) {
         let top = -1, bot = -1;
@@ -93,6 +109,7 @@ for (const [script, s] of Object.entries(scripts)) {
     const pct = (arr, p) => arr[Math.floor(arr.length * (1 - p))]?.[0];
     return {
       words: words.length, withAnudatta: gaps.length, hist,
+      levels: Object.entries(levels).sort((p, q) => q[1] - p[1]).map(([lv, n]) => `${lv}em×${n} (${lvEx[lv]})`),
       tightest: gaps.slice(0, 30).map(([g, t]) => `${t} ${g.toFixed(3)}`),
       ascentMax: asc.slice(0, 5).map(([g, t]) => `${t} ${g.toFixed(2)}`), ascentP999: pct(asc, 0.999),
       descentMax: desc.slice(0, 5).map(([g, t]) => `${t} ${g.toFixed(2)}`), descentP999: pct(desc, 0.999),
@@ -100,6 +117,7 @@ for (const [script, s] of Object.entries(scripts)) {
   }, { words: s.words, fonts: { web: b64(s.web), anu: b64(path.join(afonts, `${script}-anu.ttf`)), rest: b64(path.join(afonts, `${script}-rest.ttf`)) } });
   report[script] = r;
   console.log(`\n${script}: ${r.words} words, ${r.withAnudatta} with anudātta`, JSON.stringify(r.hist));
+  console.log('  bar tops (em below baseline):', r.levels.slice(0, 8).join(' | '));
   console.log('  tightest:', r.tightest.slice(0, 15).join(' | '));
   console.log('  ink above baseline (em): max', r.ascentMax.join(' | '), '; 99.9%', r.ascentP999.toFixed(2));
   console.log('  ink below baseline (em): max', r.descentMax.join(' | '), '; 99.9%', r.descentP999.toFixed(2));

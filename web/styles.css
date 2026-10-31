@@ -261,23 +261,22 @@ h1 { margin: 0; font-size: clamp(28px, 4vw, 40px); line-height: 1.1; font-weight
 @font-face { font-family: 'Gentium Book Plus'; src: url('fonts/GentiumBookPlus-Regular.woff') format('woff'); font-weight: 400; font-display: swap; }
 @font-face { font-family: 'Gentium Book Plus'; src: url('fonts/GentiumBookPlus-Italic.woff') format('woff'); font-weight: 400; font-style: italic; font-display: swap; }
 @font-face { font-family: 'Gentium Book Plus'; src: url('fonts/GentiumBookPlus-Bold.woff') format('woff'); font-weight: 700; font-display: swap; }
-/* Stock Noto Serif with the original svara marks, for "Standard" in Settings. */
-@font-face { font-family: 'Noto Serif Devanagari'; src: local('Noto Serif Devanagari'), url('fonts/NotoSerifDevanagari-Std.woff') format('woff'); font-weight: 100 900; font-display: swap; }
-@font-face { font-family: 'Noto Serif Kannada'; src: local('Noto Serif Kannada'), url('fonts/NotoSerifKannada-Std.woff') format('woff'); font-weight: 100 900; font-display: swap; }
-@font-face {
-  font-family: 'Vedalokana Devanagari';
-  src: url('fonts/NotoSerifDevanagari-Vedic.woff') format('woff');
-  font-weight: 100 900; font-display: swap;
-}
-@font-face {
-  font-family: 'Vedalokana Kannada';
-  src: url('fonts/NotoSerifKannada-Vedic.woff') format('woff');
-  font-weight: 100 900; font-display: swap;
-}
+/* Devanagari and Kannada fonts, built by scripts/make-fonts.py. Every anudātta sits at one
+   depth under the line (the stock fonts step it up and down with each letter).
+   *-Vedic: svara marks drawn about twice as thick; *-Std ("Standard" marks in Settings): stock strokes.
+   Devanagari comes in Noto Serif or Shobhika (Settings → Devanagari font). */
+@font-face { font-family: 'Vedalokana Devanagari'; src: url('fonts/NotoSerifDevanagari-Vedic.woff') format('woff'); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: 'Noto Serif Devanagari'; src: url('fonts/NotoSerifDevanagari-Std.woff') format('woff'); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: 'Vedalokana Shobhika'; src: url('fonts/Shobhika-Vedic.woff') format('woff'); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: 'Shobhika Std'; src: url('fonts/Shobhika-Std.woff') format('woff'); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: 'Vedalokana Kannada'; src: url('fonts/NotoSerifKannada-Vedic.woff') format('woff'); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: 'Noto Serif Kannada'; src: url('fonts/NotoSerifKannada-Std.woff') format('woff'); font-weight: 100 900; font-display: swap; }
+body.svara-std { --deva: 'Noto Serif Devanagari', serif; }
+body.f-shobhika:not(.kn) { --deva: 'Vedalokana Shobhika', 'Vedalokana Devanagari', serif; }
+body.f-shobhika.svara-std:not(.kn) { --deva: 'Shobhika Std', 'Noto Serif Devanagari', serif; }
 /* The Devanagari fonts at the end of the Kannada stacks only ever supply the shared svara
    marks, if a Kannada font without them is all that loaded: never a box or a "?". */
 body.kn { --deva: 'Vedalokana Kannada', 'Noto Serif Kannada', 'Noto Sans Kannada', 'Vedalokana Devanagari', 'Noto Serif Devanagari', serif; }
-body.svara-std { --deva: 'Noto Serif Devanagari', serif; }
 body.kn.svara-std { --deva: 'Noto Serif Kannada', 'Noto Sans Kannada', 'Noto Serif Devanagari', serif; }
 body.kn { --deva-lh: 2.4; }
 .lipi { display: flex; align-items: center; gap: 4px; margin: 0 6px 18px; padding: 3px; border-radius: 11px; background: var(--line-soft); }
@@ -744,3 +743,5 @@ body.story-open { overflow: hidden; }
 
 /* ---- Ṛgveda svara style switch in the reader ---- */
 .patha-seg .pt-m { font-family: var(--deva); font-size: 1.15em; margin-right: 6px; opacity: .8; }
+
+.fontb-shobhika { font-family: 'Vedalokana Shobhika', serif; }

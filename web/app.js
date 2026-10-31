@@ -65,7 +65,7 @@ const PREF_KEY = 'vedalokana.prefs';
 const prefs = (() => {
   // Default view is made for chanting: the text in script only, no romanisation or translation.
   // `v` is bumped when defaults change, so an earlier saved reading view moves to the new one once.
-  const d = { v: 2, script: 'deva', mode: 'samhita', tr: false, tags: true, bhashya: false, lipi: 'deva', svara: 'bold', suktaBy: 'veda', theme: 'system', menu: 'script', patha: 'std' };
+  const d = { v: 2, script: 'deva', mode: 'samhita', tr: false, tags: true, bhashya: false, lipi: 'deva', svara: 'bold', suktaBy: 'veda', theme: 'system', menu: 'script', patha: 'std', dfont: 'noto' };
   try {
     const saved = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
     if ((saved.v || 1) < 2) { delete saved.script; delete saved.tr; delete saved.mode; }
@@ -153,6 +153,7 @@ document.getElementById('menuBtn')?.addEventListener('click', () => setMenu(SA()
 function applyLipiClass() {
   document.body.classList.toggle('kn', prefs.lipi === 'knda');
   document.body.classList.toggle('svara-std', prefs.svara === 'std');
+  document.body.classList.toggle('f-shobhika', prefs.dfont === 'shobhika');
 }
 applyLipiClass();
 
@@ -180,6 +181,9 @@ applyTheme();
 // ---------- version, installing and offline ----------
 const APP = self.VEDALOKANA || { version: '0.0.0', released: '' };
 const CHANGES = [
+  ['1.4.0', '2026-10-31', [
+    'Every anudātta now sits at one depth under the line, instead of stepping up and down with each letter.',
+    'Shobhika (IIT Bombay) as a second Devanagari font, with or without heavier svara marks: Settings → Devanagari font.']],
   ['1.3.0', '2026-10-31', [
     'Ṛgveda svara style: Śṛṅgeri (one stroke for every svarita) or Kāñcī · Mādhva (dīrgha svarita ᳚ on heavy syllables, kampa vowels spelled out), in the reader and in Settings.']],
   ['1.2.1', '2026-10-31', ['Check for updates now asks the server for the published version, downloads it and offers a restart; installed copies also notice new versions sooner.']],
@@ -1115,7 +1119,7 @@ async function viewAbout() {
       <li>Audio recitation is not included: the Vedic Heritage Portal’s recordings need permission to reuse.</li>
     </ul>
     <h2>Fonts</h2>
-    <p>Noto Serif Devanagari and Noto Serif Kannada (with strengthened svara marks), IBM Plex Sans and Gentium Book Plus, all under the SIL Open Font License; the licence texts are in the <code>fonts</code> folder.</p>
+    <p>Noto Serif Devanagari, Noto Serif Kannada and Shobhika (IIT Bombay), rebuilt with every anudātta at one depth and, optionally, heavier svara marks; IBM Plex Sans and Gentium Book Plus. All are under the SIL Open Font License; the licence texts are in the <code>fonts</code> folder.</p>
     <h2>Building it</h2>
     <p>The data is built by <code>scripts/build-data.mjs</code> and the fonts by <code>scripts/make-fonts.py</code>; the source repositories and steps are in the project README. ${standalone ? '' : 'To install, use your browser’s “Install app” or “Add to Home Screen”.'}</p>
   </div>`;
@@ -1438,7 +1442,9 @@ async function viewSettings() {
     <section class="set"><h2>Ṛgveda svara style</h2><p>Śṛṅgeri style writes every svarita with one stroke, as in most printed editions. Kāñcī · Mādhva style, as in South Indian recitation books, writes a svarita on a heavy syllable with two strokes (dīrgha svarita <span lang="sa">ई᳚</span>) and spells out the vowel of a kampa: <span lang="sa">रा॒यो॒३॑(ओ॒)वनिः</span>.</p>
       <div class="seg wide-seg">${opt('patha', 'std', esc(PATHA.std[0]))}${opt('patha', 'dirgha', esc(PATHA.dirgha[0]))}</div>
       <p class="svara-demo" lang="sa">${esc(svaraLines('rv', ['अ॒ग्निमी॑ळे पु॒रोहि॑तं य॒ज्ञस्य॑ दे॒वमृ॒त्विज॑म्'])[0])}</p></section>
-    <section class="set"><h2>Svara marks</h2><p>Bold marks are drawn heavier so ॑ and ॒ stand out at reading size.</p>
+    <section class="set"><h2>Devanagari font</h2><p>Noto Serif is compact and even. Shobhika (IIT Bombay), made for Sanskrit and Vedic text, has larger letters and taller svarita marks. Kannada always uses Noto Serif Kannada.</p>
+      <div class="seg wide-seg">${opt('dfont', 'noto', 'Noto Serif')}${opt('dfont', 'shobhika', 'Shobhika', 'fontb-shobhika')}</div></section>
+    <section class="set"><h2>Svara marks</h2><p>Bold marks are drawn heavier so <span lang="sa">॑</span> and <span lang="sa">॒</span> stand out at reading size; Standard keeps each font’s own thin strokes. In both, every anudātta sits at the same depth under the line.</p>
       <div class="seg wide-seg">${opt('svara', 'bold', 'Bold')}${opt('svara', 'std', 'Standard')}</div>
       <p class="svara-demo" lang="sa">अ॒ग्निमी॑ळे पु॒रोहि॑तं य॒ज्ञस्य॑ दे॒वमृ॒त्विज॑म्</p></section>
     <section class="set"><h2>In the reader, show</h2>
@@ -1461,7 +1467,7 @@ async function viewSettings() {
     if (k === 'lipi') { setLipi(raw); return; }
     prefs[k] = raw === 'true' ? true : raw === 'false' ? false : raw;
     savePrefs();
-    if (k === 'svara') applyLipiClass();
+    if (k === 'svara' || k === 'dfont') applyLipiClass();
     if (k === 'patha') { const y = window.scrollY; route().then(() => window.scrollTo(0, y)); return; }
     b.parentElement.querySelectorAll('button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
   }));

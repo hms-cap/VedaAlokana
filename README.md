@@ -2,7 +2,7 @@
 
 A web app for browsing the Vedas — Ṛgveda, Śukla and Kṛṣṇa Yajurveda, Sāmaveda and Atharvaveda — across all four layers: **Saṃhitā**, **Brāhmaṇa**, **Āraṇyaka** and **Upaniṣad**. Saṃhitās can also be browsed by **ṛṣi**, **devatā** and **chandas** where an index exists; filters combine, so you can ask for every ṛk to Agni in Gāyatrī by Medhātithi Kāṇva. Text is shown in **Devanagari or Kannada** (with svara marks), with IAST, Padapāṭha and translation where the source has them, and Sāyaṇa's bhāṣya for the Ṛgveda.
 
-It is a static site: plain HTML, CSS and JavaScript with pre-built JSON, no framework and no server. It installs as an app and works offline (see below). Current version: **1.3.0** — see [CHANGELOG.md](CHANGELOG.md).
+It is a static site: plain HTML, CSS and JavaScript with pre-built JSON, no framework and no server. It installs as an app and works offline (see below). Current version: **1.4.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Run it locally
 
@@ -61,11 +61,11 @@ node scripts/build-data.mjs \
 
 ## Fonts
 
-`web/fonts/` holds Noto Serif Devanagari and Noto Serif Kannada subsets with heavier svara marks (`*-Vedic.woff`) and with the stock marks (`*-Std.woff`, for "Standard" in Settings), plus Latin/IAST subsets of IBM Plex Sans and Gentium Book Plus, so no font server is needed. All are built from a checkout of [google/fonts](https://github.com/google/fonts):
+`web/fonts/` holds the Sanskrit fonts — Noto Serif Devanagari, Noto Serif Kannada and Shobhika (IIT Bombay) — each in two builds: `*-Vedic.woff` with svara marks drawn about twice as thick, and `*-Std.woff` with the font's own strokes ("Standard" in Settings). In both, every anudātta is anchored at one depth under the line instead of hanging from each letter (which made the bars step up and down), going lower only under a letter that reaches deeper. There are also Latin/IAST subsets of IBM Plex Sans and Gentium Book Plus, so no font server is needed. All are built from a checkout of [google/fonts](https://github.com/google/fonts) and the [Shobhika release](https://github.com/Sandhi-IITBombay/Shobhika/releases):
 
 ```sh
-python3 scripts/make-fonts.py path/to/google-fonts web/fonts --audit /tmp/afonts   # needs fontTools
-node scripts/audit-marks.mjs /tmp/afonts   # anudātta clearance and line extents over all the data (Playwright)
+python3 scripts/make-fonts.py path/to/google-fonts web/fonts --shobhika path/to/Shobhika-1.05 --audit /tmp/afonts   # needs fontTools
+node scripts/audit-marks.mjs /tmp/afonts   # anudātta depth, clearance and line extents over all the data (Playwright)
 ```
 
 ## Ṛgveda svara styles

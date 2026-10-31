@@ -12,6 +12,7 @@ const SHELL_FILES = [
   'fonts/IBMPlexSans-Var.woff', 'fonts/GentiumBookPlus-Regular.woff', 'fonts/GentiumBookPlus-Italic.woff', 'fonts/GentiumBookPlus-Bold.woff',
   'fonts/NotoSerifDevanagari-Vedic.woff', 'fonts/NotoSerifKannada-Vedic.woff',
   'fonts/NotoSerifDevanagari-Std.woff', 'fonts/NotoSerifKannada-Std.woff',
+  'fonts/Shobhika-Vedic.woff', 'fonts/Shobhika-Std.woff',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/apple-touch-icon.png',
 ];
 const DATA_CORE = ['data/catalog.json', 'data/suktas.json', 'data/offline.json'];
