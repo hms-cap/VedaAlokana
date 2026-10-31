@@ -67,6 +67,9 @@ new MutationObserver((ms) => { for (const m of ms) m.addedNodes.forEach((n) => n
 const lipiName = () => (prefs.lipi === 'knda' ? 'ಕನ್ನಡ' : 'देवनागरी');
 // Switch script from anywhere, keeping the reader's place on the page.
 let keepScrollY = null;
+let readerNav = null;   // previous/next section of the open reader, for gestures and arrow keys
+let swipeIn = 0;        // direction the next page slides in from after a swipe
+const REDUCED_MOTION = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 let keepAnchor = null;
 function setLipi(l) {
   if (prefs.lipi === l) return;
@@ -604,18 +607,18 @@ async function viewContainer(id, d1, d2, params) {
     const c2 = currentPath[currentPath.length - 1];
     if (c2) openSheet({ title: c2.title, items: await c2.items(), layout: c2.layout || 'grid' });
   });
-  // swipe left/right between sections on touch screens
-  let sx = null; let sy = null;
-  main.ontouchstart = (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; };
-  main.ontouchend = (e) => {
-    if (sx === null) return;
-    const dx = e.changedTouches[0].clientX - sx; const dy = e.changedTouches[0].clientY - sy;
-    sx = null;
-    if (Math.abs(dx) > 80 && Math.abs(dx) > Math.abs(dy) * 2) {
-      const t2 = dx < 0 ? next : prev;
-      if (t2) go(`#/v/${id}/c/${t2[0]}/${t2[1]}`);
-    }
+  const sec = (meta.levels[1] || 'section').toLowerCase();
+  readerNav = {
+    prev: prev && { href: `#/v/${id}/c/${prev[0]}/${prev[1]}`, label: `${meta.ref} ${containerRef(meta, prev[0], prev[1], prev[2])}` },
+    next: next && { href: `#/v/${id}/c/${next[0]}/${next[1]}`, label: `${meta.ref} ${containerRef(meta, next[0], next[1], next[2])}` },
+    sec,
   };
+  if (swipeIn) {
+    const dir = swipeIn; swipeIn = 0;
+    if (!REDUCED_MOTION()) main.querySelector('article')?.animate(
+      [{ transform: `translateX(${dir * 48}px)`, opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 220, easing: 'cubic-bezier(.2,.8,.2,1)' });
+  }
+  showSwipeTip();
   // the first verse is already in view; only jump for later ones
   if (keepScrollY === null && hl && hl !== verses[0]?.[0]) requestAnimationFrame(() => document.getElementById(`v${hl}`)?.scrollIntoView({ block: 'start' }));
 }
@@ -846,7 +849,7 @@ function renderChrome(r, path) {
   const tab = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 'about' ? 'settings' : page);
   $('#tabbar').querySelectorAll('[data-tab]').forEach((a) => (a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
   document.body.classList.toggle('reading', page === 'v' && r.parts[2] === 'c');
-  if (!(page === 'v' && r.parts[2] === 'c')) $('#readerbar').hidden = true;
+  if (!(page === 'v' && r.parts[2] === 'c')) { $('#readerbar').hidden = true; readerNav = null; }
 }
 
 // ---------- library, search, settings ----------
@@ -1045,3 +1048,81 @@ route();
     } catch { /* the Noto fallbacks in the font stack still carry the marks */ }
   }
 })();
+
+// ---------- moving between sections by gesture ----------
+// In the reader, a sideways swipe moves to the previous or next section: the page follows
+// the finger, an edge label names where it will go, and letting go past the threshold (or
+// with a quick flick) turns the page. Vertical scrolling is left to the browser. Arrow keys
+// do the same on a keyboard.
+const NO_SWIPE = '.controls, .pathbar, .tags, .chips, .sheet, input, textarea, select, .readerbar, .tabbar';
+(function swipeBetweenSections() {
+  const hint = document.createElement('div');
+  hint.className = 'swipe-hint'; hint.setAttribute('aria-hidden', 'true');
+  document.body.append(hint);
+  let g = null;
+  const reset = (art) => { if (art) { art.style.transition = ''; art.style.transform = ''; art.style.opacity = ''; } hint.classList.remove('on', 'ready'); };
+  main.addEventListener('touchstart', (e) => {
+    g = null;
+    if (!readerNav || e.touches.length !== 1 || e.target.closest(NO_SWIPE)) return;
+    const art = main.querySelector('article'); if (!art) return;
+    if (window.getSelection()?.toString()) return;
+    g = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now(), axis: null, dx: 0, art };
+  }, { passive: true });
+  main.addEventListener('touchmove', (e) => {
+    if (!g) return;
+    const dx = e.touches[0].clientX - g.x; const dy = e.touches[0].clientY - g.y;
+    if (!g.axis) {
+      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+      g.axis = Math.abs(dx) > Math.abs(dy) * 1.2 ? 'x' : 'y';
+      if (g.axis === 'y') { g = null; return; }
+    }
+    e.preventDefault();
+    const target = dx < 0 ? readerNav.next : readerNav.prev;
+    g.dx = target ? dx : dx * 0.25;              // resist where there is nowhere to go
+    g.target = target; g.dir = dx < 0 ? 1 : -1;
+    g.art.style.transition = 'none';
+    g.art.style.transform = `translateX(${g.dx}px)`;
+    g.art.style.opacity = String(1 - Math.min(Math.abs(g.dx) / window.innerWidth, 0.5));
+    const th = Math.min(120, window.innerWidth * 0.28);
+    hint.className = `swipe-hint on ${g.dir > 0 ? 'right' : 'left'}${target && Math.abs(dx) > th ? ' ready' : ''}`;
+    hint.innerHTML = target
+      ? `<span class="sh-arrow">${g.dir > 0 ? '›' : '‹'}</span><span><small>${g.dir > 0 ? 'Next' : 'Previous'} ${esc(readerNav.sec)}</small><b>${esc(target.label)}</b></span>`
+      : `<span><small>${g.dir > 0 ? 'Last' : 'First'} ${esc(readerNav.sec)}</small></span>`;
+  }, { passive: false });
+  const end = () => {
+    if (!g || g.axis !== 'x') { g = null; return; }
+    const { art, target, dir } = g; const dx = g.dx;
+    const fast = Math.abs(dx) > 40 && Math.abs(dx) / (Date.now() - g.t) > 0.45;
+    const far = Math.abs(dx) > Math.min(120, window.innerWidth * 0.28);
+    g = null;
+    hint.classList.remove('on', 'ready');
+    if (target && (far || fast)) {
+      art.style.transition = 'transform .16s ease-in, opacity .16s ease-in';
+      art.style.transform = `translateX(${-dir * window.innerWidth * 0.6}px)`; art.style.opacity = '0';
+      swipeIn = dir;
+      setTimeout(() => go(target.href), REDUCED_MOTION() ? 0 : 150);
+    } else {
+      art.style.transition = 'transform .2s cubic-bezier(.2,.8,.2,1), opacity .2s';
+      art.style.transform = ''; art.style.opacity = '';
+      setTimeout(() => reset(art), 220);
+    }
+  };
+  main.addEventListener('touchend', end);
+  main.addEventListener('touchcancel', end);
+  document.addEventListener('keydown', (e) => {
+    if (!readerNav || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.target.closest('input, textarea, select, [contenteditable]') || document.querySelector('.sheet')) return;
+    const target = e.key === 'ArrowRight' ? readerNav.next : e.key === 'ArrowLeft' ? readerNav.prev : null;
+    if (!target) return;
+    e.preventDefault(); swipeIn = e.key === 'ArrowRight' ? 1 : -1; go(target.href);
+  });
+})();
+
+function showSwipeTip() {
+  if (!matchMedia('(pointer: coarse)').matches || !(readerNav?.next || readerNav?.prev)) return;
+  try { if (localStorage.getItem('vedalokana.swipeTip')) return; localStorage.setItem('vedalokana.swipeTip', '1'); } catch { return; }
+  const tip = document.createElement('div');
+  tip.className = 'swipe-tip'; tip.textContent = `Swipe left or right for the next or previous ${readerNav.sec}`;
+  document.body.append(tip);
+  setTimeout(() => tip.classList.add('out'), 3200);
+  setTimeout(() => tip.remove(), 3700);
+}

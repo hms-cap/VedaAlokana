@@ -476,3 +476,18 @@ span.rb-step { background: transparent; }
 @media (max-width: 899px) { .tabbar { grid-template-columns: repeat(5, minmax(0, 1fr)); } .tabbar a { font-size: 10.5px; } }
 @media (max-width: 899px) { .brand:not(.when-back) ~ .top-title { visibility: hidden; } }
 .tags[hidden] { display: none; }
+
+/* moving between sections by swipe */
+main { overflow-x: clip; }
+.swipe-hint { position: fixed; z-index: 40; top: 46%; display: flex; align-items: center; gap: 10px; max-width: min(260px, 70vw); padding: 10px 14px; border-radius: 16px;
+  background: var(--surface); border: 1px solid var(--line); box-shadow: 0 8px 24px rgba(0, 0, 0, .12); color: var(--ink); opacity: 0; pointer-events: none; transition: opacity .12s, transform .12s, background .12s; }
+.swipe-hint.right { right: 12px; } .swipe-hint.left { left: 12px; flex-direction: row-reverse; text-align: right; }
+.swipe-hint.on { opacity: .92; }
+.swipe-hint.ready { background: var(--indigo); border-color: var(--indigo); color: #fff; transform: scale(1.04); }
+.swipe-hint small { display: block; font-size: 11px; opacity: .75; text-transform: capitalize; }
+.swipe-hint b { display: block; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.swipe-hint .sh-arrow { font-size: 26px; line-height: 1; }
+.swipe-tip { position: fixed; z-index: 40; left: 50%; bottom: calc(132px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); max-width: calc(100vw - 32px);
+  padding: 10px 16px; border-radius: 999px; background: var(--ink); color: var(--ground); font-size: 13.5px; text-align: center; transition: opacity .4s; }
+.swipe-tip.out { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .swipe-hint { transition: none; } }
