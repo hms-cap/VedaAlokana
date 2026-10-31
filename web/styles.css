@@ -525,7 +525,7 @@ main { overflow-x: clip; }
 
 /* ---------- Home ---------- */
 .home { max-width: 960px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
-@media (min-width: 900px) { .home { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); align-items: start; } .home > .sec-h, .home > .vtiles, .home > .schips, .home > .home-foot, .home > .cont { grid-column: 1 / -1; } }
+@media (min-width: 900px) { .home { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); align-items: start; } .home > .sec-h, .home > .vtiles, .home > .schips, .home > .home-foot, .home > .cont, .home > .home-about { grid-column: 1 / -1; } }
 .pc { padding: 16px 18px 14px; border-radius: 24px; background: var(--surface); border: 1px solid var(--line-soft); min-height: 210px; }
 .pc-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--muted); }
 .pc-loc { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 17px; border: 1px solid var(--line); background: transparent; color: var(--ink); font: 500 13px var(--ui); cursor: pointer; max-width: 55%; }
@@ -851,3 +851,6 @@ mark.pv { background: color-mix(in srgb, var(--fire, #D9822B) 22%, transparent);
 .list-bar > a:first-child, .list-bar > a:last-child { width: 40px; justify-content: center; }
 
 @media (min-width: 560px) { .ch-par { text-align: justify; } }
+.home-about { justify-self: end; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 12px 4px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--muted); font-size: 14px; }
+.home-about:hover { text-decoration: none; color: var(--ink); border-color: var(--indigo); }
+.home-about small { font-size: 12px; opacity: .8; }

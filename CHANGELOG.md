@@ -2,6 +2,9 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.12.1 — 2026-10-31
+- About link moved from the foot of the start page to the top, as a small info icon.
+
 ## 1.12.0 — 2026-10-31
 - **Navigation, as in an app.** Back (the arrow, the browser or the phone) returns to the view you came from, at the place you were reading; with no earlier view it goes up to the parent. Moving to the next or previous verse, section or sūkta — by arrow, swipe, key or switch — replaces the view rather than adding a back step. Sheets, pickers and the chant view close on Back. The Library and Sūktas tabs remember where you were; tapping the current tab again returns to its top. Sūkta pages get breadcrumbs (Sūktas › Veda › sūkta); Continue reading covers sūkta pages; Search keeps its query when you come back.
 - **My sūktas.** ☆ saves a whole sūkta to *My list*. Home and the Sūktas tab show My list · Recent (last 20) · Frequent (visits counted with a 14-day half-life). My list can be reordered and chanted straight through, with next/previous between its sūktas. Settings: clear recent, stop keeping history, export or import the list (`my-suktas.json`).

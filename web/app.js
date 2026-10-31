@@ -301,6 +301,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.12.1', '2026-10-31', ['The About link moved to the top of the start page, with a small info icon.']],
   ['1.12.0', '2026-10-31', ['Back goes to the view you came from; moving verse to verse or sūkta to sūkta does not add back steps; scroll is restored; sheets and the chant view close on Back; tabs remember where you were.', 'My sūktas: save sūktas with ☆, see them with Recent and Frequent on Home and in the Sūktas tab, reorder, chant through the list, export or import it.', 'Chant view laid out like a recitation book: running text with ॥n॥, invocation, title, source and anukramaṇī; larger or smaller text; one-at-a-time view kept.']],
   ['1.11.0', '2026-10-31', ['Gaṇeśa Atharvaśīrṣa, Medhā Sūkta (Khila), Pavamāna Pariśiṣṭam, Pañcarudra Sūkta, Navagraha Mantras with adhidevatās, Vedapārāyaṇa Ārambha and Sandhyā Ṛk mantras.']],
   ['1.10.0', '2026-10-31', ['Śrī Sūkta under the Ṛgveda, in the South Indian pāṭha with svaras and the Khila pāṭha of Scheftelowitz; the words where they differ are marked.']],
@@ -675,6 +676,9 @@ async function viewHome() {
   try { suk = (cache.suktas ||= await json('data/suktas.json')); } catch { /* optional */ }
   const pct = last?.of ? Math.min(1, last.v / last.of) : 0;
   main.innerHTML = `${ASHRAMA_SVG}<div class="home">
+    <a class="home-about" href="#/about" aria-label="About Vedāvalokanam, version ${esc(APP.version)}: sources and what’s new">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.6v.1"/></svg>
+      <span>${T('About', 'परिचयः')}</span><small>${esc(APP.version)}</small></a>
     <section class="pc" id="pc" aria-label="Today’s pañcāṅga"></section>
     <section class="hero" aria-labelledby="todayH">
       ${SUN_SVG}
@@ -700,7 +704,7 @@ async function viewHome() {
     ${suk.length ? `<div class="sec-h"><h2>${T('Sūktas', 'सूक्तानि')}</h2><a href="#/suktas">${SA() ? `<span lang="sa">सर्वाणि ${dg(suk.length)}</span>` : `All ${suk.length}`}</a></div>
     ${sukVedaButtons(cat, suk, homeVeda(suk), 'button')}
     <div class="schips" id="homeSk">${sukChips(suk, homeVeda(suk))}</div>` : ''}
-    <p class="lede home-foot">Every text comes from an openly published digital edition. <a href="#/about">About Vedāvalokanam ${esc(APP.version)}: sources and what’s new.</a></p>
+    <p class="lede home-foot">Every text comes from an openly published digital edition.</p>
   </div>`;
   renderPanchanga();
   main.querySelectorAll('[data-myk]').forEach((b) => b.addEventListener('click', () => {
