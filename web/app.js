@@ -294,6 +294,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.16.1', '2026-10-31', ['The shared picture is one card: all sections on one left edge, ivory on deep indigo with gold rules.']],
   ['1.16.0', '2026-10-31', ['Today’s mantra: a share button makes one picture of all its cards, and a star saves the mantra to My list. The pañcāṅga fold label no longer shows markup in the Sanskrit menu.']],
   ['1.15.0', '2026-10-31', ['The pañcāṅga card on Home folds to its first three lines — date and place, māsa · pakṣa · tithi, and saṃvatsara · ṛtu · ayana · vāra. Tap those lines or the button below them to show tithi, nakṣatra, yoga, karaṇa and sun times; the card remembers how you left it.']],
   ['1.14.1', '2026-10-31', ['Check for updates no longer says you have the latest version when it couldn’t reach the server; it says it couldn’t check.']],
@@ -717,75 +718,68 @@ function dailyPlain(m) {
   if (m.u) out.push({ k: Tp('Use and significance', 'विनियोगः महत्त्वं च'), text: pair(m.u) });
   return out;
 }
-// one tall picture of every card: draw=false only measures, so the canvas can be sized first
+// one picture: every card as a section of a single ivory card on deep indigo, all text on one left edge.
+// draw=false only measures (the card's height goes into hs), so the canvas can be sized first.
 function paintDaily(ctx, cards, m, W, draw, hs = []) {
   const css = getComputedStyle(document.body);
   const deva = css.getPropertyValue('--deva').trim() || 'serif'; const ui = css.fontFamily;
-  const body = dmKn() ? deva : ui;
-  const PAD = 56; const IN = 40; const cw = W - 2 * PAD - 2 * IN;
+  const body = dmKn() ? deva : ui; const lab = SA() ? deva : ui;
+  const OUT = 44; const IN = 56; const X = OUT + IN; const cw = W - 2 * X;
+  const C = { ink: '#1F2430', muted: '#5B6070', indigo: '#2B3990', saffron: '#B4440E', gold: '#C9A24B', rule: '#E7DCC0', card: '#FFFBF2', soft: '#C9D0F5' };
   const wrap = (t, max) => {
     const out = []; let cur = '';
     for (const w of String(t).split(/\s+/)) { const tr = cur ? `${cur} ${w}` : w; if (cur && ctx.measureText(tr).width > max) { out.push(cur); cur = w; } else cur = tr; }
     if (cur) out.push(cur); return out;
   };
-  const C = { bg: '#FBF7EE', card: '#FFFFFF', line: '#E3DCCB', ink: '#1F2430', muted: '#5B6070', indigo: '#2B3990', saffron: '#C2410C' };
-  let y = 0;
   const fill = (c) => { ctx.fillStyle = c; };
-  const txt = (t, x, yy, font, color, align = 'left') => { if (!draw) return; ctx.font = font; fill(color); ctx.textAlign = align; ctx.textBaseline = 'alphabetic'; ctx.fillText(t, x, yy); };
-  if (draw) { fill(C.bg); ctx.fillRect(0, 0, W, 4000); }
-  // header band
-  const HEAD = 150;
+  const txt = (t, yy, font, color, x = X) => { if (!draw) return; ctx.font = font; fill(color); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillText(t, x, yy); };
+  const HEAD = 170;
   if (draw) {
-    fill(C.indigo); ctx.fillRect(0, 0, W, HEAD);
-    ctx.save(); ctx.translate(PAD, 38); ctx.scale(3.4, 3.4); fill('#F59E0B'); ctx.fill(new Path2D('M12 3c3 4 5 6.5 5 10a5 5 0 0 1-10 0c0-3.5 2-6 5-10z')); fill(C.indigo); ctx.fill(new Path2D('M12 11c1.2 1.6 2 2.6 2 4a2 2 0 0 1-4 0c0-1.4.8-2.4 2-4z')); ctx.restore();
+    const g = ctx.createLinearGradient(0, 0, W, 2600); g.addColorStop(0, '#1B2358'); g.addColorStop(1, '#2F3C9C');
+    fill(g); ctx.fillRect(0, 0, W, 6000);
+    ctx.save(); ctx.translate(X, 46); ctx.scale(3.6, 3.6); fill('#F5B63B'); ctx.fill(new Path2D('M12 3c3 4 5 6.5 5 10a5 5 0 0 1-10 0c0-3.5 2-6 5-10z')); fill('#1B2358'); ctx.fill(new Path2D('M12 11c1.2 1.6 2 2.6 2 4a2 2 0 0 1-4 0c0-1.4.8-2.4 2-4z')); ctx.restore();
   }
-  txt(Tp('Vedāvalokanam', 'वेदावलोकनम्'), PAD + 96, 78, `600 44px ${SA() ? deva : ui}`, '#FFFFFF');
-  txt(m.today ? Tp('Today’s mantra', 'अद्यतनमन्त्रः') : Tp('A mantra', 'मन्त्रः'), PAD + 96, 118, `500 26px ${SA() ? deva : ui}`, '#C9D0F5');
-  y = HEAD + 40;
-  const known = draw ? [...hs] : null;
-  for (const c of cards) {
-    const top = y; let cy = top + IN;
-    if (draw) {   // the card first, its height known from the measuring pass
-      ctx.beginPath(); ctx.roundRect(PAD, top, W - 2 * PAD, known.shift(), 28); fill(C.card); ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = C.line; ctx.stroke();
+  txt(Tp('Vedāvalokanam', 'वेदावलोकनम्'), 88, `600 46px ${lab}`, '#FFFFFF', X + 84);
+  txt(m.today ? Tp('Today’s mantra', 'अद्यतनमन्त्रः') : Tp('A mantra', 'मन्त्रः'), 132, `500 27px ${lab}`, C.soft, X + 84);
+  const top = HEAD; let cy = top + IN;
+  if (draw) {
+    ctx.beginPath(); ctx.roundRect(OUT, top, W - 2 * OUT, hs[0], 30); fill(C.card); ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = C.gold; ctx.stroke();
+  }
+  cards.forEach((c, i) => {
+    if (i) {   // a thin rule between sections
+      cy += 8;
+      if (draw) { fill(C.rule); ctx.fillRect(X, cy, cw, 2); }
+      cy += 34;
     }
-    txt(SA() ? c.k : c.k.toUpperCase(), PAD + IN, cy + 24, `700 24px ${SA() ? deva : ui}`, C.indigo);
+    txt(SA() ? c.k : c.k.toUpperCase(), cy + 24, `700 24px ${lab}`, C.indigo);
     cy += 24 + 30;
     if (c.lines) {
-      for (const l of c.lines) {   // each line as large as fits the card; a very long one wraps
+      for (const l of c.lines) {   // each line as large as fits; a very long one wraps
         ctx.font = `500 50px ${deva}`;
         const sz = Math.max(32, Math.min(50, Math.floor(50 * cw / Math.max(ctx.measureText(l).width, 1))));
         const f = `500 ${sz}px ${deva}`; ctx.font = f;
-        for (const part of wrap(l, cw)) { txt(part, W / 2, cy + sz, f, C.ink, 'center'); cy += Math.round(sz * 1.72); }
+        for (const part of wrap(l, cw)) { txt(part, cy + sz, f, C.ink); cy += Math.round(sz * 1.9); }
       }
       cy += 6;
-      ctx.font = `700 30px ${ui}`; txt(c.ref, W / 2, cy + 30, `700 30px ${SA() ? deva : ui}`, C.saffron, 'center'); cy += 46;
-      if (c.tags) { ctx.font = `500 28px ${SA() ? deva : ui}`; for (const l of wrap(c.tags, cw)) { txt(l, W / 2, cy + 28, `500 28px ${SA() ? deva : ui}`, C.muted, 'center'); cy += 42; } }
+      ctx.font = `700 30px ${lab}`; txt(c.ref, cy + 30, `700 30px ${lab}`, C.saffron); cy += 46;
+      if (c.tags) { ctx.font = `500 28px ${lab}`; for (const l of wrap(c.tags, cw)) { txt(l, cy + 28, `500 28px ${lab}`, C.muted); cy += 42; } }
     } else if (c.text) {
       ctx.font = `400 32px ${body}`;
-      for (const l of wrap(c.text, cw)) { txt(l, PAD + IN, cy + 32, `400 32px ${body}`, C.ink); cy += 52; }
-    } else if (c.words) {
-      for (const [w, g] of c.words) {
-        ctx.font = `600 38px ${deva}`; txt(w, PAD + IN, cy + 38, `600 38px ${deva}`, C.ink); cy += 56;
+      for (const l of wrap(c.text, cw)) { txt(l, cy + 32, `400 32px ${body}`, C.ink); cy += 52; }
+    } else {
+      for (const [w, g] of (c.words || c.who.map(([kind, name, note]) => [`${kind} · ${name}`, note]))) {
+        ctx.font = `600 38px ${deva}`; txt(w, cy + 38, `600 38px ${deva}`, C.ink); cy += 56;
         ctx.font = `400 29px ${body}`;
-        for (const l of wrap(g, cw)) { txt(l, PAD + IN, cy + 29, `400 29px ${body}`, C.muted); cy += 44; }
-        cy += 14;
-      }
-      cy -= 14;
-    } else if (c.who) {
-      for (const [kind, name, note] of c.who) {
-        ctx.font = `600 38px ${deva}`; txt(`${kind} · ${name}`, PAD + IN, cy + 38, `600 38px ${deva}`, C.ink); cy += 56;
-        ctx.font = `400 29px ${body}`;
-        for (const l of wrap(note, cw)) { txt(l, PAD + IN, cy + 29, `400 29px ${body}`, C.muted); cy += 44; }
+        for (const l of wrap(g, cw)) { txt(l, cy + 29, `400 29px ${body}`, C.muted); cy += 44; }
         cy += 14;
       }
       cy -= 14;
     }
-    cy += IN;
-    if (!draw) hs.push(cy - top);
-    y = cy + 28;
-  }
-  txt(Tp('Veda mantras with svara marks', 'स्वरचिह्नसहिताः वेदमन्त्राः'), W / 2, y + 40, `500 24px ${SA() ? deva : ui}`, C.muted, 'center');
-  return y + 80;
+  });
+  cy += IN;
+  if (!draw) hs[0] = cy - top;
+  txt(Tp('Veda mantras with svara marks', 'स्वरचिह्नसहिताः वेदमन्त्राः'), cy + 62, `500 24px ${lab}`, C.soft);
+  return cy + 100;
 }
 async function dailyImage(m) {
   const cards = dailyPlain(m); const W = 1080;

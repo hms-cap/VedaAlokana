@@ -2,6 +2,9 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.16.1 — 2026-10-31
+- The shared mantra picture is a single merged card: every section aligned to one left edge, ivory on deep indigo with gold rules and more room between mantra lines.
+
 ## 1.16.0 — 2026-10-31
 - **Share the daily mantra as a picture.** The share button under Today's mantra draws every card (mantra, meaning, words and grammar, ṛṣi · devatā · chandas, use) into one tall image in the script and menu language you are using, and opens the phone's share sheet; where that isn't available the picture is saved to downloads.
 - **Star it.** The star saves that mantra to My list (the My sūktas tab), next to saved sūktas; a mantra from a sūkta (Śrī Sūkta) saves the sūkta. Exporting and importing the list carries saved mantras too.
