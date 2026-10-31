@@ -56,9 +56,68 @@ const cache = { catalog: null, index: {}, text: {}, bhashya: {} };
 const MEMORY = !!window.VEDA_MEMORY_ROUTER;
 let memHash = '';
 const getHash = () => (MEMORY ? memHash : location.hash);
-function go(h) {
-  if (MEMORY) { memHash = h; route(); } else location.hash = h;
+
+// ---------- history: back is the previous view, as in an app ----------
+// Each history entry carries { k, i } in history.state: a key for its saved scroll position and
+// its depth in this visit. Back (the top-left arrow or the phone's) steps to the previous entry;
+// on the first entry of a visit (a shared link, a reload at the top) the arrow goes up to the
+// parent page instead. Moves within a view (next section, filters, tabs inside a page) replace the
+// entry, so back leaves the view in one step. Overlays (sheets, the chant view) push an entry of
+// their own, so back closes them first.
+const SCROLL_KEY = 'vedalokana.scroll';
+let scrolls = {};
+try { scrolls = JSON.parse(sessionStorage.getItem(SCROLL_KEY) || '{}'); } catch { /* storage unavailable */ }
+const newKey = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+let navK = null; let navI = 0; let pendingReplace = false; let routing = false;
+if (!MEMORY) {
+  const st = history.state;
+  if (st && st.k) { navK = st.k; navI = st.i || 0; } else { navK = newKey(); navI = 0; history.replaceState({ k: navK, i: 0 }, ''); }
 }
+// Called on every hash change before the view is drawn: a new entry gets a key and a depth; an entry
+// we have been on before (back / forward) gets its scroll position back.
+function navArrive() {
+  if (MEMORY) return null;
+  const st = history.state;
+  if (st && st.k) { navK = st.k; navI = st.i || 0; return st.ov ? null : (scrolls[navK] ?? null); }
+  navI = pendingReplace ? navI : navI + 1; pendingReplace = false;
+  navK = newKey();
+  history.replaceState({ k: navK, i: navI }, '');
+  return null;
+}
+let scrollSaveT = 0;
+window.addEventListener('scroll', () => {
+  if (MEMORY || routing || !navK) return;
+  scrolls[navK] = Math.round(window.scrollY);
+  clearTimeout(scrollSaveT);
+  scrollSaveT = setTimeout(() => { try { sessionStorage.setItem(SCROLL_KEY, JSON.stringify(scrolls)); } catch { /* storage full */ } }, 400);
+}, { passive: true });
+function go(h, opt = {}) {
+  if (MEMORY) { memHash = h; route(); return; }
+  if (h === location.hash) { if (!opt.replace) window.scrollTo(0, 0); return; }
+  if (opt.replace) { pendingReplace = true; location.replace(h); } else location.hash = h;
+}
+// Links marked data-r move within a view: they replace the history entry.
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('a[data-r]');
+  if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
+  e.preventDefault(); go(a.getAttribute('href'), { replace: true });
+});
+// Overlays: opening pushes an entry with the same address, so the phone's back closes the overlay.
+let overlayClose = null; let ignorePop = false;
+function overlayOpen(close) {
+  overlayClose = close;
+  if (!MEMORY) history.pushState({ k: navK, i: navI, ov: 1 }, '');
+}
+// The overlay was closed by its own button: drop its entry. `leaving`: a link inside it is being
+// followed, which replaces the entry instead.
+function overlayDone(leaving) {
+  overlayClose = null;
+  if (!MEMORY && !leaving && history.state?.ov) { ignorePop = true; history.back(); }
+}
+window.addEventListener('popstate', () => {
+  if (ignorePop) { ignorePop = false; return; }
+  if (overlayClose) { const f = overlayClose; overlayClose = null; f(); }
+});
 
 // ---------- preferences ----------
 const PREF_KEY = 'vedalokana.prefs';
@@ -95,7 +154,6 @@ const lipiName = () => (prefs.lipi === 'knda' ? 'ಕನ್ನಡ' : 'देव�
 // Switch script from anywhere, keeping the reader's place on the page.
 let keepScrollY = null;
 let lastRead = null;    // the open section and how far down it the reader is, for Continue on Home
-let storyResume = null; // reopen chant view at this verse after a re-render (script switch, next section)
 let readerNav = null;   // previous/next section of the open reader, for gestures and arrow keys
 let swipeIn = 0;        // direction the next page slides in from after a swipe
 const REDUCED_MOTION = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -243,6 +301,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.12.0', '2026-10-31', ['Back goes to the view you came from; moving verse to verse or sūkta to sūkta does not add back steps; scroll is restored; sheets and the chant view close on Back; tabs remember where you were.', 'My sūktas: save sūktas with ☆, see them with Recent and Frequent on Home and in the Sūktas tab, reorder, chant through the list, export or import it.', 'Chant view laid out like a recitation book: running text with ॥n॥, invocation, title, source and anukramaṇī; larger or smaller text; one-at-a-time view kept.']],
   ['1.11.0', '2026-10-31', ['Gaṇeśa Atharvaśīrṣa, Medhā Sūkta (Khila), Pavamāna Pariśiṣṭam, Pañcarudra Sūkta, Navagraha Mantras with adhidevatās, Vedapārāyaṇa Ārambha and Sandhyā Ṛk mantras.']],
   ['1.10.0', '2026-10-31', ['Śrī Sūkta under the Ṛgveda, in the South Indian pāṭha with svaras and the Khila pāṭha of Scheftelowitz; the words where they differ are marked.']],
   ['1.9.0', '2026-10-31', ['113 sūktas, mantras and śānti pāṭhas from every Veda (was 54), each on a page of its own, put together from all its parts.', 'Home: a button for each Veda under the Veda tiles shows its sūktas.']],
@@ -626,7 +685,7 @@ async function viewHome() {
         <a class="hero-go" href="${m.href}" aria-label="Open Ṛgveda ${esc(m.ref)} in the reader">${ARROW}</a>
       </div>
     </section>
-    ${last ? `<a class="cont" href="${esc(last.href)}">
+    ${last ? `<a class="cont" href="${esc(last.v > 1 ? `${last.href}${last.href.includes('?') ? '&' : '?'}v=${last.v}` : last.href)}">
       <svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" class="ring-bg"/><circle cx="24" cy="24" r="20" class="ring" stroke-dasharray="${(pct * 125.7).toFixed(1)} 126" transform="rotate(-90 24 24)"/></svg>
       <span class="cont-t"><small>${T('Continue chanting', 'पाठम् अनुवर्तय')}</small><b>${SA() && last.whereSa ? `<span lang="sa">${esc(last.whereSa)}</span>` : esc(last.where)}</b><small>${SA() && last.textSa ? `<span lang="sa">${esc(last.textSa)}</span>` : esc(last.text)}${last.of ? ` · ${SA() ? `<span lang="sa">${dg(last.v)} / ${dg(last.of)}</span>` : `${last.v} of ${last.of}`}` : ''}</small></span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>` : ''}
@@ -637,17 +696,37 @@ async function viewHome() {
         ${VEDA_ICON[v.id] ? vedaIcon(v.id, 'vt-i') + vedaIcon(v.id, 'vt-w') : `<span class="vt-g" lang="sa">${esc(VEDA_GLYPH[v.id] || v.deva[0])}</span>`}
         <span class="vt-n"><b>${T(v.name, VEDA_SA[v.id])}</b><small>${s ? `${F(s.verses)} ${unitHTML(s)}` : ''}</small></span></a>`;
   }).join('')}</div>
+    ${homeMy(suk)}
     ${suk.length ? `<div class="sec-h"><h2>${T('Sūktas', 'सूक्तानि')}</h2><a href="#/suktas">${SA() ? `<span lang="sa">सर्वाणि ${dg(suk.length)}</span>` : `All ${suk.length}`}</a></div>
     ${sukVedaButtons(cat, suk, homeVeda(suk), 'button')}
     <div class="schips" id="homeSk">${sukChips(suk, homeVeda(suk))}</div>` : ''}
     <p class="lede home-foot">Every text comes from an openly published digital edition. <a href="#/about">About Vedāvalokanam ${esc(APP.version)}: sources and what’s new.</a></p>
   </div>`;
   renderPanchanga();
+  main.querySelectorAll('[data-myk]').forEach((b) => b.addEventListener('click', () => {
+    prefs.homeMy = b.dataset.myk; savePrefs();
+    main.querySelectorAll('[data-myk]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    $('#homeMy').innerHTML = myChips(suk, prefs.homeMy);
+    $('#homeMyOpen')?.setAttribute('href', `#/suktas?list=${prefs.homeMy}`);
+  }));
   main.querySelectorAll('.skv [data-skv]').forEach((b) => b.addEventListener('click', () => {
     prefs.homeSk = b.dataset.skv; savePrefs();
     main.querySelectorAll('.skv [data-skv]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
     $('#homeSk').innerHTML = sukChips(suk, prefs.homeSk);
   }));
+}
+
+// ---------- My sūktas on Home: Saved · Recent · Frequent ----------
+function myChips(suk, k) {
+  return myList(k, suk).map((e) => `<a class="schip" href="${esc(e.href)}${k === 'saved' ? '?from=my' : ''}"><span lang="sa">${esc(e.deva)}</span><small>${sukRef(e)}</small></a>`).join('');
+}
+function homeMy(suk) {
+  const have = MY_LISTS.filter(([k]) => myList(k, suk).length);
+  if (!have.length) return '';
+  const cur = have.some(([k]) => k === prefs.homeMy) ? prefs.homeMy : have[0][0];
+  return `<div class="sec-h"><h2>${T('My sūktas', 'मम सूक्तानि')}</h2><a id="homeMyOpen" href="#/suktas?list=${cur}">${T('Open', 'सर्वम्')}</a></div>
+    <div class="seg my-seg" role="group" aria-label="My sūktas">${have.map(([k, en, sa]) => `<button type="button" data-myk="${k}" aria-pressed="${String(k === cur)}">${T(en, sa)}</button>`).join('')}</div>
+    <div class="schips" id="homeMy">${myChips(suk, cur)}</div>`;
 }
 
 // ---------- sūktas: the Veda buttons and chips shared by Home and the Sūktas tab ----------
@@ -663,9 +742,63 @@ function sukVedaButtons(cat, suk, cur, as, href) {
     const inner = `${VEDA_ICON[v.id] ? vedaIcon(v.id, 'skv-i') : ''}<span class="skv-n"><b>${T(v.name, VEDA_SA[v.id])}</b><small>${F(n(v.id))}</small></span>`;
     return as === 'button'
       ? `<button type="button" class="skv-b" style="--vc: var(--v-${v.id})" data-skv="${v.id}" aria-pressed="${String(v.id === cur)}">${inner}</button>`
-      : `<a class="skv-b" style="--vc: var(--v-${v.id})" href="${href(v.id)}" aria-pressed="${String(v.id === cur)}">${inner}</a>`;
+      : `<a class="skv-b" data-r style="--vc: var(--v-${v.id})" href="${href(v.id)}" aria-pressed="${String(v.id === cur)}">${inner}</a>`;
   }).join('')}</div>`;
 }
+// ---------- My sūktas: one saved list, and recent / frequent, kept on this device ----------
+const MY_KEY = 'vedalokana.my';
+const MY_LISTS = [['saved', 'My list', 'मम सङ्ग्रहः'], ['recent', 'Recent', 'अचिरपठितानि'], ['frequent', 'Frequent', 'बहुपठितानि']];
+const my = (() => {
+  const d = { saved: [], hist: {}, keep: true };
+  try { return { ...d, ...JSON.parse(localStorage.getItem(MY_KEY) || '{}') }; } catch { return d; }
+})();
+const saveMy = () => { try { localStorage.setItem(MY_KEY, JSON.stringify(my)); } catch { /* storage unavailable */ } };
+const HALF_LIFE = 14 * 864e5;   // a visit counts half as much after two weeks
+const decayed = (h, now) => h.s * 0.5 ** ((now - h.t) / HALF_LIFE);
+function visitSukta(sid) {
+  if (!my.keep) return;
+  const now = Date.now(); const h = my.hist[sid];
+  if (h && now - h.t < 10 * 60e3) { h.t = now; saveMy(); return; }   // a reload or a return within minutes is one visit
+  my.hist[sid] = { n: (h?.n || 0) + 1, s: (h ? decayed(h, now) : 0) + 1, t: now };
+  saveMy();
+}
+const isSaved = (sid) => my.saved.includes(sid);
+function toggleSaved(sid) {
+  my.saved = isSaved(sid) ? my.saved.filter((x) => x !== sid) : [...my.saved, sid];
+  saveMy();
+}
+function myList(kind, all) {
+  const byId = new Map(all.map((e) => [e.id, e]));
+  const now = Date.now();
+  const ids = kind === 'saved' ? my.saved
+    : kind === 'recent' ? Object.entries(my.hist).sort((a, b) => b[1].t - a[1].t).slice(0, 20).map(([k]) => k)
+      : Object.entries(my.hist).filter(([, h]) => h.n >= 2).sort((a, b) => decayed(b[1], now) - decayed(a[1], now)).slice(0, 12).map(([k]) => k);
+  return ids.map((k) => byId.get(k)).filter(Boolean);
+}
+// a reader section that is a whole sūkta of the list (Ṛgveda 10.90 = Puruṣa Sūkta)
+async function sukOfSection(t, d1, d2, n) {
+  let all = cache.suktas;
+  if (!all) { try { all = (cache.suktas = await json('data/suktas.json')); } catch { return null; } }
+  return all.find((e) => e.reader === `#/v/${t}/c/${d1}/${d2}` && e.count === n) || null;
+}
+const STAR = (on) => `<svg width="20" height="20" viewBox="0 0 24 24" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8z"/></svg>`;
+function addStar(box, sid) {
+  if (!box) return;
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'star-btn';
+  const paint = () => { const on = isSaved(sid); b.innerHTML = `${STAR(on)}<span>${on ? T('In my list', 'सङ्गृहीतम्') : T('Save', 'सङ्गृहाण')}</span>`; b.setAttribute('aria-pressed', String(on)); };
+  paint();
+  b.addEventListener('click', () => { toggleSaved(sid); paint(); });
+  box.append(b);
+}
+// the next and previous items when a sūkta was opened from My list
+function listNeighbours(sid, all) {
+  const l = myList('saved', all); const k = l.findIndex((e) => e.id === sid);
+  if (k < 0) return {};
+  const at = (e) => e && { href: `${e.href}?from=my`, label: e.deva };
+  return { prev: at(l[k - 1]), next: at(l[k + 1]), pos: k, of: l.length };
+}
+
 const KIND = { upaniṣad: ['Upaniṣad', 'उपनिषत्'], sūkta: ['Sūkta', 'सूक्तम्'], mantra: ['Mantra', 'मन्त्रः'], anuvāka: ['Anuvāka', 'अनुवाकः'], praśna: ['Praśna', 'प्रश्नः'], adhyāya: ['Adhyāya', 'अध्यायः'], parva: ['Parva', 'पर्व'], śānti: ['Śānti mantra', 'शान्तिमन्त्रः'] };
 
 // ---------- a sūkta given in pāṭhas of its own (Śrī Sūkta): switch between them, with the
@@ -688,21 +821,96 @@ async function viewSuktaVersions(s, params) {
     const lines = linesOf(v, i);
     const where = v.src ? `<a href="#/v/${v.src[0]}/c/${v.src[1]}/${v.src[2]}?v=${v.src[3]}" class="pv-src">${SA() ? `<span lang="sa">${esc(`${REF_SA.rv} ${dg(v.src.slice(1).join('.'))}`)}</span>` : esc(`RV ${v.src.slice(1).join('.')}`)}</a>` : '';
     const note = v.reads?.length ? `<p class="pv-note">${SA() ? `<span lang="sa">खिलपाठः ${esc(dg(`2.6.${v.khila}`))}:</span>` : `Khila 2.6.${esc(v.khila)} reads`} <span lang="sa">${v.reads.map(esc).join(' · ')}</span></p>` : '';
-    body += `<section class="verse"><div class="vnum">${N(String(v.n))}</div><div><div class="deva" lang="sa">${lines.map((l, li) => `<div>${wordsHTML(l, li, v.marks)}</div>`).join('')}</div>${note}${where}</div></section>`;
+    body += `<section class="verse" id="sv${i + 1}"><div class="vnum">${N(String(v.n))}</div><div><div class="deva" lang="sa">${lines.map((l, li) => `<div>${wordsHTML(l, li, v.marks)}</div>`).join('')}</div>${note}${where}</div></section>`;
   });
   const k = KIND[s.kind] || KIND.sūkta;
-  main.innerHTML = `<div class="col sk-page">
+  const all = cache.suktas;
+  main.innerHTML = `<article class="col sk-page" style="--vc: var(--v-${s.veda})">
+    ${listBar(s, all, params)}
     <h1>${SA() ? `<span lang="sa">${esc(s.deva)}</span>` : `${esc(s.name)}<span class="h1-deva" lang="sa">${esc(s.deva)}</span>`}</h1>
     <p class="sk-info">${T(VEDA_SHORT[s.veda] || '', VEDA_SA[s.veda])} · ${sukRef(s)} · ${T(k[0], k[1])} · ${SA() ? `<span lang="sa">${esc(s.devataDeva)}</span>` : `<em>Devatā</em> ${esc(s.devata)}`} · ${F(ver.verses.length)} ${T('verses', 'मन्त्राः')}</p>
-    ${s.versions.length < 2 ? '' : `<div class="seg wide-seg sk-ver" role="group" aria-label="Pāṭha">${s.versions.map((v) => `<a href="#/s/${s.id}${v === s.versions[0] ? '' : `?p=${v.id}`}" aria-pressed="${String(v === ver)}">${T(v.name, v.deva)}</a>`).join('')}</div>`}
+    ${s.versions.length < 2 ? '' : `<div class="seg wide-seg sk-ver" role="group" aria-label="Pāṭha">${s.versions.map((v) => `<a data-r href="#/s/${s.id}${v === s.versions[0] ? '' : `?p=${v.id}`}" aria-pressed="${String(v === ver)}">${T(v.name, v.deva)}</a>`).join('')}</div>`}
     <p class="lede sk-note">${esc(ver.note)}${ver === s.versions[0] && s.versions.length > 1 ? ' Words that read differently in the Khila text are <mark class="pv">marked</mark>, with its reading under the verse.' : ''}</p>
-    <div class="sk-acts"><button type="button" class="chip" id="skCopy">${T('Copy', 'प्रतिलिपिः')}</button></div>
+    <div class="sk-acts">${chantBtn()}<button type="button" class="chip" id="skCopy">${T('Copy', 'प्रतिलिपिः')}</button></div>
     <div class="verses">${body}</div>
-  </div>`;
+  </article>`;
+  const cparts = [];
+  ver.verses.forEach((v, j) => {
+    if (!cparts.length || v.head) cparts.push({ title: v.head ? v.head[1] : '', group: s.veda === 'rv' ? 5 : 1, verses: [] });
+    cparts[cparts.length - 1].verses.push({ n: v.n, lines: linesOf(v, j), label: v.src ? `RV ${v.src.slice(1).join('.')}` : '' });
+  });
+  suktaExtras(s, all, params, cparts);
   $('#skCopy')?.addEventListener('click', async (e) => {
     const txt = [s.deva, ...ver.verses.flatMap((v, i) => linesOf(v, i).map((l) => (prefs.lipi === 'knda' ? toKnda(l) : l))), `— ${s.ref}`].join('\n');
     try { await navigator.clipboard.writeText(txt); e.target.textContent = SA() ? 'प्रतिलिपिः ✓' : 'Copied'; } catch { /* clipboard blocked */ }
   });
+}
+
+// ---------- My list on the Sūktas tab: reorder, remove, chant straight through ----------
+function myListHTML(k, all, row) {
+  const items = myList(k, all);
+  const empty = { saved: ['Nothing saved yet. Tap ☆ Save on any sūkta to keep it here.', 'किमपि न सङ्गृहीतम्। सूक्ते ☆ स्पृश।'],
+    recent: ['Sūktas you open will appear here.', 'पठितानि सूक्तानि अत्र दृश्यन्ते।'],
+    frequent: ['Sūktas you open often will appear here.', 'बहुशः पठितानि सूक्तानि अत्र दृश्यन्ते।'] }[k];
+  if (!items.length) return `<p class="lede">${T(empty[0], empty[1])}</p>`;
+  if (k !== 'saved') return `<div class="sk-list">${items.map(row).join('')}</div>`;
+  const ctl = (e, j) => `<span class="my-ctl">
+      <button type="button" data-mv="-1" data-id="${e.id}" aria-label="Move up"${j === 0 ? ' disabled' : ''}>↑</button>
+      <button type="button" data-mv="1" data-id="${e.id}" aria-label="Move down"${j === items.length - 1 ? ' disabled' : ''}>↓</button>
+      <button type="button" data-rm="${e.id}" aria-label="Remove from my list">✕</button></span>`;
+  return `<div class="sk-acts"><button type="button" class="chant-btn" id="chantList"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10-6.5a1 1 0 0 0 0-1.8l-10-6.5A1 1 0 0 0 8 5.5z"/></svg>${T('Chant my list', 'सङ्ग्रहं पठ')}</button></div>
+    <div class="sk-list my-list">${items.map((e, j) => `<div class="my-row">${row(e)}${ctl(e, j)}</div>`).join('')}</div>`;
+}
+function wireMyList(all) {
+  main.querySelectorAll('[data-mv]').forEach((b) => b.addEventListener('click', () => {
+    const j = my.saved.indexOf(b.dataset.id); const t = j + Number(b.dataset.mv);
+    if (j < 0 || t < 0 || t >= my.saved.length) return;
+    [my.saved[j], my.saved[t]] = [my.saved[t], my.saved[j]]; saveMy();
+    keepScrollY = window.scrollY; route();
+  }));
+  main.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => {
+    toggleSaved(b.dataset.rm); keepScrollY = window.scrollY; route();
+  }));
+  $('#chantList')?.addEventListener('click', () => {
+    const first = myList('saved', all)[0];
+    if (first) { chantResume = 0; go(`${first.href}?from=my`); }
+  });
+}
+
+// ---------- what every sūkta page has: save, chant, My-list moves, Continue ----------
+const chantBtn = () => `<button class="chant-btn" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10-6.5a1 1 0 0 0 0-1.8l-10-6.5A1 1 0 0 0 8 5.5z"/></svg>${T('Chant view', 'पारायणम्')}</button>`;
+let sukNav = null;   // My-list neighbours of the open sūkta, kept through renderChrome
+function listBar(s, all, params) {
+  if (params?.get('from') !== 'my') return '';
+  const nb = listNeighbours(s.id, all);
+  if (nb.pos === undefined) return '';
+  const arrow = (d) => `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+  return `<nav class="list-bar" aria-label="My list">
+    ${nb.prev ? `<a data-r href="${esc(nb.prev.href)}" aria-label="Previous in my list">${arrow('M15 5l-7 7 7 7')}</a>` : '<span></span>'}
+    <a href="#/suktas?list=saved"><b>${T('My list', 'मम सङ्ग्रहः')}</b> <small>${F(nb.pos + 1)} / ${F(nb.of)}</small></a>
+    ${nb.next ? `<a data-r href="${esc(nb.next.href)}" aria-label="Next in my list">${arrow('M9 5l7 7-7 7')}</a>` : '<span></span>'}</nav>`;
+}
+function suktaExtras(s, all, params, cparts) {
+  visitSukta(s.id);
+  addStar(main.querySelector('.sk-acts'), s.id);
+  const nb = params?.get('from') === 'my' ? listNeighbours(s.id, all) : {};
+  sukNav = nb.pos !== undefined ? { prev: nb.prev, next: nb.next, sec: 'sūkta' } : null;
+  readerNav = sukNav;
+  lastRead = { href: `#/s/${s.id}${nb.pos !== undefined ? '?from=my' : ''}`, text: 'Sūktas', textSa: 'सूक्तानि', where: s.name, whereSa: s.deva, v: 1, of: s.count };
+  try { localStorage.setItem('vedalokana.last', JSON.stringify(lastRead)); } catch { /* storage unavailable */ }
+  const model = () => ({
+    title: s.deva, veda: s.veda, parts: cparts, prev: sukNav?.prev, next: sukNav?.next,
+    onClose: (k) => document.getElementById(`sv${k + 1}`)?.scrollIntoView({ block: 'start' }),
+    onPlace: (k) => { lastRead.v = k + 1; try { localStorage.setItem('vedalokana.last', JSON.stringify(lastRead)); } catch { /* storage unavailable */ } },
+  });
+  main.querySelector('.chant-btn')?.addEventListener('click', () => openChant(model(), 0));
+  const v = Number(params?.get('v'));
+  if (chantResume !== null) { const k = chantResume; chantResume = null; openChant(model(), k); }
+  else if (v > 1) requestAnimationFrame(() => document.getElementById(`sv${v}`)?.scrollIntoView({ block: 'start' }));
+  if (swipeIn) {
+    const dir = swipeIn; swipeIn = 0;
+    if (!REDUCED_MOTION()) main.querySelector('article')?.animate([{ transform: `translateX(${dir * 48}px)`, opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 220, easing: 'cubic-bezier(.2,.8,.2,1)' });
+  }
 }
 
 // ---------- one sūkta, put together from its parts ----------
@@ -741,16 +949,32 @@ async function viewSukta(sid, params) {
     if (b.lines.length && prefs.script !== 'roman') html += `<div class="deva" lang="sa">${svaraLines(b.g.t, b.lines, b.cut ? null : b.v[3]).map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
     if (showRoman(b)) html += `<div class="roman" lang="sa-Latn">${b.v[2].map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
     if (!b.cut && b.v[4] && prefs.tr) html += `<p class="tr" lang="en">${esc(b.v[4])}</p>`;
-    return `${head}<section class="verse" aria-label="${esc(b.meta.ref)} ${esc(ref)}">
+    return `${head}<section class="verse" id="sv${n}" aria-label="${esc(b.meta.ref)} ${esc(ref)}">
       <div class="vnum"><a href="#/v/${b.g.t}/c/${b.g.d1}/${b.g.d2}?v=${b.v[0]}" title="${esc(`${b.meta.ref} ${ref}`)}">${N(String(n))}</a></div><div>${html}</div></section>`;
   }).join('');
   const k = KIND[s.kind] || KIND.sūkta;
-  main.innerHTML = `<div class="col sk-page">
+  main.innerHTML = `<article class="col sk-page" style="--vc: var(--v-${s.veda})">
+    ${listBar(s, all, params)}
     <h1>${SA() ? `<span lang="sa">${esc(s.deva)}</span>` : `${esc(s.name)}<span class="h1-deva" lang="sa">${esc(s.deva)}</span>`}</h1>
     <p class="sk-info">${T(vedaName?.name || '', VEDA_SA[s.veda])} · ${sukRef(s)} · ${T(k[0], k[1])} · ${SA() ? `<span lang="sa">${esc(s.devataDeva)}</span>` : `<em>Devatā</em> ${esc(s.devata)}`}${s.count > 1 ? ` · ${F(s.count)} ${T('verses', 'मन्त्राः')}` : ''}</p>
-    <div class="sk-acts">${s.reader ? `<a class="chip" href="${s.reader}">${T('Open in the reader', 'मूलग्रन्थे पठ')}</a>` : ''}<button type="button" class="chip" id="skCopy">${T('Copy', 'प्रतिलिपिः')}</button></div>
+    <div class="sk-acts">${chantBtn()}${s.reader ? `<a class="chip" href="${s.reader}">${T('Open in the reader', 'मूलग्रन्थे पठ')}</a>` : ''}<button type="button" class="chip" id="skCopy">${T('Copy', 'प्रतिलिपिः')}</button></div>
     <div class="verses">${body}</div>
-  </div>`;
+  </article>`;
+  // chant view: one part per place the sūkta is gathered from
+  const rvx = s.segs.some((g) => g.t === 'rv') ? await index('rv') : null;
+  let cn = 0;
+  const cparts = s.segs.map((g) => {
+    const bs = blocks.filter((b) => b.g === g && b.lines.length);
+    const rows = g.t === 'rv' ? rvx.rows.filter((r) => r[0] === g.d1 && r[1] === g.d2 && r[2] >= g.v[0] && r[2] <= g.v[1]) : [];
+    return {
+      title: g.titleDeva || '',
+      src: `(${REF_SA[g.t] || bs[0]?.meta.deva || ''} ${dg(String(g.ref || '').replace(/\./g, ','))})`,
+      anu: g.t === 'rv' && bs.length ? anukramani(bs[0].lines, bs.length, rows, rvx.facets) : '',
+      group: METRICAL.has(g.t) ? 5 : 1,
+      verses: bs.map((b) => ({ n: ++cn, lines: svaraLines(b.g.t, b.lines, b.cut ? null : b.v[3]), label: refText(b.meta, refOf(b.meta, b.g.d1, b.g.d2, b.v[0], b.v[5])) })),
+    };
+  });
+  suktaExtras(s, all, params, cparts);
   $('#skCopy')?.addEventListener('click', async (e) => {
     const txt = [s.deva, ...blocks.flatMap((b) => svaraLines(b.g.t, b.lines, b.cut ? null : b.v[3]).map((l) => (prefs.lipi === 'knda' ? toKnda(l) : l))), `— ${s.ref}`].join('\n');
     try { await navigator.clipboard.writeText(txt); e.target.textContent = SA() ? 'प्रतिलिपिः ✓' : 'Copied'; } catch { /* clipboard blocked */ }
@@ -831,9 +1055,9 @@ async function viewVedaGroup(vid, layerArg) {
   }[layer];
   const sam = layer === 'samhita' ? (v.layers.samhita.map((i) => byId[i]).find((x) => x.has.svara || x.has.roman) || byId[v.layers.samhita[0]]) : null;
   main.innerHTML = `<div class="wide veda-page" style="--vc: var(--v-${v.id})">
-    <nav class="veda-switch" aria-label="Veda">${cat.vedas.map((x) => `<a href="#/veda/${x.id}${layer !== 'samhita' ? `/${layer}` : ''}"${x.id === v.id ? ' aria-current="page"' : ''} style="--vc: var(--v-${x.id})">${T(x.name.replace(/veda$/, ''), VEDA_SA_SHORT[x.id])}</a>`).join('')}</nav>
+    <nav class="veda-switch" aria-label="Veda">${cat.vedas.map((x) => `<a data-r href="#/veda/${x.id}${layer !== 'samhita' ? `/${layer}` : ''}"${x.id === v.id ? ' aria-current="page"' : ''} style="--vc: var(--v-${x.id})">${T(x.name.replace(/veda$/, ''), VEDA_SA_SHORT[x.id])}</a>`).join('')}</nav>
     <h1>${SA() ? `<span lang="sa">${esc(VEDA_SA[v.id] || v.deva)}</span>` : `${esc(v.name)}<span class="h1-deva" lang="sa">${esc(v.deva)}</span>`}</h1>
-    <nav class="layer-tabs" aria-label="Layers">${cat.layers.map((l) => `<a href="#/veda/${v.id}/${l}"${l === layer ? ' aria-current="page"' : ''}>
+    <nav class="layer-tabs" aria-label="Layers">${cat.layers.map((l) => `<a data-r href="#/veda/${v.id}/${l}"${l === layer ? ' aria-current="page"' : ''}>
       <span class="lt-l">${T(LAYERS[l].label, LAYER_SA[l])}</span><span class="lt-n">${v.layers[l].length ? N(v.layers[l].length) : '–'}</span></a>`).join('')}</nav>
     ${sam ? '<section class="wheel-wrap" id="wheel" aria-label="Divisions of the Saṃhitā"></section>' : ''}
     <p class="lede">${esc(blurb)}</p>
@@ -1215,7 +1439,7 @@ async function viewContainer(id, d1, d2, params) {
       if (tr && (prefs.tr || (!hasDeva && !hasRoman))) body += `<p class="tr" lang="en">${esc(tr)}</p>`;
       const bh = !(hasBh && prefs.bhashya) ? '' : `<details class="bh" data-bh="${v}"><summary>${SA() ? '<span lang="sa">सायणभाष्यम्</span>' : `${esc(meta.has.bhashya)} bhāṣya <span class="dv" lang="sa">सायणभाष्यम्</span>`}</summary><div class="bh-text" lang="sa"><p class="bh-wait">Loading…</p></div></details>`;
       return `<section class="verse${v === hl ? ' hl' : ''}" id="v${v}" aria-label="${esc(meta.ref)} ${esc(ref)}">
-        <div class="vnum"><a href="#/v/${id}/c/${d1}/${d2}?v=${v}">${N(ref)}</a></div>
+        <div class="vnum"><a data-r href="#/v/${id}/c/${d1}/${d2}?v=${v}">${N(ref)}</a></div>
         <div>${label && meta.refFmt !== 'label' ? `<div class="vlabel">${esc(label)}</div>` : ''}${body}${tags ? `<div class="tags">${tags}</div>` : ''}${bh}</div>
         <button class="icon-btn copy" data-copy="${v}" aria-label="Copy ${esc(meta.ref)} ${esc(ref)}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/></svg></button>
       </section>`;
@@ -1270,9 +1494,9 @@ async function viewContainer(id, d1, d2, params) {
   // phone reader bar: previous · section picker · next
   const rb = $('#readerbar');
   rb.hidden = false;
-  rb.innerHTML = `${prev ? `<a class="rb-step" href="#/v/${id}/c/${prev[0]}/${prev[1]}" aria-label="Previous ${esc((meta.levels[1] || 'section').toLowerCase())}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a>` : '<span class="rb-step" aria-hidden="true"></span>'}
+  rb.innerHTML = `${prev ? `<a class="rb-step" data-r href="#/v/${id}/c/${prev[0]}/${prev[1]}" aria-label="Previous ${esc((meta.levels[1] || 'section').toLowerCase())}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a>` : '<span class="rb-step" aria-hidden="true"></span>'}
     <button class="rb-pick" aria-haspopup="dialog"><span>${cref ? refHTML(meta, cref) : T(meta.name, meta.deva)}</span>${CHEV}</button>
-    ${next ? `<a class="rb-step" href="#/v/${id}/c/${next[0]}/${next[1]}" aria-label="Next ${esc((meta.levels[1] || 'section').toLowerCase())}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>` : '<span class="rb-step" aria-hidden="true"></span>'}`;
+    ${next ? `<a class="rb-step" data-r href="#/v/${id}/c/${next[0]}/${next[1]}" aria-label="Next ${esc((meta.levels[1] || 'section').toLowerCase())}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>` : '<span class="rb-step" aria-hidden="true"></span>'}`;
   rb.querySelector('.rb-pick').addEventListener('click', async () => {
     const c2 = currentPath[currentPath.length - 1];
     if (c2) openSheet({ title: c2.title, items: await c2.items(), layout: c2.layout || 'grid' });
@@ -1283,9 +1507,29 @@ async function viewContainer(id, d1, d2, params) {
     next: next && { href: `#/v/${id}/c/${next[0]}/${next[1]}`, label: refText(meta, containerRef(meta, next[0], next[1], next[2])) },
     sec,
   };
-  const story = { verses: verses.filter((x) => x[1].length), meta, d1, d2, cref, next: readerNav.next };
-  main.querySelector('.chant-btn')?.addEventListener('click', () => openStory(story, 0));
-  if (storyResume !== null) { const i = storyResume; storyResume = null; openStory(story, i); }
+  // chant view: this section as a book page
+  const sk = await sukOfSection(id, d1, d2, verses.length);
+  if (sk) addStar(main.querySelector('.reader-head'), sk.id);
+  if (sk) visitSukta(sk.id);
+  const chantModel = () => {
+    const vs = verses.filter((v) => v[1].length);
+    const title = sk ? sk.deva : `${meta.deva} ${dg(cref || '')}`.trim();
+    return {
+      title, veda: meta.veda,
+      parts: [{
+        src: cref ? `(${REF_SA[id] || meta.deva} ${dg(String(cref).replace(/\./g, ','))})` : '',
+        anu: id === 'rv' ? anukramani(vs[0][1], vs.length, vs.map((v) => rowOf.get(v[0])).filter(Boolean), x.facets) : '',
+        group: METRICAL.has(id) ? 5 : 1,
+        verses: vs.map((v) => ({ n: v[0], lines: svaraLines(id, v[1], v[3]), label: refText(meta, refOf(meta, d1, d2, v[0], v[5])) })),
+      }],
+      prev: readerNav.prev && { href: readerNav.prev.href, label: readerNav.prev.label },
+      next: readerNav.next && { href: readerNav.next.href, label: readerNav.next.label },
+      onClose: (k) => document.getElementById(`v${vs[k][0]}`)?.scrollIntoView({ block: 'start' }),
+      onPlace: (k) => { if (lastRead) { lastRead.v = k + 1; try { localStorage.setItem('vedalokana.last', JSON.stringify(lastRead)); } catch { /* storage unavailable */ } } },
+    };
+  };
+  main.querySelector('.chant-btn')?.addEventListener('click', () => openChant(chantModel(), 0));
+  if (chantResume !== null) { const k = chantResume; chantResume = null; openChant(chantModel(), k); }
   if (swipeIn) {
     const dir = swipeIn; swipeIn = 0;
     if (!REDUCED_MOTION()) main.querySelector('article')?.animate(
@@ -1435,12 +1679,15 @@ function setupSearch() {
 // ---------- sheets (level switchers) ----------
 const sheetRoot = $('#sheetRoot');
 let lastFocus = null;
-function closeSheet() {
+// silent: the page is changing anyway (a link in the sheet, a new route), so leave history alone
+function closeSheet(silent) {
   if (!sheetRoot.firstChild) return;
   sheetRoot.innerHTML = '';
   document.body.classList.remove('sheet-open');
+  if (overlayClose === sheetPop) overlayDone(silent);
   lastFocus?.focus?.();
 }
+function sheetPop() { sheetRoot.innerHTML = ''; document.body.classList.remove('sheet-open'); lastFocus?.focus?.(); }
 function openSheet({ title, items, layout = 'list', note }) {
   lastFocus = document.activeElement;
   const body = items.length
@@ -1457,8 +1704,13 @@ function openSheet({ title, items, layout = 'list', note }) {
       <div class="sheet-body">${body}</div>
     </div>`;
   document.body.classList.add('sheet-open');
-  sheetRoot.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', closeSheet));
-  sheetRoot.querySelectorAll('.sheet-body a').forEach((a) => a.addEventListener('click', () => setTimeout(closeSheet, 0)));
+  sheetRoot.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => closeSheet()));
+  // following a link from the sheet takes the sheet's place in history
+  sheetRoot.querySelectorAll('.sheet-body a').forEach((a) => a.addEventListener('click', (e) => {
+    if (e.metaKey || e.ctrlKey) return;
+    e.preventDefault(); closeSheet(true); go(a.getAttribute('href'), { replace: true });
+  }));
+  if (overlayClose !== sheetPop) overlayOpen(sheetPop);
   const cur = sheetRoot.querySelector('[aria-current="true"]') || sheetRoot.querySelector('.sheet-body a');
   cur?.scrollIntoView({ block: 'center' });
   (cur || sheetRoot.querySelector('[data-close]')).focus({ preventScroll: true });
@@ -1471,6 +1723,21 @@ async function buildPath(r) {
   const [a, id, sub, p1, p2] = r.parts;
   const path = [];
   let vid; let layer; let meta;
+  // a sūkta: Sūktas › its Veda › the sūkta, each a picker
+  if (a === 's') {
+    const all = (cache.suktas ||= await json('data/suktas.json'));
+    const sk = all.find((x) => x.id === id);
+    if (!sk) return path;
+    const sv = cat.vedas.find((x) => x.id === sk.veda);
+    const n = (vv) => all.filter((e) => e.veda === vv).length;
+    path.push({ label: 'Sūktas', deva: MENU_SA.suktas, href: '#/suktas', title: 'Sūktas',
+      items: async () => [{ label: 'All sūktas', deva: 'सर्वाणि सूक्तानि', href: '#/suktas' }, ...MY_LISTS.map(([k, en, sa]) => ({ label: en, deva: sa, href: `#/suktas?list=${k}` }))] });
+    path.push({ label: sv.name, deva: VEDA_SA[sv.id], href: `#/suktas?veda=${sv.id}`, title: 'Sūktas of',
+      items: async () => cat.vedas.filter((x) => n(x.id)).map((x) => ({ label: x.name, deva: VEDA_SA[x.id], href: `#/suktas?veda=${x.id}`, current: x.id === sv.id, sub: `${n(x.id)} sūktas` })) });
+    path.push({ label: sk.name, deva: sk.deva, href: sk.href, title: `${sv.name}: sūktas`,
+      items: async () => all.filter((e) => e.veda === sv.id).map((e) => ({ label: e.name, deva: e.deva, href: e.href, current: e.id === sk.id, sub: e.ref })) });
+    return path;
+  }
   if (a === 'veda') { vid = id; layer = sub; }
   if (a === 'v') { meta = cat.texts.find((t) => t.id === id); if (meta) { vid = meta.veda; layer = meta.layer; } }
   const v = cat.vedas.find((x) => x.id === vid);
@@ -1523,6 +1790,24 @@ async function buildPath(r) {
   return path;
 }
 
+let tabLast = {};
+try { tabLast = JSON.parse(sessionStorage.getItem('vedalokana.tabs') || '{}'); } catch { /* storage unavailable */ }
+$('#backBtn').addEventListener('click', (e) => {
+  if (e.metaKey || e.ctrlKey) return;
+  e.preventDefault();
+  if (!MEMORY && navI > 0) history.back();
+  else go($('#backBtn').getAttribute('href'), { replace: true });
+});
+// a tab returns to where you were in it; the tab you are on goes to its first page, at the top
+$('#tabbar').addEventListener('click', (e) => {
+  const a = e.target.closest('a[data-tab]');
+  if (!a || e.metaKey || e.ctrlKey) return;
+  e.preventDefault();
+  const root = a.getAttribute('href'); const t = a.dataset.tab;
+  const here = a.getAttribute('aria-current') === 'page';
+  if (here) { if (getHash() !== root && (getHash() || '#/') !== root) go(root); else window.scrollTo({ top: 0, behavior: REDUCED_MOTION() ? 'auto' : 'smooth' }); return; }
+  go(tabLast[t] || root);
+});
 const CHEV = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
 let currentPath = [];
 function renderChrome(r, path) {
@@ -1537,14 +1822,17 @@ function renderChrome(r, path) {
     openSheet({ title: c.title, items: await c.items(), layout: c.layout || 'list' });
   }));
   bar.scrollLeft = bar.scrollWidth;
-  // back goes up one level
+  // back: the previous view; on the first view of a visit, the parent page
   const page = r.parts[0] || '';
   const topLevel = ['', 'library', 'suktas', 'search', 'settings'].includes(page);
-  const parentHref = path.length >= 2 ? path[path.length - 2].href : page === 'about' ? '#/settings' : page === 's' ? '#/suktas' : topLevel ? null : '#/library';
+  const parentHref = topLevel ? null : path.length >= 2 ? path[path.length - 2].href : page === 'about' ? '#/settings' : page === 's' ? '#/suktas' : '#/library';
   const back = $('#backBtn');
   back.hidden = !parentHref;
   if (parentHref) back.setAttribute('href', parentHref);
   $('#brand').classList.toggle('when-back', !!parentHref);
+  // each tab remembers where you were in it
+  const tabNow = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 'about' ? 'settings' : page === 's' ? 'suktas' : page);
+  if (tabNow === 'library' || tabNow === 'suktas') { tabLast[tabNow] = getHash(); try { sessionStorage.setItem('vedalokana.tabs', JSON.stringify(tabLast)); } catch { /* storage unavailable */ } }
   const named = { library: 'Library', suktas: 'Sūktas', s: 'Sūktas', search: 'Search', settings: 'Settings', about: 'About' }[page];
   const lastC = path[path.length - 1];
   $('#topTitle').textContent = lastC ? Tp(lastC.label, lastC.deva) : (named ? Tp(named, MENU_SA[page === 's' ? 'suktas' : page]) : '');
@@ -1552,7 +1840,8 @@ function renderChrome(r, path) {
   const tab = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 'about' ? 'settings' : page === 's' ? 'suktas' : page);
   $('#tabbar').querySelectorAll('[data-tab]').forEach((a) => (a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
   document.body.classList.toggle('reading', page === 'v' && r.parts[2] === 'c');
-  if (!(page === 'v' && r.parts[2] === 'c')) { $('#readerbar').hidden = true; readerNav = null; }
+  if (!(page === 'v' && r.parts[2] === 'c')) { $('#readerbar').hidden = true; readerNav = page === 's' ? sukNav : null; }
+  if (page !== 's') sukNav = null;
 }
 
 // ---------- library, search, settings ----------
@@ -1599,7 +1888,8 @@ async function viewSuktas(params) {
     }
     groups = [...m.values()];
   }
-  const row = (e) => `<a class="sk-row" href="${e.href}">
+  const listK = MY_LISTS.some(([k]) => k === params.get('list')) ? params.get('list') : '';
+  const row = (e) => `<a class="sk-row" href="${e.href}${listK === 'saved' ? '?from=my' : ''}">
       <span class="sk-top"><span class="sk-name"><span class="dv" lang="sa">${esc(e.deva)}</span><span class="ia">${esc(e.name)}</span></span><span class="sk-ref">${esc(e.ref)}</span></span>
       <span class="sk-line" lang="sa">${esc(e.line)}</span>
       <span class="sk-meta">${by !== 'devata' ? `<span><em>Devatā</em> ${esc(e.devata)}</span>` : ''}${by !== 'veda' ? `<span>${esc(VEDA_SHORT[e.veda])}</span>` : ''}<span>${esc((KIND[e.kind] || KIND.sūkta)[0])}${e.count > 1 ? ` · ${fmt(e.count)} verses` : ''}</span></span>
@@ -1607,17 +1897,21 @@ async function viewSuktas(params) {
   main.innerHTML = `<div class="col">
     <h1>${T('Sūktas', 'सूक्तानि')}${SA() ? '' : '<span class="h1-deva" lang="sa">सूक्तानि</span>'}</h1>
     <p class="lede">The sūktas, mantras and śānti pāṭhas of recitation books such as the Sasvara Vedamantrāḥ, from every Veda. Each opens as one piece, even when it is gathered from several places.</p>
+    <nav class="chips my-tabs" aria-label="My sūktas">${MY_LISTS.map(([k, en, sa]) => `<a class="chip" data-r href="#/suktas?list=${k}"${listK === k ? ' aria-current="true"' : ''}>${k === 'saved' ? STAR(listK === k) : ''}${T(en, sa)} <small>${F(myList(k, all).length)}</small></a>`).join('')}
+      <a class="chip" data-r href="#/suktas"${!listK ? ' aria-current="true"' : ''}>${T('All', 'सर्वाणि')} <small>${F(all.length)}</small></a></nav>
+    ${listK ? myListHTML(listK, all, row) : `
     ${sukVedaButtons(cat, all, vedaF, 'link', (k) => href({ veda: vedaF === k ? '' : k }))}
     <div class="seg sk-sort" role="group" aria-label="List by">
-      ${[['veda', 'By Veda'], ['devata', 'By devatā'], ['az', 'A–Z']].map(([k, l]) => `<a href="${href({ by: k })}" data-by="${k}" aria-pressed="${by === k}">${l}</a>`).join('')}
+      ${[['veda', 'By Veda'], ['devata', 'By devatā'], ['az', 'A–Z']].map(([k, l]) => `<a data-r href="${href({ by: k })}" data-by="${k}" aria-pressed="${by === k}">${l}</a>`).join('')}
     </div>
     ${groups.map((g) => `<section class="sk-group"><h2>${esc(g.title)}${g.deva ? `<span class="h2-deva" lang="sa">${esc(g.deva)}</span>` : ''}<small>${g.items.length}</small></h2>
-      <div class="sk-list">${g.items.map(row).join('')}</div></section>`).join('')}
+      <div class="sk-list">${g.items.map(row).join('')}</div></section>`).join('')}`}
   </div>`;
+  if (listK === 'saved') wireMyList(all);
   main.querySelectorAll('[data-by]').forEach((a) => a.addEventListener('click', () => { prefs.suktaBy = a.dataset.by; savePrefs(); }));
 }
 
-async function viewSearch() {
+async function viewSearch(params) {
   setTitle('Search');
   main.innerHTML = `<div class="col">
     <h1 class="sr">Search</h1>
@@ -1638,9 +1932,11 @@ async function viewSearch() {
     $('#bres').innerHTML = r.map((it) => `<a href="${it.href}"><span>${esc(it.label)}</span><small>${esc(it.hint)}</small></a>`).join('')
       || '<p class="empty">No match. Try a reference like 1.1.1, or part of a name.</p>';
   };
-  input.addEventListener('input', run);
-  main.querySelectorAll('[data-q]').forEach((b) => b.addEventListener('click', () => { input.value = b.dataset.q; run(); input.focus(); }));
-  if (matchMedia('(hover: hover)').matches) input.focus();
+  // the query is kept in the address, so back from a result returns to the same results
+  const keepQ = () => { if (!MEMORY) history.replaceState(history.state, '', `#/search${input.value.trim() ? `?q=${encodeURIComponent(input.value)}` : ''}`); };
+  input.addEventListener('input', () => { run(); keepQ(); });
+  main.querySelectorAll('[data-q]').forEach((b) => b.addEventListener('click', () => { input.value = b.dataset.q; run(); keepQ(); input.focus(); }));
+  if (params?.get('q')) { input.value = params.get('q'); await run(); } else if (matchMedia('(hover: hover)').matches) input.focus();
 }
 
 async function viewSettings() {
@@ -1670,6 +1966,10 @@ async function viewSettings() {
       <div class="seg wide-seg">${opt('tr', true, 'Show')}${opt('tr', false, 'Hide')}</div></section>
     <section class="set"><h2>Ṛṣi, devatā and chandas</h2><p>Shown at the top of a sūkta and again only where they change. Hide them for uninterrupted chanting.</p>
       <div class="seg wide-seg">${opt('tags', true, 'Show')}${opt('tags', false, 'Hide')}</div></section>
+    <section class="set" id="mysk"><h2>My sūktas</h2><p>Your list, and the sūktas you open (Recent and Frequent), are kept on this device only. Export the list to keep a copy or move it to another device.</p>
+      <div class="seg wide-seg"><button data-keep="true" aria-pressed="${String(my.keep)}">Keep recent and frequent</button><button data-keep="false" aria-pressed="${String(!my.keep)}">Don’t keep</button></div>
+      <div class="app-acts"><button type="button" class="off-btn ghost" id="myClear">Clear recent and frequent</button><button type="button" class="off-btn ghost" id="myExport">Export my list</button><label class="off-btn ghost">Import a list<input type="file" id="myImport" accept="application/json,.json" hidden></label></div>
+      <p class="pc-note" id="myMsg" aria-live="polite"></p></section>
     <section class="set" id="offline"><h2>Offline</h2><p>Once installed, the app opens without a connection, and every text you have read stays available. Download a whole Veda to have all of it ready.</p>
       <div class="off" id="offList"><p class="loading">Checking what is stored…</p></div></section>
     <section class="set"><h2>About</h2><a class="about-link" href="#/about"><img src="icons/icon.svg" alt="" width="40" height="40"><span><b>Vedāvalokanam</b><small>Version ${esc(APP.version)} · sources, licences, what’s new</small></span>
@@ -1677,6 +1977,27 @@ async function viewSettings() {
   </div>`;
   renderOffline(document.getElementById('offList'));
   if (parse().params.get('s') === 'offline') document.getElementById('offline')?.scrollIntoView();
+  // My sūktas
+  const myMsg = (t) => { const m = $('#myMsg'); if (m) m.textContent = t; };
+  main.querySelectorAll('[data-keep]').forEach((b) => b.addEventListener('click', () => {
+    my.keep = b.dataset.keep === 'true'; saveMy();
+    main.querySelectorAll('[data-keep]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  }));
+  $('#myClear')?.addEventListener('click', () => { my.hist = {}; saveMy(); myMsg('Recent and frequent cleared.'); });
+  $('#myExport')?.addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify({ app: 'Vedavalokanam', list: my.saved }, null, 1)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'my-suktas.json';
+    document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+  $('#myImport')?.addEventListener('change', async (e) => {
+    try {
+      const d = JSON.parse(await e.target.files[0].text());
+      const all = (cache.suktas ||= await json('data/suktas.json'));
+      const ids = (Array.isArray(d) ? d : d.list || []).filter((x) => all.some((s2) => s2.id === x));
+      my.saved = [...new Set([...my.saved, ...ids])]; saveMy();
+      myMsg(`${ids.length} sūktas added to your list.`);
+    } catch { myMsg('That file is not a list exported from this app.'); }
+  });
   main.querySelectorAll('[data-k]').forEach((b) => b.addEventListener('click', () => {
     const k = b.dataset.k; const raw = b.dataset.v;
     if (k === 'lipi') { setLipi(raw); return; }
@@ -1697,7 +2018,8 @@ function parse() {
 async function route() {
   const r = parse();
   if (r.veda) activeVeda = r.veda;
-  closeSheet();
+  routing = true;
+  closeSheet(true);
   main.ontouchstart = null; main.ontouchend = null;
   main.innerHTML = '<p class="loading">Loading…</p>';
   try {
@@ -1708,7 +2030,7 @@ async function route() {
     else if (a === 'library') await viewLibrary();
     else if (a === 'suktas') await viewSuktas(r.params);
     else if (a === 's') await viewSukta(id, r.params);
-    else if (a === 'search') await viewSearch();
+    else if (a === 'search') await viewSearch(r.params);
     else if (a === 'settings') await viewSettings();
     else if (a === 'veda') await viewVedaGroup(id, sub);
     else if (a === 'v' && !sub) await viewVeda(id);
@@ -1731,9 +2053,12 @@ async function route() {
     document.fonts.ready.then(() => requestAnimationFrame(() => {
       const el = a && document.getElementById(a.id);
       window.scrollTo(0, el ? window.scrollY + el.getBoundingClientRect().top - a.top : y);
+      routing = false;
     }));
+  } else {
+    if (!r.params.get('v') || r.params.get('v') === '1') window.scrollTo(0, 0);
+    routing = false;
   }
-  else if (!r.params.get('v') || r.params.get('v') === '1') window.scrollTo(0, 0);
   paintLipiToggle();
   main.focus({ preventScroll: true });
 }
@@ -1744,7 +2069,13 @@ if (MEMORY) {
     e.preventDefault();
     go(a.getAttribute('href'));
   });
-} else window.addEventListener('hashchange', route);
+} else {
+  window.addEventListener('hashchange', () => {
+    const y = navArrive();
+    if (y !== null) { keepScrollY = y; keepAnchor = null; }
+    route();
+  });
+}
 setupSearch();
 document.querySelectorAll('#lipiToggle [data-lipi]').forEach((b) => b.addEventListener('click', () => setLipi(b.dataset.lipi)));
 route();
@@ -1818,7 +2149,7 @@ const NO_SWIPE = '.controls, .pathbar, .tags, .chips, .sheet, input, textarea, s
       art.style.transition = 'transform .16s ease-in, opacity .16s ease-in';
       art.style.transform = `translateX(${-dir * window.innerWidth * 0.6}px)`; art.style.opacity = '0';
       swipeIn = dir;
-      setTimeout(() => go(target.href), REDUCED_MOTION() ? 0 : 150);
+      setTimeout(() => go(target.href, { replace: true }), REDUCED_MOTION() ? 0 : 150);
     } else {
       art.style.transition = 'transform .2s cubic-bezier(.2,.8,.2,1), opacity .2s';
       art.style.transform = ''; art.style.opacity = '';
@@ -1831,7 +2162,7 @@ const NO_SWIPE = '.controls, .pathbar, .tags, .chips, .sheet, input, textarea, s
     if (!readerNav || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.target.closest('input, textarea, select, [contenteditable]') || document.querySelector('.sheet, .story')) return;
     const target = e.key === 'ArrowRight' ? readerNav.next : e.key === 'ArrowLeft' ? readerNav.prev : null;
     if (!target) return;
-    e.preventDefault(); swipeIn = e.key === 'ArrowRight' ? 1 : -1; go(target.href);
+    e.preventDefault(); swipeIn = e.key === 'ArrowRight' ? 1 : -1; go(target.href, { replace: true });
   });
 })();
 
@@ -1848,7 +2179,7 @@ function showSwipeTip() {
 // Remember how far into a section the reader has scrolled, for the Continue card on Home.
 let progressTick = 0;
 window.addEventListener('scroll', () => {
-  if (!lastRead || !document.body.classList.contains('reading') || progressTick) return;
+  if (!lastRead || !(document.body.classList.contains('reading') || getHash().startsWith('#/s/')) || progressTick || document.querySelector('.chant')) return;
   progressTick = requestAnimationFrame(() => {
     progressTick = 0;
     const vs = [...main.querySelectorAll('.verse')];
@@ -1860,92 +2191,165 @@ window.addEventListener('scroll', () => {
   });
 }, { passive: true });
 
-// ---------- chant view: one mantra at a time, full screen ----------
+// ---------- chant view ----------
+// Two layouts, switched in the view: a page set like a recitation book (the default) and one
+// mantra at a time. Both take a model:
+//   { title, veda, parts: [{ title?, src?, anu?, group, verses: [{ n, lines, label }] }],
+//     prev?, next?: { href, label }, onClose(i), onPlace(i) }
+// lines are the Devanagari lines as the page shows them (pāṭha applied); `group` ṛks make a paragraph.
 let wakeLock = null;
-function openStory(st, start) {
-  document.querySelector('.story')?.remove();
-  const { verses, meta } = st;
-  if (!verses.length) return;
-  let i = Math.max(0, Math.min(start, verses.length - 1));
+let chantResume = null; // open the chant view on the next page drawn (next sūkta, next section)
+const INVOCATION = '॥ ॐ श्रीगुरुभ्यो नमः हरिः ॐ ॥';
+// texts whose verses are ṛks / mantras: a paragraph every five, as the books print the vargas
+const METRICAL = new Set(['rv', 'av', 'yv', 'svs', 'sv']);
+const RCH = [, , , 'तृचस्य', 'चतुरृचस्य', 'पञ्चर्चस्य', 'षळृचस्य', 'सप्तर्चस्य', 'अष्टर्चस्य', 'नवर्चस्य', 'दशर्चस्य', 'एकादशर्चस्य', 'द्वादशर्चस्य', 'त्रयोदशर्चस्य', 'चतुर्दशर्चस्य', 'पञ्चदशर्चस्य', 'षोडशर्चस्य', 'सप्तदशर्चस्य', 'अष्टादशर्चस्य', 'एकोनविंशत्यृचस्य', 'विंशत्यृचस्य', 'एकविंशत्यृचस्य', 'द्वाविंशत्यृचस्य', 'त्रयोविंशत्यृचस्य', 'चतुर्विंशत्यृचस्य', 'पञ्चविंशत्यृचस्य', 'षड्विंशत्यृचस्य', 'सप्तविंशत्यृचस्य', 'अष्टाविंशत्यृचस्य', 'एकोनत्रिंशदृचस्य', 'त्रिंशदृचस्य'];
+const plain = (l) => l.replace(/[॒॑᳚]/g, '');
+// "a" + voiced sound: इन्द्रः गायत्री → इन्द्रो गायत्री, as the anukramaṇī is read
+const visargaSandhi = (s) => s.replace(/([क-हळ])ः(?= [गघजझडढदधबभमयरलवहनणङञ])/g, '$1ो');
+// The anukramaṇī line of a run of ṛks: pratīka इति count ṛṣi devatā chandas.
+function anukramani(firstLines, n, rows, facets) {
+  const prat = plain(firstLines[0] || '').split(' ').filter((w) => w && !/^[।॥]/.test(w)).slice(0, 3).join(' ');
+  const uniq = (f, c) => [...new Set(rows.map((r) => (r[c] >= 0 ? facets[f][r[c]][2] : '')).filter(Boolean))].slice(0, 3);
+  const who = [...uniq('rishi', COL.rishi), ...uniq('devata', COL.devata), ...uniq('chandas', COL.chandas)].join(' ');
+  const cnt = n === 1 ? 'इति मन्त्रस्य' : n === 2 ? 'इति द्वयोः' : `इति ${RCH[n] || `${dg(n)} ऋचः`} सूक्तस्य`;
+  return visargaSandhi(`${prat} ${cnt} ${who}`.trim()) + ' ।';
+}
+// a ṛk as one run of text: half-verses joined by । and closed by ॥n॥
+function bookVerse(lines, n) {
+  const clean = lines.map((l) => l.replace(/\s*\(\s*[0-9०-९]+\s*\)\s*$/, '').replace(/[\s।॥]*[0-9०-९]*[\s।॥]*$/, '').trim()).filter(Boolean);
+  return `${clean.join('\u00a0। ')}\u00a0॥${dg(n)}॥`;
+}
+
+function openChant(model, start = 0) {
+  document.querySelector('.chant')?.remove();
+  const flat = model.parts.flatMap((p) => p.verses);
+  if (!flat.length) return;
+  let i = Math.max(0, Math.min(start, flat.length - 1));
   const el = document.createElement('div');
-  el.className = 'story';
-  el.setAttribute('role', 'dialog');
-  el.setAttribute('aria-modal', 'true');
-  el.setAttribute('aria-label', `Chant view, ${meta.ref} ${st.cref}`);
-  el.style.setProperty('--vc', `var(--v-${meta.veda})`);
-  const segs = verses.length <= 60;
-  el.innerHTML = `<div class="st-art" aria-hidden="true"><svg viewBox="0 0 520 520"><g fill="none" stroke="currentColor" stroke-width="1.2">
-      <circle cx="260" cy="260" r="80"/><circle cx="260" cy="260" r="130"/><circle cx="260" cy="260" r="180"/><circle cx="260" cy="260" r="230"/>
-      <path d="M260 30v460M30 260h460M97 97l326 326M423 97L97 423"/><path d="M260 120l121 210H139z"/><path d="M260 400L139 190h242z"/></g></svg></div>
-    <div class="st-bar">${segs ? verses.map(() => '<span></span>').join('') : '<span class="st-fill"><i></i></span>'}</div>
-    <div class="st-head">
-      <span class="st-t"><b>${refHTML(meta, st.cref)}</b><small></small></span>
-      <div class="st-lipi" role="group" aria-label="Script"><button type="button" data-l="deva" lang="sa-Deva">अ</button><button type="button" data-l="knda" lang="sa-Knda">ಅ</button></div>
-      <button class="st-x" type="button" aria-label="Close chant view"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-    </div>
-    <div class="st-body" aria-live="polite"></div>
-    <div class="st-foot">
-      <button class="st-nav" type="button" data-d="-1" aria-label="Previous mantra"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
-      <span class="st-count"></span>
-      <button class="st-nav" type="button" data-d="1" aria-label="Next mantra"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
-    </div>`;
+  el.className = 'chant';
+  el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true');
+  el.setAttribute('aria-label', `Chant view, ${model.title}`);
+  el.style.setProperty('--vc', `var(--v-${model.veda || 'rv'})`);
   document.body.append(el);
   document.body.classList.add('story-open');
-  const body = el.querySelector('.st-body');
-  const end = () => i === verses.length; // the "next section" card after the last mantra
-  const show = () => {
-    if (end()) {
-      body.innerHTML = st.next
-        ? `<div class="st-end"><small>${SA() && lvl(meta.levels[1]) ? `<span lang="sa">${esc(lvl(meta.levels[1]))} समाप्तम्</span>` : `${esc(meta.levels[1] || 'Section')} complete`}</small><a class="st-next" href="${st.next.href}">${SA() ? `<span lang="sa">अग्रिमम्:</span> ${esc(st.next.label)}` : `Next: ${esc(st.next.label)}`}</a></div>`
-        : `<div class="st-end"><small>${T('End of the text', 'ग्रन्थः समाप्तः')}</small></div>`;
-      el.querySelector('.st-next')?.addEventListener('click', (e) => { e.preventDefault(); storyResume = 0; close(); swipeIn = 1; go(st.next.href); });
-    } else {
-      const [v, deva] = verses[i];
-      body.innerHTML = `<div class="st-m" lang="sa">${svaraLines(meta.id, deva, verses[i][3]).map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
-      el.querySelector('.st-t small').textContent = SA() ? inLipi(dg(refOf(meta, st.d1, st.d2, v, verses[i][5]))) : `${refOf(meta, st.d1, st.d2, v, verses[i][5])}`;
-    }
-    el.querySelector('.st-count').textContent = end() ? '' : SA() ? inLipi(dg(`${i + 1} / ${verses.length}`)) : `${i + 1} / ${verses.length}`;
-    if (segs) el.querySelectorAll('.st-bar span').forEach((b, k) => b.classList.toggle('on', k <= i));
-    else el.querySelector('.st-fill i').style.width = `${Math.min(1, (i + 1) / verses.length) * 100}%`;
-    el.querySelector('[data-d="-1"]').disabled = i === 0;
-    el.querySelector('[data-d="1"]').disabled = end();
-    el.querySelectorAll('.st-lipi button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.l === prefs.lipi)));
-    if (!REDUCED_MOTION()) body.firstElementChild?.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'ease-out' });
-    lastRead && Object.assign(lastRead, { v: Math.min(i + 1, verses.length) }) && (() => { try { localStorage.setItem('vedalokana.last', JSON.stringify(lastRead)); } catch { /* storage unavailable */ } })();
-  };
-  const step = (d) => { const n = i + d; if (n < 0 || n > verses.length) return; i = n; show(); };
+  const ICON = { x: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>' };
+  const head = () => `<div class="ch-head">
+      <button class="ch-x" type="button" aria-label="Close chant view">${ICON.x}</button>
+      <span class="ch-t" lang="sa">${esc(model.title)}</span>
+      <div class="ch-tools">
+        <div class="seg ch-lay" role="group" aria-label="Layout"><button type="button" data-lay="book" aria-pressed="${prefs.chantLayout !== 'one'}" title="Book page">${T('Page', 'पुटम्')}</button><button type="button" data-lay="one" aria-pressed="${prefs.chantLayout === 'one'}" title="One mantra at a time">${T('One', 'एकैकम्')}</button></div>
+        <div class="seg ch-size" role="group" aria-label="Text size"><button type="button" data-z="-1" aria-label="Smaller text">A−</button><button type="button" data-z="1" aria-label="Larger text">A+</button></div>
+        <div class="seg ch-lipi" role="group" aria-label="Script"><button type="button" data-l="deva" lang="sa-Deva" aria-pressed="${prefs.lipi === 'deva'}">अ</button><button type="button" data-l="knda" lang="sa-Knda" aria-pressed="${prefs.lipi === 'knda'}">ಅ</button></div>
+      </div></div>`;
+  const nextHTML = () => (model.next
+    ? `<a class="ch-next" href="${esc(model.next.href)}"><small>${T('Next', 'अग्रिमम्')}</small><b lang="sa">${esc(model.next.label)}</b></a>`
+    : `<p class="ch-end" lang="sa">॥ इति ॥</p>`);
+  const prevHTML = () => (model.prev ? `<a class="ch-prev" href="${esc(model.prev.href)}"><small>${T('Previous', 'पूर्वम्')}</small><b lang="sa">${esc(model.prev.label)}</b></a>` : '');
+  let onScroll = null;
+  // ---- book layout: the whole text as a page, ṛks running on, paragraphs of `group` ṛks
+  function book() {
+    let k = 0;
+    const parts = model.parts.map((p) => {
+      const paras = [];
+      p.verses.forEach((v, j) => {
+        if (j % (p.group || 1) === 0) paras.push([]);
+        paras[paras.length - 1].push(`<span class="ch-v" data-i="${k++}">${esc(bookVerse(v.lines, v.n))}</span>`);
+      });
+      return `${p.title ? `<h2 class="ch-pt">${esc(p.title)}</h2>` : ''}${p.src ? `<p class="ch-src">${esc(p.src)}</p>` : ''}${p.anu ? `<p class="ch-anu">${esc(p.anu)}</p>` : ''}
+        ${paras.map((ps) => `<p class="ch-par">${ps.join(' ')}</p>`).join('')}`;
+    }).join('');
+    el.innerHTML = `${head()}<div class="ch-scroll"><div class="ch-page" lang="sa" style="--chz: ${prefs.chantSize || 23}px">
+        <p class="ch-inv">${INVOCATION}</p><h1 class="ch-title">${esc(model.title)}</h1>${parts}
+        <div class="ch-move">${prevHTML()}${nextHTML()}</div></div></div>`;
+    const sc = el.querySelector('.ch-scroll');
+    const target = el.querySelector(`.ch-v[data-i="${i}"]`);
+    if (i > 0 && target) sc.scrollTop = target.offsetTop - 80;
+    onScroll = () => {
+      const top = sc.getBoundingClientRect().top + 70;
+      const spans = [...el.querySelectorAll('.ch-v')];
+      const cur = spans.find((s) => s.getBoundingClientRect().bottom > top);
+      const n = cur ? Number(cur.dataset.i) : flat.length - 1;
+      if (n !== i) { i = n; model.onPlace?.(i); }
+    };
+    sc.addEventListener('scroll', onScroll, { passive: true });
+    wire();
+  }
+  // ---- one mantra at a time
+  function one() {
+    el.innerHTML = `${head()}<div class="ch-one" style="--chz: ${(prefs.chantSize || 23) + 7}px"><div class="ch-body" aria-live="polite"></div>
+      <div class="ch-foot"><button class="ch-step" type="button" data-d="-1" aria-label="Previous mantra"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <span class="ch-count"></span>
+      <button class="ch-step" type="button" data-d="1" aria-label="Next mantra"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button></div></div>`;
+    const body = el.querySelector('.ch-body');
+    const show = () => {
+      if (i >= flat.length) body.innerHTML = `<div class="ch-move">${prevHTML()}${nextHTML()}</div>`;
+      else body.innerHTML = `<div class="ch-m" lang="sa">${flat[i].lines.map((l) => `<div>${esc(l)}</div>`).join('')}</div><p class="ch-ref">${esc(flat[i].label || '')}</p>`;
+      el.querySelector('.ch-count').textContent = i >= flat.length ? '' : SA() ? inLipi(dg(`${i + 1} / ${flat.length}`)) : `${i + 1} / ${flat.length}`;
+      el.querySelector('[data-d="-1"]').disabled = i === 0;
+      el.querySelector('[data-d="1"]').disabled = i >= flat.length;
+      if (!REDUCED_MOTION()) body.firstElementChild?.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 200, easing: 'ease-out' });
+      if (i < flat.length) model.onPlace?.(i);
+      wireMove();
+    };
+    one.step = (d) => { const n = i + d; if (n < 0 || n > flat.length) return; i = n; show(); };
+    el.querySelectorAll('.ch-step').forEach((b) => b.addEventListener('click', () => one.step(Number(b.dataset.d))));
+    show(); wire();
+  }
+  const render = () => { one.step = null; (prefs.chantLayout === 'one' ? one : book)(); };
+  function wireMove() {
+    el.querySelectorAll('.ch-next, .ch-prev').forEach((a) => a.addEventListener('click', (e) => {
+      e.preventDefault();
+      chantResume = 0; finish(true); swipeIn = a.classList.contains('ch-next') ? 1 : -1;
+      go(a.getAttribute('href'), { replace: true });
+    }));
+  }
+  function wire() {
+    el.querySelector('.ch-x').addEventListener('click', () => finish(false));
+    el.querySelectorAll('[data-lay]').forEach((b) => b.addEventListener('click', () => {
+      if (prefs.chantLayout === b.dataset.lay || (!prefs.chantLayout && b.dataset.lay === 'book')) return;
+      prefs.chantLayout = b.dataset.lay; savePrefs(); render();
+    }));
+    el.querySelectorAll('[data-z]').forEach((b) => b.addEventListener('click', () => {
+      prefs.chantSize = Math.max(16, Math.min(40, (prefs.chantSize || 23) + 2 * Number(b.dataset.z))); savePrefs();
+      el.querySelectorAll('.ch-page, .ch-one').forEach((x) => x.style.setProperty('--chz', `${prefs.chantSize + (x.classList.contains('ch-one') ? 7 : 0)}px`));
+    }));
+    el.querySelectorAll('[data-l]').forEach((b) => b.addEventListener('click', () => {
+      if (b.dataset.l === prefs.lipi) return;
+      setLipi(b.dataset.l); render();     // the page underneath is redrawn too; this view stays open
+    }));
+    wireMove();
+    el.querySelector('.ch-x').focus({ preventScroll: true });
+  }
+  // sideways swipe: a mantra in the one-at-a-time layout, the next / previous sūkta on the page
+  let sx = null; let sy = null;
+  el.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+  el.addEventListener('touchend', (e) => {
+    if (sx === null) return;
+    const dx = e.changedTouches[0].clientX - sx; const dy = e.changedTouches[0].clientY - sy; sx = null;
+    if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 2 || e.target.closest('.ch-head')) return;
+    if (one.step) { one.step(dx < 0 ? 1 : -1); return; }
+    el.querySelector(dx < 0 ? '.ch-next' : '.ch-prev')?.click();
+  });
   const onKey = (e) => {
-    if (e.key === 'Escape') { e.preventDefault(); close(); }
-    else if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); step(1); }
-    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); step(-1); }
+    if (e.key === 'Escape') { e.preventDefault(); finish(false); return; }
+    if (!one.step) return;
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); one.step(1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); one.step(-1); }
   };
-  function close() {
+  document.addEventListener('keydown', onKey, true);
+  function teardown() {
     document.removeEventListener('keydown', onKey, true);
     el.remove(); document.body.classList.remove('story-open');
     try { wakeLock?.release(); } catch { /* not held */ } wakeLock = null;
-    const v = verses[Math.min(i, verses.length - 1)][0];
-    document.getElementById(`v${v}`)?.scrollIntoView({ block: 'start' });
   }
-  document.addEventListener('keydown', onKey, true);
-  el.querySelector('.st-x').addEventListener('click', close);
-  el.querySelectorAll('.st-nav').forEach((b) => b.addEventListener('click', () => step(Number(b.dataset.d))));
-  el.querySelectorAll('.st-lipi button').forEach((b) => b.addEventListener('click', () => {
-    if (b.dataset.l === prefs.lipi) return;
-    storyResume = Math.min(i, verses.length - 1); close(); setLipi(b.dataset.l);
-  }));
-  // tap the left or right third of the text to move; swipe sideways too
-  let sx = null; let sy = null; let st0 = 0;
-  body.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; st0 = Date.now(); }, { passive: true });
-  body.addEventListener('touchend', (e) => {
-    if (sx === null) return;
-    const dx = e.changedTouches[0].clientX - sx; const dy = e.changedTouches[0].clientY - sy; sx = null;
-    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) step(dx < 0 ? 1 : -1);
-    else if (Math.abs(dx) < 10 && Math.abs(dy) < 10 && Date.now() - st0 < 400 && !e.target.closest('a')) {
-      const x = e.changedTouches[0].clientX / window.innerWidth;
-      if (x > 0.66) step(1); else if (x < 0.33) step(-1);
-    }
-  });
+  // leaving: a next / previous link replaces the overlay's history entry
+  function finish(leaving) {
+    teardown();
+    if (overlayClose === popClose) overlayDone(leaving);
+    if (!leaving) model.onClose?.(Math.min(i, flat.length - 1));
+  }
+  function popClose() { teardown(); model.onClose?.(Math.min(i, flat.length - 1)); }
+  overlayOpen(popClose);
   try { navigator.wakeLock?.request('screen').then((l) => { wakeLock = l; }).catch(() => {}); } catch { /* not supported */ }
-  show();
-  el.querySelector('.st-x').focus();
+  render();
 }

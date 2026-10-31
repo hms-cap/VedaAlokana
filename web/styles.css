@@ -791,3 +791,63 @@ mark.pv { background: color-mix(in srgb, var(--fire, #D9822B) 22%, transparent);
 .seg a[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,0.08); font-weight: 500; }
 .seg a:hover { text-decoration: none; }
 .pv-src { display: inline-block; margin-top: 4px; font-size: 13px; color: var(--muted); }
+
+/* ---- chant view: a recitation-book page, or one mantra at a time ---- */
+.chant { --paper: #FBF6EA; --paper-ink: #1B1712; --paper-muted: #6B6255; position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; background: var(--paper); color: var(--paper-ink); font-family: var(--ui); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .chant { --paper: #17140F; --paper-ink: #ECE4D3; --paper-muted: #A99F8D; } }
+:root[data-theme="dark"] .chant { --paper: #17140F; --paper-ink: #ECE4D3; --paper-muted: #A99F8D; }
+.ch-head { display: flex; align-items: center; gap: 8px; padding: max(8px, env(safe-area-inset-top)) 10px 8px; border-bottom: 1px solid color-mix(in srgb, var(--paper-ink) 12%, transparent); flex-wrap: wrap; }
+.ch-x { width: 44px; height: 44px; border: 0; border-radius: 22px; background: transparent; color: var(--paper-ink); cursor: pointer; display: grid; place-items: center; }
+.ch-t { flex: 1; min-width: 6em; font-family: var(--deva); font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ch-tools { display: flex; gap: 6px; flex-wrap: wrap; }
+.chant .seg { background: color-mix(in srgb, var(--paper-ink) 8%, transparent); }
+.chant .seg button { color: var(--paper-muted); height: 34px; padding: 0 10px; }
+.chant .seg button[aria-pressed="true"] { background: var(--paper); color: var(--paper-ink); }
+.ch-lipi button[lang="sa-Deva"] { font-family: 'Noto Serif Devanagari', serif; } .ch-lipi button[lang="sa-Knda"] { font-family: 'Noto Serif Kannada', serif; }
+.ch-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+.ch-page { max-width: 760px; margin: 0 auto; padding: 18px 18px calc(40px + env(safe-area-inset-bottom)); font-family: var(--deva); font-size: var(--chz, 23px); line-height: calc(var(--deva-lh) * 1.06); }
+.ch-inv { text-align: center; margin: 0 0 6px; font-weight: 600; font-size: .82em; }
+.ch-title { text-align: center; margin: 4px 0 10px; font-size: 1.12em; font-weight: 700; letter-spacing: 0; }
+.ch-pt { text-align: center; margin: 22px 0 2px; font-size: .95em; font-weight: 700; }
+.ch-src { text-align: center; margin: 2px 0; font-size: .74em; font-weight: 600; color: var(--paper-ink); }
+.ch-anu { margin: 2px 0 8px; font-size: .8em; font-weight: 600; text-align: center; }
+.ch-par { margin: 0 0 .6em; text-align: start; text-justify: inter-word; hyphens: manual; overflow-wrap: normal; word-break: keep-all; }
+.ch-v { }
+.ch-move { display: flex; gap: 10px; justify-content: space-between; margin-top: 28px; font-family: var(--ui); font-size: 16px; }
+.ch-move a { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 12px 16px; border-radius: 16px; border: 1px solid color-mix(in srgb, var(--paper-ink) 18%, transparent); color: var(--paper-ink); text-decoration: none; }
+.ch-move .ch-next { text-align: right; background: var(--vc); border-color: var(--vc); color: #FFFFFF; }
+.ch-move small { font-size: 12px; opacity: .8; } .ch-move b { font-family: var(--deva); font-weight: 500; font-size: 18px; }
+.ch-end { text-align: center; width: 100%; font-family: var(--deva); font-size: 20px; color: var(--paper-muted); }
+.ch-one { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.ch-body { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 18px 22px; overflow-y: auto; }
+.ch-m { font-family: var(--deva); font-size: var(--chz, 30px); line-height: var(--deva-lh); }
+.ch-ref { color: var(--paper-muted); font-size: 14px; margin-top: 10px; }
+.ch-foot { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px calc(14px + env(safe-area-inset-bottom)); }
+.ch-step { width: 56px; height: 56px; border-radius: 28px; border: 1px solid color-mix(in srgb, var(--paper-ink) 18%, transparent); background: transparent; color: var(--paper-ink); display: grid; place-items: center; cursor: pointer; }
+.ch-step:disabled { opacity: .3; }
+.ch-count { color: var(--paper-muted); font-variant-numeric: tabular-nums; }
+
+/* ---- My sūktas ---- */
+.star-btn { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 500 14px var(--ui); cursor: pointer; }
+.star-btn[aria-pressed="true"] { color: var(--fire); border-color: var(--fire); }
+.reader-head .star-btn { margin-top: 4px; }
+.reader-head { flex-wrap: wrap; gap: 8px; }
+.sk-acts { align-items: center; }
+.my-tabs { margin: 10px 0 12px; }
+.my-tabs .chip { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+.my-tabs .chip svg { width: 15px; height: 15px; }
+.my-tabs .chip[aria-current="true"] { background: var(--ink); color: var(--ground); border-color: var(--ink); }
+.my-tabs .chip small { color: inherit; opacity: .7; }
+.my-row { display: flex; align-items: stretch; border-top: 1px solid var(--line-soft); }
+.my-row:first-child { border-top: 0; }
+.my-row .sk-row { flex: 1; border-top: 0; }
+.my-ctl { display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 6px; }
+.my-ctl button { width: 36px; height: 30px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); cursor: pointer; }
+.my-ctl button:disabled { opacity: .3; }
+.my-seg { margin-bottom: 10px; }
+.list-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 10px; padding: 6px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); }
+.list-bar a { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); text-decoration: none; padding: 6px 10px; border-radius: 10px; }
+.list-bar a small { color: var(--muted); }
+.list-bar > a:first-child, .list-bar > a:last-child { width: 40px; justify-content: center; }
+
+@media (min-width: 560px) { .ch-par { text-align: justify; } }

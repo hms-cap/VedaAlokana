@@ -2,6 +2,11 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.12.0 — 2026-10-31
+- **Navigation, as in an app.** Back (the arrow, the browser or the phone) returns to the view you came from, at the place you were reading; with no earlier view it goes up to the parent. Moving to the next or previous verse, section or sūkta — by arrow, swipe, key or switch — replaces the view rather than adding a back step. Sheets, pickers and the chant view close on Back. The Library and Sūktas tabs remember where you were; tapping the current tab again returns to its top. Sūkta pages get breadcrumbs (Sūktas › Veda › sūkta); Continue reading covers sūkta pages; Search keeps its query when you come back.
+- **My sūktas.** ☆ saves a whole sūkta to *My list*. Home and the Sūktas tab show My list · Recent (last 20) · Frequent (visits counted with a 14-day half-life). My list can be reordered and chanted straight through, with next/previous between its sūktas. Settings: clear recent, stop keeping history, export or import the list (`my-suktas.json`).
+- **Chant view as a book page.** Running text with ॥n॥ after each ṛk, a paragraph every five ṛks in the metrical Vedas, the invocation ॥ ॐ श्रीगुरुभ्यो नमः हरिः ॐ ॥, the title, the source (ऋ. १०,९०) and, for the Ṛgveda, an anukramaṇī line (pratīka, number of ṛks, ṛṣi, devatā, chandas); each part of a gathered sūkta has its own heading. A−/A+, Devanagari/Kannada, a paper page, screen kept awake, Back returns to the verse reached. The one-at-a-time view remains as an option. Chant is on reader sections, sūkta pages and My list.
+
 ## 1.11.0 — 2026-10-31
 - Seven more, from Dayananda Aithal's Saswara Ṛgveda: **Gaṇeśa Atharvaśīrṣa** (under the Atharvaveda), **Medhā Sūkta** and **Pavamāna Pariśiṣṭam** (Ṛgveda Khila), **Pañcarudra Sūkta** (52 ṛks), **Navagraha Mantras** with their adhidevatās and pratyadhidevatās, **Vedapārāyaṇa Ārambha Mantras** and **Sandhyā Ṛk Mantras**. Their Ṛgveda ṛks are shown from the app's own Ṛgveda (so the pāṭha switch applies) with a link to each ṛk; the rest as printed there. `scripts/aithal-source.mjs` extracts them into `scripts/sources/aithal.json`.
 
