@@ -1,6 +1,7 @@
 :root {
   --ground: #F5F6F4;
   --surface: #FFFFFF;
+  --surface-2: #F0F2EF;
   --ink: #15181A;
   --muted: #565C62;
   --line: #DCDFDB;
@@ -20,15 +21,19 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --ground: #121416; --surface: #1A1D20; --ink: #ECEDEB; --muted: #A2A8AD;
-    --line: #2E3236; --line-soft: #24282B; --indigo: #A9B4F5; --indigo-soft: #23284A; --fire: #F08A4B; --hero: #232B6E;
+    --ground: #101215; --surface: #181B1F; --surface-2: #1F2328; --ink: #ECEDEB; --muted: #A3A9AF;
+    --line: #2D3238; --line-soft: #23272C; --indigo: #A9B4F5; --indigo-soft: #232A52; --fire: #F29255;
+    --v-rv: #4453C4; --v-syv: #C24E17; --v-kyv: #9C5A16; --v-sv: #138270; --v-av: #8B3F88;
+    --hero: #1F2765; --hero-soft: #B9C0F0; --sun: #E0662A; --sun-ring: #F29255;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-    --ground: #121416; --surface: #1A1D20; --ink: #ECEDEB; --muted: #A2A8AD;
-    --line: #2E3236; --line-soft: #24282B; --indigo: #A9B4F5; --indigo-soft: #23284A; --fire: #F08A4B; --hero: #232B6E;
-  color-scheme: dark;
+    --ground: #101215; --surface: #181B1F; --surface-2: #1F2328; --ink: #ECEDEB; --muted: #A3A9AF;
+    --line: #2D3238; --line-soft: #23272C; --indigo: #A9B4F5; --indigo-soft: #232A52; --fire: #F29255;
+    --v-rv: #4453C4; --v-syv: #C24E17; --v-kyv: #9C5A16; --v-sv: #138270; --v-av: #8B3F88;
+    --hero: #1F2765; --hero-soft: #B9C0F0; --sun: #E0662A; --sun-ring: #F29255;
+    color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -48,6 +53,7 @@ button { font: inherit; color: inherit; }
 .brand { display: flex; align-items: center; gap: 8px; color: var(--ink); font-weight: 600; font-size: 17px; letter-spacing: -0.01em; }
 .brand:hover { text-decoration: none; }
 .icon-btn { width: 44px; height: 44px; border: 0; background: transparent; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.theme-btn svg { display: none; } .theme-btn[data-t="system"] .i-sys, .theme-btn[data-t="light"] .i-light, .theme-btn[data-t="dark"] .i-dark { display: block; }
 .icon-btn:hover { background: var(--line-soft); }
 .menu-btn { display: none; margin-left: -8px; }
 .search { position: relative; margin-left: auto; width: min(420px, 100%); height: 42px; display: flex; align-items: center; gap: 8px;

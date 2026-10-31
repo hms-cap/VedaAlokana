@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>(function(){try{var t=(JSON.parse(localStorage.getItem('vedalokana.prefs')||'{}')).theme;if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}})()</script>
+<meta name="theme-color" content="#F5F6F4">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vedālokana — browse Veda mantras</title>
 <meta name="description" content="Browse the Vedas — Saṃhitās, Brāhmaṇas, Āraṇyakas and Upaniṣads — by structure, ṛṣi, devatā and chandas, in Devanagari, Kannada or IAST.">
@@ -18,7 +20,7 @@
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
   </a>
   <a href="#/" class="brand" id="brand">
-    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c3 4 5 6.5 5 10a5 5 0 0 1-10 0c0-3.5 2-6 5-10z" fill="#C2410C"/><path d="M12 11c1.2 1.6 2 2.6 2 4a2 2 0 0 1-4 0c0-1.4.8-2.4 2-4z" fill="#F5F6F4"/></svg>
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c3 4 5 6.5 5 10a5 5 0 0 1-10 0c0-3.5 2-6 5-10z" fill="#C2410C"/><path d="M12 11c1.2 1.6 2 2.6 2 4a2 2 0 0 1-4 0c0-1.4.8-2.4 2-4z" style="fill:var(--ground)"/></svg>
     <span>Vedālokana</span>
   </a>
   <div class="top-title" id="topTitle" aria-hidden="true"></div>
@@ -31,6 +33,11 @@
   <div class="lipi-toggle" id="lipiToggle" role="group" aria-label="Script for Sanskrit text">
     <button data-lipi="deva" lang="sa-Deva" aria-label="Devanagari" aria-pressed="true">अ</button><button data-lipi="knda" lang="sa-Knda" aria-label="Kannada" aria-pressed="false">ಅ</button>
   </div>
+  <button class="icon-btn theme-btn" id="themeBtn" data-t="system" aria-label="Theme: match device. Tap to change">
+    <svg class="i-sys" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
+    <svg class="i-light" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>
+    <svg class="i-dark" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg>
+  </button>
   <a href="#/search" class="icon-btn top-search" aria-label="Search">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
   </a>

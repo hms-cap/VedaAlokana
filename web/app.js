@@ -41,7 +41,7 @@ const PREF_KEY = 'vedalokana.prefs';
 const prefs = (() => {
   // Default view is made for chanting: the text in script only, no romanisation or translation.
   // `v` is bumped when defaults change, so an earlier saved reading view moves to the new one once.
-  const d = { v: 2, script: 'deva', mode: 'samhita', tr: false, tags: true, bhashya: false, lipi: 'deva', svara: 'bold', suktaBy: 'veda' };
+  const d = { v: 2, script: 'deva', mode: 'samhita', tr: false, tags: true, bhashya: false, lipi: 'deva', svara: 'bold', suktaBy: 'veda', theme: 'system' };
   try {
     const saved = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
     if ((saved.v || 1) < 2) { delete saved.script; delete saved.tr; delete saved.mode; }
@@ -94,6 +94,27 @@ function applyLipiClass() {
   document.body.classList.toggle('svara-std', prefs.svara === 'std');
 }
 applyLipiClass();
+
+// ---------- theme: 'system' follows the device; 'light' / 'dark' override it ----------
+const THEMES = { system: 'Match device', light: 'Light', dark: 'Dark' };
+const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
+function applyTheme() {
+  const root = document.documentElement;
+  if (prefs.theme === 'light' || prefs.theme === 'dark') root.setAttribute('data-theme', prefs.theme);
+  else root.removeAttribute('data-theme');
+  const dark = prefs.theme === 'dark' || (prefs.theme !== 'light' && darkMQ?.matches);
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#101215' : '#F5F6F4');
+  const b = document.getElementById('themeBtn');
+  if (b) { b.dataset.t = prefs.theme; b.setAttribute('aria-label', `Theme: ${THEMES[prefs.theme].toLowerCase()}. Tap to change`); b.title = `Theme: ${THEMES[prefs.theme]}`; }
+  document.querySelectorAll('[data-k="theme"]').forEach((o) => o.setAttribute('aria-pressed', String(o.dataset.v === prefs.theme)));
+}
+function setTheme(t) { prefs.theme = t; savePrefs(); applyTheme(); }
+document.getElementById('themeBtn')?.addEventListener('click', () => {
+  const order = ['system', 'light', 'dark'];
+  setTheme(order[(order.indexOf(prefs.theme) + 1) % 3]);
+});
+darkMQ?.addEventListener?.('change', applyTheme);
+applyTheme();
 
 // ---------- helpers ----------
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -730,6 +751,7 @@ async function viewContainer(id, d1, d2, params) {
   main.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => {
     const k = b.dataset.p; const raw = b.dataset.v;
     if (k === 'lipi') { setLipi(raw); return; }
+    if (k === 'theme') { setTheme(raw); return; }
     prefs[k] = raw === 'true' ? true : raw === 'false' ? false : raw;
     savePrefs();
     b.parentElement.querySelectorAll('button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
@@ -1093,6 +1115,8 @@ async function viewSettings() {
   const opt = (k, v, l, cls = '') => `<button class="${cls}" data-k="${k}" data-v="${v}" aria-pressed="${String(prefs[k] === v)}">${l}</button>`;
   main.innerHTML = `<div class="col">
     <h1>Settings</h1>
+    <section class="set"><h2>Appearance</h2><p>Light for daytime, dark for early-morning or evening chanting. “Match device” follows your phone or computer.</p>
+      <div class="seg wide-seg">${opt('theme', 'system', 'Match device')}${opt('theme', 'light', 'Light')}${opt('theme', 'dark', 'Dark')}</div></section>
     <section class="set"><h2>Script for Sanskrit text</h2><p>Names, headings and mantras switch together. Svara marks are kept.</p>
       <div class="seg wide-seg">${opt('lipi', 'deva', 'देवनागरी', 'dvb')}${opt('lipi', 'knda', 'ಕನ್ನಡ', 'knb')}</div></section>
     <section class="set"><h2>Svara marks</h2><p>Bold marks are drawn heavier so ॑ and ॒ stand out at reading size.</p>
