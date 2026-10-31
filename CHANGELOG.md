@@ -2,6 +2,9 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.7.2 — 2026-10-31
+- The single-stroke pāṭha is renamed again, to **Antarjāla pāṭha** (अन्तर्जालपाठः): the text as the online source (VedaWeb) gives it. Your choice of pāṭha is kept.
+
 ## 1.7.1 — 2026-10-31
 - The single-stroke pāṭha of the Ṛgveda is renamed **Sāmānya pāṭha** (previously Śṛṅgeri style): it is the common printed text, not a tradition of its own. Your choice of pāṭha is kept.
 
