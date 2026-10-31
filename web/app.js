@@ -175,6 +175,9 @@ applyTheme();
 // ---------- version, installing and offline ----------
 const APP = self.VEDALOKANA || { version: '0.0.0', released: '' };
 const CHANGES = [
+  ['1.2.0', '2026-10-31', [
+    'One-tap icons at the top of each sūkta to show or hide ṛṣi · devatā · chandas, the translation and the Sāyaṇa bhāṣya.',
+    'Reader buttons take the colour of their Veda.']],
   ['1.1.0', '2026-10-31', [
     'Menus and labels follow the reading script: tabs, Veda and level names, ṛṣi · devatā · chandas, references and numbers in Sanskrit, in Devanagari or Kannada.',
     'An En button beside the script switch, and a setting, bring back English menus at any time.']],
@@ -881,17 +884,29 @@ async function viewContainer(id, d1, d2, params) {
     hasDeva ? seg('Script', [['lipi', 'deva', 'देवनागरी'], ['lipi', 'knda', 'ಕನ್ನಡ']]).replace('class="seg"', 'class="seg lipi-seg"') : '',
     hasDeva && hasRoman ? seg('Show', [['script', 'both', T('Both', 'उभयम्')], ['script', 'deva', T('Script', 'लिपिः')], ['script', 'roman', 'IAST']]) : '',
     hasPada ? seg('Text', [['mode', 'samhita', T('Saṃhitā', 'संहितापाठः')], ['mode', 'pada', T('Padapāṭha', 'पदपाठः')]]) : '',
-    hasTr && (hasDeva || hasRoman) ? seg('Translation', [['tr', true, T('Translation', 'अनुवादः')], ['tr', false, T('Hide', 'गोपय')]]) : '',
-    hasBh ? seg('Bhāṣya', [['bhashya', true, T(`${meta.has.bhashya} bhāṣya`, 'सायणभाष्यम्')], ['bhashya', false, T('Hide', 'गोपय')]]) : '',
-    summary.length ? seg('Ṛṣi, devatā, chandas', [['tags', true, T('Ṛṣi · Devatā · Chandas', 'ऋषिः · देवता · छन्दः')], ['tags', false, T('Hide', 'गोपय')]]) : '',
+    // translation, bhāṣya and ṛṣi · devatā · chandas: the one-tap toggles above (.quick)
   ].join('');
 
-  main.innerHTML = `<article class="col">
+  // Small one-tap toggles at the top of the reader, mirroring the switches below
+  const QI = {
+    tags: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 12.2V4.8a1.3 1.3 0 0 1 1.3-1.3h7.4l8.3 8.3a1.3 1.3 0 0 1 0 1.8l-7.4 7.4a1.3 1.3 0 0 1-1.8 0z"/><circle cx="8.2" cy="8.2" r="1.6"/></svg>',
+    tr: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h9M7.5 3v2M10 5c-.8 3.6-3 6.4-6 8M6 8.5c1.2 2 2.9 3.6 5 4.6"/><path d="M12.5 21l4-10 4 10M14 17.5h5"/></svg>',
+    bhashya: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5c3-1.3 6-1.3 9 .8 3-2.1 6-2.1 9-.8v13c-3-1.3-6-1.3-9 .8-3-2.1-6-2.1-9-.8z"/><path d="M12 6.3v13" stroke-linecap="round"/></svg>',
+  };
+  const qb = (k, en, sa) => `<button type="button" class="qbtn" data-q="${k}" aria-pressed="${String(!!prefs[k])}" title="${esc(Tp(en, sa))}" aria-label="${esc(Tp(en, sa))}">${QI[k]}<span>${T(en.split(' ')[0], sa)}</span></button>`;
+  const quick = [
+    summary.length ? qb('tags', 'Ṛṣi · devatā · chandas', 'ऋषिः · देवता · छन्दः') : '',
+    hasTr && (hasDeva || hasRoman) ? qb('tr', 'Translation', 'अनुवादः') : '',
+    hasBh ? qb('bhashya', `${meta.has.bhashya} bhāṣya`, 'भाष्यम्') : '',
+  ].join('');
+
+  main.innerHTML = `<article class="col" style="--vc: var(--v-${meta.veda})">
     <div class="crumbs"><a href="#/v/${id}">${esc(meta.name)}</a>${x.groups.length > 1 ? `<span aria-hidden="true">/</span><a href="#/v/${id}/g/${d1}">${esc(groupName(meta, d1))}</a>` : ''}</div>
     <div class="reader-head"><div>
       <h1>${cref ? (SA() && contSa(meta, cref) ? `<span lang="sa">${esc(contSa(meta, cref))}</span>` : `${esc(meta.levels[1] || meta.levels[2])} ${esc(cref)}`) : T(meta.name, meta.deva)}</h1>
       ${c[2] && meta.refFmt !== 'label' ? `<div class="ctitle" lang="sa">${esc(c[2])}</div>` : ''}
     </div>${hasDeva ? `<button class="chant-btn" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10-6.5a1 1 0 0 0 0-1.8l-10-6.5A1 1 0 0 0 8 5.5z"/></svg>${T('Chant view', 'पारायणम्')}</button>` : ''}</div>
+    ${quick ? `<div class="quick" role="group" aria-label="${esc(Tp('Show or hide', 'दर्शय / गोपय'))}">${quick}</div>` : ''}
     ${summary.length ? `<div class="tags" id="sumTags"${prefs.tags ? '' : ' hidden'}>${summary.map(([f, e]) => `<a class="tag" href="${findHref(id, { [f]: e[0] })}"><em>${T(FACETS[f].label, FACET_SA[f])}</em>${e[2] ? `<span class="dv" lang="sa">${esc(e[2])}</span>` : ''}${SA() && e[2] ? '' : `<span>${esc(cap(e[1]))}</span>`}</a>`).join('')}</div>` : ''}
     ${controls ? `<div class="controls">${controls}</div>` : ''}
     <div id="verses"></div>
@@ -929,7 +944,7 @@ async function viewContainer(id, d1, d2, params) {
         if (showRoman) body += `<div class="roman" lang="sa-Latn">${roman.map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
       }
       if (tr && (prefs.tr || (!hasDeva && !hasRoman))) body += `<p class="tr" lang="en">${esc(tr)}</p>`;
-      const bh = !(hasBh && prefs.bhashya) ? '' : `<details class="bh" data-bh="${v}"><summary>${esc(meta.has.bhashya)} bhāṣya <span class="dv" lang="sa">सायणभाष्यम्</span></summary><div class="bh-text" lang="sa"><p class="bh-wait">Loading…</p></div></details>`;
+      const bh = !(hasBh && prefs.bhashya) ? '' : `<details class="bh" data-bh="${v}"><summary>${SA() ? '<span lang="sa">सायणभाष्यम्</span>' : `${esc(meta.has.bhashya)} bhāṣya <span class="dv" lang="sa">सायणभाष्यम्</span>`}</summary><div class="bh-text" lang="sa"><p class="bh-wait">Loading…</p></div></details>`;
       return `<section class="verse${v === hl ? ' hl' : ''}" id="v${v}" aria-label="${esc(meta.ref)} ${esc(ref)}">
         <div class="vnum"><a href="#/v/${id}/c/${d1}/${d2}?v=${v}">${N(ref)}</a></div>
         <div>${label && meta.refFmt !== 'label' ? `<div class="vlabel">${esc(label)}</div>` : ''}${body}${tags ? `<div class="tags">${tags}</div>` : ''}${bh}</div>
@@ -955,6 +970,22 @@ async function viewContainer(id, d1, d2, params) {
     }));
   };
   draw();
+  const syncToggles = () => {
+    main.querySelectorAll('.qbtn').forEach((q) => q.setAttribute('aria-pressed', String(!!prefs[q.dataset.q])));
+    main.querySelectorAll('.seg button[data-p]').forEach((o) => {
+      const v = o.dataset.v === 'true' ? true : o.dataset.v === 'false' ? false : o.dataset.v;
+      o.setAttribute('aria-pressed', String(prefs[o.dataset.p] === v));
+    });
+  };
+  main.querySelectorAll('.qbtn').forEach((q) => q.addEventListener('click', () => {
+    // keep the verse at the top of the screen in place while text appears or disappears above it
+    const head = $('.topbar').getBoundingClientRect().bottom + ($('#pathbar').hidden ? 0 : $('#pathbar').offsetHeight);
+    const anchor = [...main.querySelectorAll('.verse[id]')].find((el) => el.getBoundingClientRect().bottom > head + 8);
+    const top = anchor?.getBoundingClientRect().top;
+    prefs[q.dataset.q] = !prefs[q.dataset.q];
+    savePrefs(); syncToggles(); draw();
+    if (anchor && window.scrollY > 0) { const a2 = document.getElementById(anchor.id); if (a2) window.scrollBy(0, a2.getBoundingClientRect().top - top); }
+  }));
   main.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => {
     const k = b.dataset.p; const raw = b.dataset.v;
     if (k === 'lipi') { setLipi(raw); return; }
@@ -963,7 +994,7 @@ async function viewContainer(id, d1, d2, params) {
     prefs[k] = raw === 'true' ? true : raw === 'false' ? false : raw;
     savePrefs();
     b.parentElement.querySelectorAll('button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
-    draw();
+    syncToggles(); draw();
   }));
   lastRead = { href: `#/v/${id}/c/${d1}/${d2}`, text: meta.name, textSa: meta.deva, where: cref ? `${meta.ref} ${cref}` : meta.name, whereSa: cref ? refSa(meta, cref) : meta.deva, v: 1, of: verses.length };
   try { localStorage.setItem('vedalokana.last', JSON.stringify(lastRead)); } catch { /* storage unavailable */ }

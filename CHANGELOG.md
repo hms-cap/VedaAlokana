@@ -2,6 +2,10 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.2.0 — 2026-10-31
+- One-tap icons at the top of each sūkta to show or hide ṛṣi · devatā · chandas, the translation and the Sāyaṇa bhāṣya (replacing the three switch rows below the title).
+- Reader buttons take the colour of their Veda.
+
 ## 1.1.0 — 2026-10-31
 - Menus and labels follow the reading script: tab bar, Veda and level names, ṛṣi · devatā · chandas, pañcāṅga labels, references (ऋ. १०.९०) and numbers appear in Sanskrit, in Devanagari or Kannada.
 - An **En** button beside the अ/ಅ switch in the top bar, and Settings → Menus and labels, switch back to English menus.

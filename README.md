@@ -2,7 +2,7 @@
 
 A web app for browsing the Vedas — Ṛgveda, Śukla and Kṛṣṇa Yajurveda, Sāmaveda and Atharvaveda — across all four layers: **Saṃhitā**, **Brāhmaṇa**, **Āraṇyaka** and **Upaniṣad**. Saṃhitās can also be browsed by **ṛṣi**, **devatā** and **chandas** where an index exists; filters combine, so you can ask for every ṛk to Agni in Gāyatrī by Medhātithi Kāṇva. Text is shown in **Devanagari or Kannada** (with svara marks), with IAST, Padapāṭha and translation where the source has them, and Sāyaṇa's bhāṣya for the Ṛgveda.
 
-It is a static site: plain HTML, CSS and JavaScript with pre-built JSON, no framework and no server. It installs as an app and works offline (see below). Current version: **1.1.0** — see [CHANGELOG.md](CHANGELOG.md).
+It is a static site: plain HTML, CSS and JavaScript with pre-built JSON, no framework and no server. It installs as an app and works offline (see below). Current version: **1.2.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Run it locally
 

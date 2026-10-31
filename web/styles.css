@@ -729,3 +729,13 @@ body.story-open { overflow: hidden; }
 .tabbar [lang^="sa"] { font-size: 1.12em; }
 .brand [lang^="sa"] { font-size: 1.08em; }
 .st-next { gap: .35em; }
+
+/* ---- reader: one-tap toggles for tags, translation and bhāṣya ---- */
+.quick { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0 2px; }
+.qbtn { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px 0 10px; border-radius: 18px; border: 1px solid var(--line);
+  background: transparent; color: var(--muted); font: 500 13px var(--ui); cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
+.qbtn:hover { border-color: var(--vc, var(--indigo)); color: var(--ink); }
+.qbtn[aria-pressed="true"] { background: var(--vc, var(--v-rv)); border-color: var(--vc, var(--v-rv)); color: #FFFFFF; }
+.qbtn [lang^="sa"] { font-size: 1.15em; line-height: 1.2; }
+.qbtn svg { flex: none; }
+@media (max-width: 380px) { .qbtn span { display: none; } .qbtn { width: 40px; padding: 0; justify-content: center; } }
