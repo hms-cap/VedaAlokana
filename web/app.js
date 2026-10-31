@@ -67,6 +67,8 @@ new MutationObserver((ms) => { for (const m of ms) m.addedNodes.forEach((n) => n
 const lipiName = () => (prefs.lipi === 'knda' ? 'ಕನ್ನಡ' : 'देवनागरी');
 // Switch script from anywhere, keeping the reader's place on the page.
 let keepScrollY = null;
+let lastRead = null;    // the open section and how far down it the reader is, for Continue on Home
+let storyResume = null; // reopen chant view at this verse after a re-render (script switch, next section)
 let readerNav = null;   // previous/next section of the open reader, for gestures and arrow keys
 let swipeIn = 0;        // direction the next page slides in from after a swipe
 const REDUCED_MOTION = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -209,6 +211,12 @@ async function renderRail(rt) {
 }
 
 // ---------- views ----------
+// ---------- home ----------
+const VEDA_GLYPH = { rv: 'ऋ', syv: 'य', kyv: 'य', sv: 'सा', av: 'अ' };
+const HOME_SUKTAS = ['Puruṣa Sūkta', 'Śrī Rudram', 'Nāsadīya Sūkta', 'Medhā Sūkta', 'Durgā Sūkta', 'Hiraṇyagarbha Sūkta', 'Śānti Mantra'];
+const SUN_SVG = `<svg class="hero-sun" width="260" height="260" viewBox="0 0 260 260" aria-hidden="true"><circle cx="130" cy="130" r="46"/><circle cx="130" cy="130" r="70" class="r1"/><circle cx="130" cy="130" r="94" class="r2"/><circle cx="130" cy="130" r="118" class="r3"/></svg>`;
+const ARROW = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+
 async function viewHome() {
   setTitle('');
   const cat = await catalog();
@@ -220,31 +228,85 @@ async function viewHome() {
   const verse = t[row[1]].find((x) => x[0] === row[2]);
   const dev = row[COL.devata] >= 0 ? rv.facets.devata[row[COL.devata]] : null;
   const ris = row[COL.rishi] >= 0 ? rv.facets.rishi[row[COL.rishi]] : null;
+  const cha = row[COL.chandas] >= 0 ? rv.facets.chandas[row[COL.chandas]] : null;
   const ref = refOf(meta, row[0], row[1], row[2]);
   const byId = Object.fromEntries(cat.texts.map((x) => [x.id, x]));
   let last = null;
   try { last = JSON.parse(localStorage.getItem('vedalokana.last') || 'null'); } catch { /* storage unavailable */ }
-  main.innerHTML = `<div class="wide">
-    ${last ? `<a class="continue" href="${esc(last.href)}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5zM13 4h5.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H13z"/></svg>
-      <span class="ci-t"><small>Continue reading</small><b>${esc(last.where)}</b><small>${esc(last.text)}</small></span>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>` : ''}
-    <section class="today" aria-labelledby="todayH">
-      <h1 id="todayH" class="sr">Mantra for today</h1>
-      <div class="ref"><a href="#/v/rv/c/${row[0]}/${row[1]}?v=${row[2]}">Ṛgveda ${esc(ref)}</a>${dev ? `, to ${esc(cap(dev[1]))}` : ''}${ris ? `, seen by ${esc(cap(ris[1]))}` : ''}</div>
-      <div class="deva mantra-deva" lang="sa">${verse[1].map((l) => `<div>${esc(l)}</div>`).join('')}</div>
-      <div class="roman mantra-roman" lang="sa-Latn">${verse[2].map((l) => `<div>${esc(l)}</div>`).join('')}</div>
-      ${verse[4] ? `<p class="tr">${esc(verse[4])}</p>` : ''}
+  let suk = [];
+  try { suk = (cache.suktas ||= await json('data/suktas.json')); } catch { /* optional */ }
+  const chips = HOME_SUKTAS.map((n) => suk.find((s) => s.name.startsWith(n))).filter(Boolean).slice(0, 6);
+  const pct = last?.of ? Math.min(1, last.v / last.of) : 0;
+  main.innerHTML = `<div class="home">
+    <section class="pc" id="pc" aria-label="Today’s pañcāṅga"></section>
+    <section class="hero" aria-labelledby="todayH">
+      ${SUN_SVG}
+      <h1 id="todayH" class="hero-k">Today’s mantra</h1>
+      <div class="hero-m" lang="sa">${verse[1].map((l) => `<div>${esc(l)}</div>`).join('')}</div>
+      <div class="hero-f">
+        <span class="hero-r"><b>Ṛgveda ${esc(ref)}</b><span>${[dev, ris, cha].filter(Boolean).map((e) => esc(cap(e[1]))).join(' · ')}</span></span>
+        <a class="hero-go" href="#/v/rv/c/${row[0]}/${row[1]}?v=${row[2]}" aria-label="Open Ṛgveda ${esc(ref)} in the reader">${ARROW}</a>
+      </div>
     </section>
-    <h2 class="section-title">Choose a Veda</h2>
-    <div class="vedas">${cat.vedas.map((v) => `
-      <a class="veda-card" href="#/veda/${v.id}">
-        <span class="dv" lang="sa">${esc(v.deva)}</span>
-        <span class="nm">${esc(v.name)}</span>
-        <span class="layers">${cat.layers.map((l) => `<span class="lrow"><span class="lk">${LAYERS[l].label}</span><span class="lv">${
-          v.layers[l].length ? esc(v.layers[l].map((i) => byId[i].name).join(', ')) : `<span class="none">${v.absent?.[l] ? 'None' : 'Not yet'}</span>`}</span></span>`).join('')}</span>
-      </a>`).join('')}</div>
-    <p class="lede" style="margin-top:28px">Every text comes from an openly published digital edition. <a href="#/about">See the sources and what is still missing.</a></p>
+    ${last ? `<a class="cont" href="${esc(last.href)}">
+      <svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" class="ring-bg"/><circle cx="24" cy="24" r="20" class="ring" stroke-dasharray="${(pct * 125.7).toFixed(1)} 126" transform="rotate(-90 24 24)"/></svg>
+      <span class="cont-t"><small>Continue chanting</small><b>${esc(last.where)}</b><small>${esc(last.text)}${last.of ? ` · ${last.v} of ${last.of}` : ''}</small></span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>` : ''}
+    <div class="sec-h"><h2>The Vedas</h2><a href="#/library">Library</a></div>
+    <div class="vtiles">${cat.vedas.map((v) => {
+    const s = v.layers.samhita.map((i) => byId[i]).find((x) => x.has.svara || x.has.roman) || byId[v.layers.samhita[0]];
+    return `<a class="vtile" href="#/veda/${v.id}" style="--vc: var(--v-${v.id})">
+        <span class="vt-g" lang="sa">${VEDA_GLYPH[v.id] || esc(v.deva[0])}</span>
+        <span class="vt-n"><b>${esc(v.name)}</b><small>${s ? `${fmt(s.verses)} ${esc(unitName(s))}` : ''}</small></span></a>`;
+  }).join('')}</div>
+    ${chips.length ? `<div class="sec-h"><h2>Sūktas</h2><a href="#/suktas">All ${suk.length}</a></div>
+    <div class="schips">${chips.map((s) => `<a class="schip" href="${esc(s.href)}${s.v ? `?v=${s.v}` : ''}"><span lang="sa">${esc(s.deva)}</span><small>${esc(s.ref)}</small></a>`).join('')}</div>` : ''}
+    <p class="lede home-foot">Every text comes from an openly published digital edition. <a href="#/about">Sources and what is still missing.</a></p>
   </div>`;
+  renderPanchanga();
+}
+
+// ---------- local pañcāṅga ----------
+const PLACE_KEY = 'vedalokana.place';
+function place() {
+  try { const p = JSON.parse(localStorage.getItem(PLACE_KEY) || 'null'); if (p) return p; } catch { /* storage unavailable */ }
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+  if (/Kolkata|Calcutta/.test(tz)) return { lat: 12.9716, lon: 77.5946, name: 'Bengaluru', guess: true };
+  return { lat: 20, lon: -new Date().getTimezoneOffset() / 4, name: 'Your time zone', guess: true };
+}
+const hm = (t, base) => {
+  const s = new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  return new Date(t).getDate() !== new Date(base).getDate() ? `${s} tomorrow` : s;
+};
+async function renderPanchanga() {
+  const el = document.getElementById('pc'); if (!el) return;
+  const pl = place();
+  let p;
+  try { p = (await import('./panchanga.js')).panchanga(new Date(), pl.lat, pl.lon); } catch { el.remove(); return; }
+  const now = Date.now();
+  el.innerHTML = `<div class="pc-top">
+      <span class="pc-date">${esc(new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' }))}</span>
+      <button class="pc-loc" type="button" aria-label="Pañcāṅga place: ${esc(pl.name)}. Use my location">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/></svg>
+        <span>${esc(pl.name)}</span></button>
+    </div>
+    <div class="pc-main"><span lang="sa">${esc(p.masa)} ${esc(p.paksha)} ${esc(p.tithi)}</span></div>
+    <div class="pc-sub" lang="sa">${esc(p.samvatsara)} संवत्सर · ${esc(p.rtu)} ऋतु · ${esc(p.ayana)} · ${esc(p.vara)}</div>
+    <dl class="pc-grid">
+      <div><dt>Tithi</dt><dd><span lang="sa">${esc(p.tithi)}</span><small>till ${esc(hm(p.tithiEnd, now))}</small></dd></div>
+      <div><dt>Nakṣatra</dt><dd><span lang="sa">${esc(p.nakshatra)}</span><small>till ${esc(hm(p.nakshatraEnd, now))}</small></dd></div>
+      <div><dt>Yoga</dt><dd><span lang="sa">${esc(p.yoga)}</span><small>till ${esc(hm(p.yogaEnd, now))}</small></dd></div>
+      <div><dt>Karaṇa</dt><dd><span lang="sa">${esc(p.karana)}</span><small>at sunrise</small></dd></div>
+      <div class="pc-sun"><dt>Sun</dt><dd><span>↑ ${esc(hm(p.sunrise, now))}</span><small>↓ ${p.sunset ? esc(hm(p.sunset, now)) : '–'}</small></dd></div>
+    </dl>
+    ${pl.guess ? '<p class="pc-note">Times for the place shown. Tap it to use your location.</p>' : ''}`;
+  el.querySelector('.pc-loc').addEventListener('click', () => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition((pos) => {
+      try { localStorage.setItem(PLACE_KEY, JSON.stringify({ lat: pos.coords.latitude, lon: pos.coords.longitude, name: 'Your location' })); } catch { /* storage unavailable */ }
+      renderPanchanga();
+    }, () => { el.querySelector('.pc-note')?.replaceChildren('Location not available; showing the default place.'); }, { maximumAge: 864e5, timeout: 10000 });
+  });
 }
 
 async function viewVedaGroup(vid, layerArg) {
@@ -268,15 +330,69 @@ async function viewVedaGroup(vid, layerArg) {
     aranyaka: 'The “forest” texts, on the inner meaning of the rites.',
     upanishad: 'The philosophical close of each Veda.',
   }[layer];
-  main.innerHTML = `<div class="wide">
+  const sam = layer === 'samhita' ? (v.layers.samhita.map((i) => byId[i]).find((x) => x.has.svara || x.has.roman) || byId[v.layers.samhita[0]]) : null;
+  main.innerHTML = `<div class="wide veda-page" style="--vc: var(--v-${v.id})">
+    <nav class="veda-switch" aria-label="Veda">${cat.vedas.map((x) => `<a href="#/veda/${x.id}${layer !== 'samhita' ? `/${layer}` : ''}"${x.id === v.id ? ' aria-current="page"' : ''} style="--vc: var(--v-${x.id})">${esc(x.name.replace(/veda$/, ''))}</a>`).join('')}</nav>
     <h1>${esc(v.name)}<span class="h1-deva" lang="sa">${esc(v.deva)}</span></h1>
     <nav class="layer-tabs" aria-label="Layers">${cat.layers.map((l) => `<a href="#/veda/${v.id}/${l}"${l === layer ? ' aria-current="page"' : ''}>
       <span class="lt-l">${LAYERS[l].label}</span><span class="lt-n">${v.layers[l].length || '–'}</span></a>`).join('')}</nav>
+    ${sam ? '<section class="wheel-wrap" id="wheel" aria-label="Divisions of the Saṃhitā"></section>' : ''}
     <p class="lede">${esc(blurb)}</p>
     ${v.layers[layer].length
     ? `<div class="text-cards">${v.layers[layer].map((i) => card(byId[i])).join('')}</div>`
     : `<p class="note">${esc(v.absent?.[layer] || 'No openly licensed digital edition has been found yet.')}</p>`}
   </div>`;
+  if (sam) renderWheel(sam);
+}
+
+// ---------- the Saṃhitā as a wheel of its divisions ----------
+const DEVA_DIGITS = (n) => String(n).replace(/[0-9]/g, (d) => '०१२३४५६७८९'[d]);
+async function renderWheel(meta) {
+  const el = document.getElementById('wheel'); if (!el) return;
+  const x = await index(meta.id);
+  const id = meta.id;
+  const multi = x.groups.length > 1;
+  const segs = multi
+    ? x.groups.map(([d1, cs]) => ({ k: d1, name: groupName(meta, d1), n: cs.reduce((a, c) => a + c[1], 0), sub: cs.length, subName: meta.levels[1], href: `#/v/${id}/g/${d1}` }))
+    : x.groups[0][1].map(([d2, n, title]) => ({ k: d2, name: `${meta.levels[1] || 'Section'} ${d2}`, title, n, href: `#/v/${id}/c/${x.groups[0][0]}/${d2}` }));
+  const total = segs.reduce((a, s) => a + s.n, 0);
+  const cx = 170; const r0 = 92; const r1 = 150; const gap = segs.length > 24 ? 0.6 : 1.2;
+  const pt = (r, d) => [cx + r * Math.cos(d * Math.PI / 180), cx + r * Math.sin(d * Math.PI / 180)].map((v) => v.toFixed(1));
+  let a = -90;
+  const paths = segs.map((s, i) => {
+    const sw = s.n / total * 360; const st = a + gap / 2; const en = a + sw - gap / 2; const big = sw > 180 ? 1 : 0;
+    const [x1, y1] = pt(r1, st); const [x2, y2] = pt(r1, en); const [x3, y3] = pt(r0, en); const [x4, y4] = pt(r0, st);
+    const [lx, ly] = pt((r0 + r1) / 2, a + sw / 2);
+    a += sw;
+    return `<path class="seg${i % 2 ? ' alt' : ''}" data-i="${i}" tabindex="0" role="button" aria-label="${esc(s.name)}: ${fmt(s.n)} ${esc(unitName(meta))}"
+      d="M${x1} ${y1}A${r1} ${r1} 0 ${big} 1 ${x2} ${y2}L${x3} ${y3}A${r0} ${r0} 0 ${big} 0 ${x4} ${y4}Z"/>${segs.length <= 24 && sw > 9 ? `<text x="${lx}" y="${ly}" lang="sa" aria-hidden="true">${DEVA_DIGITS(s.k)}</text>` : ''}`;
+  }).join('');
+  const dev = (x.facets.devata || []).slice(0, 4);
+  const max = dev[0]?.[3] || 1;
+  el.innerHTML = `<div class="wheel">
+      <svg viewBox="0 0 340 340" role="group" aria-label="${esc(meta.name)}: ${segs.length} ${esc(multi ? `${meta.levels[0]}s` : `${meta.levels[1]}s`)}, sized by ${esc(unitName(meta))}">${paths}</svg>
+      <div class="wheel-c"><span class="wc-n" lang="sa">${esc(meta.deva)}</span><span class="wc-s">${fmt(total)} ${esc(unitName(meta))}</span></div>
+    </div>
+    <div class="wheel-side">
+      <div class="seg-card" aria-live="polite"></div>
+      ${dev.length ? `<h2 class="wheel-h">Most addressed devatās</h2>
+      <div class="dbars">${dev.map((d) => `<a class="dbar" href="${findHref(id, { devata: d[0] })}"><span class="db-n" lang="sa">${esc(d[2] || d[1])}</span><span class="db-b"><span style="width:${(d[3] / max * 100).toFixed(1)}%"></span></span><span class="db-c">${fmt(d[3])}</span></a>`).join('')}</div>` : ''}
+    </div>`;
+  const card = el.querySelector('.seg-card');
+  const pick = (i) => {
+    const s = segs[i];
+    el.querySelectorAll('.seg').forEach((p) => p.classList.toggle('on', Number(p.dataset.i) === i));
+    card.innerHTML = `<span class="sc-dot" aria-hidden="true"></span>
+      <span class="sc-t"><b>${esc(s.name)}${s.title && !/^\d+$/.test(s.title) ? ` · <span lang="sa">${esc(s.title)}</span>` : ''}</b>
+      <small>${s.sub ? `${fmt(s.sub)} ${esc((s.subName || 'section').toLowerCase())}s · ` : ''}${fmt(s.n)} ${esc(unitName(meta))}</small></span>
+      <a class="sc-go" href="${s.href}">Open</a>`;
+  };
+  el.querySelectorAll('.seg').forEach((p) => {
+    p.addEventListener('click', () => pick(Number(p.dataset.i)));
+    p.addEventListener('dblclick', () => go(segs[Number(p.dataset.i)].href));
+    p.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(Number(p.dataset.i)); } });
+  });
+  pick(0);
 }
 
 function unitName(t) {
@@ -547,7 +663,7 @@ async function viewContainer(id, d1, d2, params) {
     <div class="reader-head"><div>
       <h1>${cref ? `${esc(meta.levels[1] || meta.levels[2])} ${esc(cref)}` : esc(meta.name)}</h1>
       ${c[2] && meta.refFmt !== 'label' ? `<div class="ctitle" lang="sa">${esc(c[2])}</div>` : ''}
-    </div></div>
+    </div>${hasDeva ? `<button class="chant-btn" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10-6.5a1 1 0 0 0 0-1.8l-10-6.5A1 1 0 0 0 8 5.5z"/></svg>Chant view</button>` : ''}</div>
     ${summary.length ? `<div class="tags" id="sumTags"${prefs.tags ? '' : ' hidden'}>${summary.map(([f, e]) => `<a class="tag" href="${findHref(id, { [f]: e[0] })}"><em>${FACETS[f].label}</em>${e[2] ? `<span class="dv" lang="sa">${esc(e[2])}</span>` : ''}<span>${esc(cap(e[1]))}</span></a>`).join('')}</div>` : ''}
     ${controls ? `<div class="controls">${controls}</div>` : ''}
     <div id="verses"></div>
@@ -619,7 +735,8 @@ async function viewContainer(id, d1, d2, params) {
     b.parentElement.querySelectorAll('button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
     draw();
   }));
-  try { localStorage.setItem('vedalokana.last', JSON.stringify({ href: `#/v/${id}/c/${d1}/${d2}`, text: meta.name, where: cref ? `${meta.ref} ${cref}` : meta.name })); } catch { /* storage unavailable */ }
+  lastRead = { href: `#/v/${id}/c/${d1}/${d2}`, text: meta.name, where: cref ? `${meta.ref} ${cref}` : meta.name, v: 1, of: verses.length };
+  try { localStorage.setItem('vedalokana.last', JSON.stringify(lastRead)); } catch { /* storage unavailable */ }
   // phone reader bar: previous · section picker · next
   const rb = $('#readerbar');
   rb.hidden = false;
@@ -636,6 +753,9 @@ async function viewContainer(id, d1, d2, params) {
     next: next && { href: `#/v/${id}/c/${next[0]}/${next[1]}`, label: `${meta.ref} ${containerRef(meta, next[0], next[1], next[2])}` },
     sec,
   };
+  const story = { verses: verses.filter((x) => x[1].length), meta, d1, d2, cref, next: readerNav.next };
+  main.querySelector('.chant-btn')?.addEventListener('click', () => openStory(story, 0));
+  if (storyResume !== null) { const i = storyResume; storyResume = null; openStory(story, i); }
   if (swipeIn) {
     const dir = swipeIn; swipeIn = 0;
     if (!REDUCED_MOTION()) main.querySelector('article')?.animate(
@@ -1134,7 +1254,7 @@ const NO_SWIPE = '.controls, .pathbar, .tags, .chips, .sheet, input, textarea, s
   main.addEventListener('touchend', end);
   main.addEventListener('touchcancel', end);
   document.addEventListener('keydown', (e) => {
-    if (!readerNav || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.target.closest('input, textarea, select, [contenteditable]') || document.querySelector('.sheet')) return;
+    if (!readerNav || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.target.closest('input, textarea, select, [contenteditable]') || document.querySelector('.sheet, .story')) return;
     const target = e.key === 'ArrowRight' ? readerNav.next : e.key === 'ArrowLeft' ? readerNav.prev : null;
     if (!target) return;
     e.preventDefault(); swipeIn = e.key === 'ArrowRight' ? 1 : -1; go(target.href);
@@ -1149,4 +1269,109 @@ function showSwipeTip() {
   document.body.append(tip);
   setTimeout(() => tip.classList.add('out'), 3200);
   setTimeout(() => tip.remove(), 3700);
+}
+
+// Remember how far into a section the reader has scrolled, for the Continue card on Home.
+let progressTick = 0;
+window.addEventListener('scroll', () => {
+  if (!lastRead || !document.body.classList.contains('reading') || progressTick) return;
+  progressTick = requestAnimationFrame(() => {
+    progressTick = 0;
+    const vs = [...main.querySelectorAll('.verse')];
+    const i = vs.findIndex((el) => el.getBoundingClientRect().bottom > 140);
+    const v = i < 0 ? vs.length : i + 1;
+    if (v === lastRead.v) return;
+    lastRead.v = v;
+    try { localStorage.setItem('vedalokana.last', JSON.stringify(lastRead)); } catch { /* storage unavailable */ }
+  });
+}, { passive: true });
+
+// ---------- chant view: one mantra at a time, full screen ----------
+let wakeLock = null;
+function openStory(st, start) {
+  document.querySelector('.story')?.remove();
+  const { verses, meta } = st;
+  if (!verses.length) return;
+  let i = Math.max(0, Math.min(start, verses.length - 1));
+  const el = document.createElement('div');
+  el.className = 'story';
+  el.setAttribute('role', 'dialog');
+  el.setAttribute('aria-modal', 'true');
+  el.setAttribute('aria-label', `Chant view, ${meta.ref} ${st.cref}`);
+  el.style.setProperty('--vc', `var(--v-${meta.veda})`);
+  const segs = verses.length <= 60;
+  el.innerHTML = `<div class="st-art" aria-hidden="true"><svg viewBox="0 0 520 520"><g fill="none" stroke="currentColor" stroke-width="1.2">
+      <circle cx="260" cy="260" r="80"/><circle cx="260" cy="260" r="130"/><circle cx="260" cy="260" r="180"/><circle cx="260" cy="260" r="230"/>
+      <path d="M260 30v460M30 260h460M97 97l326 326M423 97L97 423"/><path d="M260 120l121 210H139z"/><path d="M260 400L139 190h242z"/></g></svg></div>
+    <div class="st-bar">${segs ? verses.map(() => '<span></span>').join('') : '<span class="st-fill"><i></i></span>'}</div>
+    <div class="st-head">
+      <span class="st-t"><b>${esc(meta.ref)} ${esc(st.cref)}</b><small></small></span>
+      <div class="st-lipi" role="group" aria-label="Script"><button type="button" data-l="deva" lang="sa-Deva">अ</button><button type="button" data-l="knda" lang="sa-Knda">ಅ</button></div>
+      <button class="st-x" type="button" aria-label="Close chant view"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="st-body" aria-live="polite"></div>
+    <div class="st-foot">
+      <button class="st-nav" type="button" data-d="-1" aria-label="Previous mantra"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <span class="st-count"></span>
+      <button class="st-nav" type="button" data-d="1" aria-label="Next mantra"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+    </div>`;
+  document.body.append(el);
+  document.body.classList.add('story-open');
+  const body = el.querySelector('.st-body');
+  const end = () => i === verses.length; // the "next section" card after the last mantra
+  const show = () => {
+    if (end()) {
+      body.innerHTML = st.next
+        ? `<div class="st-end"><small>${esc(meta.levels[1] || 'Section')} complete</small><a class="st-next" href="${st.next.href}">Next: ${esc(st.next.label)}</a></div>`
+        : `<div class="st-end"><small>End of the text</small></div>`;
+      el.querySelector('.st-next')?.addEventListener('click', (e) => { e.preventDefault(); storyResume = 0; close(); swipeIn = 1; go(st.next.href); });
+    } else {
+      const [v, deva] = verses[i];
+      body.innerHTML = `<div class="st-m" lang="sa">${deva.map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
+      el.querySelector('.st-t small').textContent = `${refOf(meta, st.d1, st.d2, v, verses[i][5])}`;
+    }
+    el.querySelector('.st-count').textContent = end() ? '' : `${i + 1} / ${verses.length}`;
+    if (segs) el.querySelectorAll('.st-bar span').forEach((b, k) => b.classList.toggle('on', k <= i));
+    else el.querySelector('.st-fill i').style.width = `${Math.min(1, (i + 1) / verses.length) * 100}%`;
+    el.querySelector('[data-d="-1"]').disabled = i === 0;
+    el.querySelector('[data-d="1"]').disabled = end();
+    el.querySelectorAll('.st-lipi button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.l === prefs.lipi)));
+    if (!REDUCED_MOTION()) body.firstElementChild?.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'ease-out' });
+    lastRead && Object.assign(lastRead, { v: Math.min(i + 1, verses.length) }) && (() => { try { localStorage.setItem('vedalokana.last', JSON.stringify(lastRead)); } catch { /* storage unavailable */ } })();
+  };
+  const step = (d) => { const n = i + d; if (n < 0 || n > verses.length) return; i = n; show(); };
+  const onKey = (e) => {
+    if (e.key === 'Escape') { e.preventDefault(); close(); }
+    else if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); step(1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); step(-1); }
+  };
+  function close() {
+    document.removeEventListener('keydown', onKey, true);
+    el.remove(); document.body.classList.remove('story-open');
+    try { wakeLock?.release(); } catch { /* not held */ } wakeLock = null;
+    const v = verses[Math.min(i, verses.length - 1)][0];
+    document.getElementById(`v${v}`)?.scrollIntoView({ block: 'start' });
+  }
+  document.addEventListener('keydown', onKey, true);
+  el.querySelector('.st-x').addEventListener('click', close);
+  el.querySelectorAll('.st-nav').forEach((b) => b.addEventListener('click', () => step(Number(b.dataset.d))));
+  el.querySelectorAll('.st-lipi button').forEach((b) => b.addEventListener('click', () => {
+    if (b.dataset.l === prefs.lipi) return;
+    storyResume = Math.min(i, verses.length - 1); close(); setLipi(b.dataset.l);
+  }));
+  // tap the left or right third of the text to move; swipe sideways too
+  let sx = null; let sy = null; let st0 = 0;
+  body.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; st0 = Date.now(); }, { passive: true });
+  body.addEventListener('touchend', (e) => {
+    if (sx === null) return;
+    const dx = e.changedTouches[0].clientX - sx; const dy = e.changedTouches[0].clientY - sy; sx = null;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) step(dx < 0 ? 1 : -1);
+    else if (Math.abs(dx) < 10 && Math.abs(dy) < 10 && Date.now() - st0 < 400 && !e.target.closest('a')) {
+      const x = e.changedTouches[0].clientX / window.innerWidth;
+      if (x > 0.66) step(1); else if (x < 0.33) step(-1);
+    }
+  });
+  try { navigator.wakeLock?.request('screen').then((l) => { wakeLock = l; }).catch(() => {}); } catch { /* not supported */ }
+  show();
+  el.querySelector('.st-x').focus();
 }

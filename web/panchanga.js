@@ -1,0 +1,147 @@
+// A small local pañcāṅga: tithi, nakṣatra, yoga, karaṇa, vāra, amānta māsa,
+// saṃvatsara, ṛtu, sunrise and sunset for a place, computed in the browser.
+//
+// Sun: Meeus, Astronomical Algorithms ch. 25 (about 0.01°). Moon: Meeus ch. 47 with
+// its 59 largest longitude terms (about 0.01–0.05°). Sidereal positions use the Lahiri
+// ayanāṃśa. Ending times are found by bisection, so they can differ from printed
+// pañcāṅgas by a few minutes; the day's elements are those current at sunrise.
+
+const R = Math.PI / 180;
+const norm = (a) => ((a % 360) + 360) % 360;
+const jd = (ms) => ms / 86400000 + 2440587.5 + 69 / 86400; // ≈ TT
+
+function sunLon(J) {
+  const T = (J - 2451545) / 36525;
+  const L0 = 280.46646 + 36000.76983 * T + 0.0003032 * T * T;
+  const M = 357.52911 + 35999.05029 * T - 0.0001537 * T * T;
+  const C = (1.914602 - 0.004817 * T - 0.000014 * T * T) * Math.sin(M * R)
+    + (0.019993 - 0.000101 * T) * Math.sin(2 * M * R) + 0.000289 * Math.sin(3 * M * R);
+  const om = 125.04 - 1934.136 * T;
+  return norm(L0 + C - 0.00569 - 0.00478 * Math.sin(om * R));
+}
+
+// [D, M, M', F, coefficient × 1e-6°]
+const MOON = [
+  [0,0,1,0,6288774],[2,0,-1,0,1274027],[2,0,0,0,658314],[0,0,2,0,213618],[0,1,0,0,-185116],[0,0,0,2,-114332],
+  [2,0,-2,0,58793],[2,-1,-1,0,57066],[2,0,1,0,53322],[2,-1,0,0,45758],[0,1,-1,0,-40923],[1,0,0,0,-34720],
+  [0,1,1,0,-30383],[2,0,0,-2,15327],[0,0,1,2,-12528],[0,0,1,-2,10980],[4,0,-1,0,10675],[0,0,3,0,10034],
+  [4,0,-2,0,8548],[2,1,-1,0,-7888],[2,1,0,0,-6766],[1,0,-1,0,-5163],[1,1,0,0,4987],[2,-1,1,0,4036],
+  [2,0,2,0,3994],[4,0,0,0,3861],[2,0,-3,0,3665],[0,1,-2,0,-2689],[2,0,-1,2,-2602],[2,-1,-2,0,2390],
+  [1,0,1,0,-2348],[2,-2,0,0,2236],[0,1,2,0,-2120],[0,2,0,0,-2069],[2,-2,-1,0,2048],[2,0,1,-2,-1773],
+  [2,0,0,2,-1595],[4,-1,-1,0,1215],[0,0,2,2,-1110],[3,0,-1,0,-892],[2,1,1,0,-810],[4,-1,-2,0,759],
+  [0,2,-1,0,-713],[2,2,-1,0,-700],[2,1,-2,0,691],[2,-1,0,-2,596],[4,0,1,0,549],[0,0,4,0,537],
+  [4,-1,0,0,520],[1,0,-2,0,-487],[2,1,0,-2,-399],[0,0,2,-2,-381],[1,1,1,0,351],[3,0,-2,0,-340],
+  [4,0,-3,0,330],[2,-1,2,0,327],[0,2,1,0,-323],[1,1,-1,0,299],[2,0,3,0,294],
+];
+function moonLon(J) {
+  const T = (J - 2451545) / 36525;
+  const Lp = 218.3164477 + 481267.88123421 * T - 0.0015786 * T * T;
+  const D = 297.8501921 + 445267.1114034 * T - 0.0018819 * T * T;
+  const M = 357.5291092 + 35999.0502909 * T - 0.0001536 * T * T;
+  const Mp = 134.9633964 + 477198.8675055 * T + 0.0087414 * T * T;
+  const F = 93.2720950 + 483202.0175233 * T - 0.0036539 * T * T;
+  const E = 1 - 0.002516 * T - 0.0000074 * T * T;
+  let s = 0;
+  for (const [d, m, mp, f, c] of MOON) {
+    const e = Math.abs(m) === 1 ? E : Math.abs(m) === 2 ? E * E : 1;
+    s += c * e * Math.sin((d * D + m * M + mp * Mp + f * F) * R);
+  }
+  s += 3958 * Math.sin((119.75 + 131.849 * T) * R) + 1962 * Math.sin((Lp - F) * R) + 318 * Math.sin((53.09 + 479264.29 * T) * R);
+  const om = 125.04 - 1934.136 * T;
+  return norm(Lp + s / 1e6 - 0.00478 * Math.sin(om * R));
+}
+
+const ayanamsa = (J) => 23.85306 + 1.39722 * ((J - 2451545) / 36525); // Lahiri
+const elong = (ms) => { const J = jd(ms); return norm(moonLon(J) - sunLon(J)); };
+const sidMoon = (ms) => { const J = jd(ms); return norm(moonLon(J) - ayanamsa(J)); };
+const sidSun = (ms) => { const J = jd(ms); return norm(sunLon(J) - ayanamsa(J)); };
+const yogaAng = (ms) => norm(sidMoon(ms) + sidSun(ms));
+
+// First moment after t0 at which the angle f(t) (increasing, mod 360) reaches `target`.
+function crossing(f, target, t0, maxHours = 40) {
+  const ahead = (t) => norm(f(t) - target + 180) - 180; // <0 before, ≥0 after
+  let a = t0; let b = t0;
+  for (let h = 0; h < maxHours; h++) { b = a + 3600e3; if (ahead(a) < 0 && ahead(b) >= 0) break; a = b; }
+  for (let i = 0; i < 30; i++) { const m = (a + b) / 2; if (ahead(m) < 0) a = m; else b = m; }
+  return b;
+}
+// Last moment before t0 at which the elongation was 0 (new moon), and the next one.
+function newMoons(t0) {
+  let a = t0;
+  while (true) { const b = a - 12 * 3600e3; if (elong(b) > elong(a)) { a = b; break; } a = b; }
+  const prev = crossing(elong, 0, a, 14);
+  const next = crossing(elong, 0, prev + 25 * 86400e3, 7 * 24);
+  return [prev, next];
+}
+
+function sunAlt(ms, lat, lon) {
+  const J = jd(ms); const T = (J - 2451545) / 36525;
+  const lam = sunLon(J) * R; const eps = (23.4393 - 0.013 * T) * R;
+  const ra = Math.atan2(Math.cos(eps) * Math.sin(lam), Math.cos(lam));
+  const dec = Math.asin(Math.sin(eps) * Math.sin(lam));
+  const gmst = norm(280.46061837 + 360.98564736629 * (J - 2451545)) * R;
+  const H = gmst + lon * R - ra;
+  return Math.asin(Math.sin(lat * R) * Math.sin(dec) + Math.cos(lat * R) * Math.cos(dec) * Math.cos(H)) / R;
+}
+function sunEvent(dayStart, lat, lon, rising) {
+  const h0 = -0.833; const step = 10 * 60e3;
+  for (let t = dayStart; t < dayStart + 86400e3; t += step) {
+    const a = sunAlt(t, lat, lon) - h0; const b = sunAlt(t + step, lat, lon) - h0;
+    if (rising ? a < 0 && b >= 0 : a > 0 && b <= 0) {
+      let lo = t; let hi = t + step;
+      for (let i = 0; i < 20; i++) { const m = (lo + hi) / 2; const v = sunAlt(m, lat, lon) - h0; if ((v < 0) === rising) lo = m; else hi = m; }
+      return hi;
+    }
+  }
+  return null;
+}
+
+export const NAMES = {
+  tithi: ['प्रतिपत्', 'द्वितीया', 'तृतीया', 'चतुर्थी', 'पञ्चमी', 'षष्ठी', 'सप्तमी', 'अष्टमी', 'नवमी', 'दशमी', 'एकादशी', 'द्वादशी', 'त्रयोदशी', 'चतुर्दशी', 'पूर्णिमा', 'अमावास्या'],
+  tithiIast: ['Pratipat', 'Dvitīyā', 'Tṛtīyā', 'Caturthī', 'Pañcamī', 'Ṣaṣṭhī', 'Saptamī', 'Aṣṭamī', 'Navamī', 'Daśamī', 'Ekādaśī', 'Dvādaśī', 'Trayodaśī', 'Caturdaśī', 'Pūrṇimā', 'Amāvāsyā'],
+  nakshatra: ['अश्विनी', 'भरणी', 'कृत्तिका', 'रोहिणी', 'मृगशिरा', 'आर्द्रा', 'पुनर्वसु', 'पुष्य', 'आश्लेषा', 'मघा', 'पूर्वफल्गुनी', 'उत्तरफल्गुनी', 'हस्त', 'चित्रा', 'स्वाती', 'विशाखा', 'अनुराधा', 'ज्येष्ठा', 'मूल', 'पूर्वाषाढा', 'उत्तराषाढा', 'श्रवण', 'धनिष्ठा', 'शतभिषक्', 'पूर्वभाद्रपदा', 'उत्तरभाद्रपदा', 'रेवती'],
+  yoga: ['विष्कम्भ', 'प्रीति', 'आयुष्मान्', 'सौभाग्य', 'शोभन', 'अतिगण्ड', 'सुकर्मा', 'धृति', 'शूल', 'गण्ड', 'वृद्धि', 'ध्रुव', 'व्याघात', 'हर्षण', 'वज्र', 'सिद्धि', 'व्यतीपात', 'वरीयान्', 'परिघ', 'शिव', 'सिद्ध', 'साध्य', 'शुभ', 'शुक्ल', 'ब्रह्म', 'इन्द्र', 'वैधृति'],
+  karana: ['बव', 'बालव', 'कौलव', 'तैतिल', 'गरज', 'वणिज', 'विष्टि'],
+  karanaFixed: { 0: 'किंस्तुघ्न', 57: 'शकुनि', 58: 'चतुष्पाद', 59: 'नाग' },
+  vara: ['भानुवासर', 'सोमवासर', 'मङ्गलवासर', 'बुधवासर', 'गुरुवासर', 'शुक्रवासर', 'शनिवासर'],
+  masa: ['चैत्र', 'वैशाख', 'ज्येष्ठ', 'आषाढ', 'श्रावण', 'भाद्रपद', 'आश्वयुज', 'कार्तिक', 'मार्गशीर्ष', 'पौष', 'माघ', 'फाल्गुन'],
+  masaIast: ['Caitra', 'Vaiśākha', 'Jyeṣṭha', 'Āṣāḍha', 'Śrāvaṇa', 'Bhādrapada', 'Āśvayuja', 'Kārtika', 'Mārgaśīrṣa', 'Pauṣa', 'Māgha', 'Phālguna'],
+  rtu: ['वसन्त', 'ग्रीष्म', 'वर्षा', 'शरद्', 'हेमन्त', 'शिशिर'],
+  samvatsara: ['प्रभव', 'विभव', 'शुक्ल', 'प्रमोद', 'प्रजापति', 'आङ्गिरस', 'श्रीमुख', 'भाव', 'युव', 'धातृ', 'ईश्वर', 'बहुधान्य', 'प्रमाथी', 'विक्रम', 'वृष', 'चित्रभानु', 'स्वभानु', 'तारण', 'पार्थिव', 'व्यय', 'सर्वजित्', 'सर्वधारी', 'विरोधी', 'विकृति', 'खर', 'नन्दन', 'विजय', 'जय', 'मन्मथ', 'दुर्मुख', 'हेमलम्ब', 'विलम्ब', 'विकारी', 'शार्वरी', 'प्लव', 'शुभकृत्', 'शोभकृत्', 'क्रोधी', 'विश्वावसु', 'पराभव', 'प्लवङ्ग', 'कीलक', 'सौम्य', 'साधारण', 'विरोधकृत्', 'परिधावी', 'प्रमादी', 'आनन्द', 'राक्षस', 'नल', 'पिङ्गल', 'कालयुक्त', 'सिद्धार्थी', 'रौद्र', 'दुर्मति', 'दुन्दुभि', 'रुधिरोद्गारी', 'रक्ताक्षी', 'क्रोधन', 'अक्षय'],
+};
+
+// The pañcāṅga for the local calendar day containing `date`, at a place.
+export function panchanga(date, lat, lon) {
+  const d0 = new Date(date); d0.setHours(0, 0, 0, 0);
+  const day = d0.getTime();
+  const rise = sunEvent(day, lat, lon, true) ?? day + 6 * 3600e3;
+  const set = sunEvent(day, lat, lon, false);
+  const e = elong(rise);
+  const ti = Math.floor(e / 12);
+  const tithiEnd = crossing(elong, (ti + 1) * 12 % 360, rise);
+  const nk = Math.floor(sidMoon(rise) / (360 / 27));
+  const nkEnd = crossing(sidMoon, (nk + 1) * (360 / 27) % 360, rise);
+  const yg = Math.floor(yogaAng(rise) / (360 / 27));
+  const ygEnd = crossing(yogaAng, (yg + 1) * (360 / 27) % 360, rise);
+  const k = Math.floor(e / 6);
+  const karana = NAMES.karanaFixed[k] || NAMES.karana[(k - 1) % 7];
+  const [nm, nextNm] = newMoons(rise);
+  const sign = Math.floor(sidSun(nm) / 30);
+  const masaI = (sign + 1) % 12;
+  const adhika = Math.floor(sidSun(nextNm) / 30) === sign;
+  const g = new Date(rise);
+  const sy = g.getFullYear() - (g.getMonth() < 4 && masaI >= 9 ? 1 : 0);
+  return {
+    sunrise: rise, sunset: set,
+    paksha: ti < 15 ? 'शुक्ल' : 'कृष्ण', pakshaIast: ti < 15 ? 'Śukla' : 'Kṛṣṇa',
+    tithi: ti === 14 ? NAMES.tithi[14] : ti === 29 ? NAMES.tithi[15] : NAMES.tithi[ti % 15],
+    tithiIast: ti === 14 ? NAMES.tithiIast[14] : ti === 29 ? NAMES.tithiIast[15] : NAMES.tithiIast[ti % 15],
+    tithiEnd, nakshatra: NAMES.nakshatra[nk], nakshatraEnd: nkEnd,
+    yoga: NAMES.yoga[yg], yogaEnd: ygEnd, karana,
+    vara: NAMES.vara[g.getDay()],
+    masa: (adhika ? 'अधिक ' : '') + NAMES.masa[masaI], masaIast: (adhika ? 'Adhika ' : '') + NAMES.masaIast[masaI],
+    rtu: NAMES.rtu[Math.floor(masaI / 2)],
+    ayana: sidSun(rise) >= 270 || sidSun(rise) < 90 ? 'उत्तरायण' : 'दक्षिणायन',
+    samvatsara: NAMES.samvatsara[(((sy - 1987) % 60) + 60) % 60],
+  };
+}
