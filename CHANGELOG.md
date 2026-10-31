@@ -2,6 +2,10 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.8.0 — 2026-10-31
+- Kannada anudātta, checked over every accented syllable of all the Vedas (about 306,000): after a candrabindu with a long vowel or reph (ಲೋಁ॒ ವೀಁ॒ ಲ್ಲೋಁ॒, common in the Taittirīya texts) the bar sat at the end of the letter; svara marks now move in front of ಁ as they do in front of ಂ and ಃ. No bar is now more than a third of a letter off its letter, except under the Taittirīya ಗ್ಂ, where it stays under ಗ್ಂ as Devanagari keeps it under ꣳ.
+- Dākṣiṇātya pāṭha in the Atharvaveda and the Vājasaneyi Saṃhitā: nasals before a stop of their class are written as anusvāra (इंद्र, य॑न्ति → यं॑ति). Neither has a padapāṭha here, so word-final nasals are converted too, and avagraha at pāda junctions (which needs word boundaries) is not added. The Taittirīya Saṃhitā, Brāhmaṇa, Āraṇyaka and Upaniṣad are left as they are: they already print the Taittirīya pāṭha, with its own nasals (शन्नो, तन्तन्मे) and avagrahas (माऽघशꣳसो).
+
 ## 1.7.3 — 2026-10-31
 - Kannada: every anudātta now sits under its letter. Where a letter is fused with its vowel sign (ಜಾ ಪು ಪೂ ವೋ ಜೊ …) the bar used to sit under the middle of the whole glyph, i.e. under the vowel sign; and after a visarga (ತೀಃ॒ ನೋಃ॒ ರ್ಯಃ॒) it stopped at the length mark or the reph, half under the next letter. `scripts/make-fonts.py` now anchors the bar under the letter itself and lets svara marks move in front of ಃ as they already did in front of ಂ; letters and bar depth are unchanged.
 

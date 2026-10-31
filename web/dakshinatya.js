@@ -107,7 +107,7 @@ const SKIP = /[॒॑᳚]/;
 function devaTokens(lines) {
   const out = [];
   lines.forEach((line, li) => {
-    const ch = [...line];
+  const ch = [...line];
     for (let i = 0; i < ch.length; i++) {
       const c = ch[i];
       if (CONS_IAST[c]) {
@@ -176,6 +176,36 @@ function padaBoundary(dt, k) {
 
 const CLASS = { 'ङ': /[कखगघ]/, 'ञ': /[चछजझ]/, 'ण': /[टठडढ]/, 'न': /[तथदध]/, 'म': /[पफबभ]/ };
 
+// Rules 3 and 4 on one line: class nasals to anusvāra (except at `keep`), avagraha after `ava`.
+function rewrite(line, keep, ava) {
+  const ch = [...line];
+  let out = '';
+  for (let i = 0; i < ch.length; i++) {
+    const c = ch[i];
+    // 3. class nasal + virama + stop of its class → anusvāra on the syllable before
+    if (CLASS[c] && ch[i + 1] === '्' && CLASS[c].test(ch[i + 2] || '') && !keep.has(i)) {
+      let p = out.length; while (p > 0 && SKIP.test(out[p - 1])) p--;
+      const prev = out[p - 1];
+      if (prev && /[अ-हळािीुूृॄॢेैोौ]/.test(prev)) {   // after a letter or vowel sign, not a numeral or cluster
+        out = `${out.slice(0, p)}ं${out.slice(p)}`; i++; continue;
+      }
+    }
+    out += c;
+    // 4. avagraha after the merged ā and its marks
+    if (ava.has(i)) {
+      let k = i + 1; while (k < ch.length && SKIP.test(ch[k])) out += ch[k++];
+      if (k < ch.length && ch[k] !== ' ' && ch[k] !== 'ऽ') out += 'ऽ';
+      i = k - 1;
+    }
+  }
+  return out;
+}
+
+// Other Saṃhitās (Atharvaveda, Vājasaneyi) in the Dākṣiṇātya pāṭha: only the nasal rule. They
+// have no padapāṭha here, so a nasal at the end of a word is converted too, and their own
+// svara marks are kept as they are.
+export function dakshinatyaNasals(lines) { return lines.map((l) => rewrite(l, new Set(), new Set())); }
+
 // ---------- the whole ṛk ----------
 // lines: the half-verses in Devanagari; pada: the padapāṭha words (IAST). Without pada, rules 3
 // and 4 fall back to: every class nasal before a stop of its class, and no added avagraha.
@@ -198,27 +228,5 @@ export function dakshinatyaVerse(lines, pada) {
       }
     }
   }
-  return lines.map((line, li) => {
-    const ch = [...line];
-    let out = '';
-    for (let i = 0; i < ch.length; i++) {
-      const c = ch[i];
-      // 3. class nasal + virama + stop of its class → anusvāra on the syllable before
-      if (CLASS[c] && ch[i + 1] === '्' && CLASS[c].test(ch[i + 2] || '') && !keepNasal[li].has(i)) {
-        let p = out.length; while (p > 0 && SKIP.test(out[p - 1])) p--;
-        const prev = out[p - 1];
-        if (prev && /[अ-हळािीुूृॄॢेैोौ]/.test(prev)) {   // after a letter or vowel sign, not a numeral or cluster
-          out = `${out.slice(0, p)}ं${out.slice(p)}`; i++; continue;
-        }
-      }
-      out += c;
-      // 4. avagraha after the merged ā and its marks
-      if (avagraha[li].has(i)) {
-        let k = i + 1; while (k < ch.length && SKIP.test(ch[k])) out += ch[k++];
-        if (k < ch.length && ch[k] !== ' ' && ch[k] !== 'ऽ') out += 'ऽ';
-        i = k - 1;
-      }
-    }
-    return heavyMarks(kampa(out));
-  });
+  return lines.map((line, li) => heavyMarks(kampa(rewrite(line, keepNasal[li], avagraha[li]))));
 }

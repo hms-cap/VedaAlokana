@@ -3,7 +3,7 @@
 // Data lives in ./data (built by scripts/build-data.mjs); routing is hash-based.
 
 import { toKnda } from './lipi.js';
-import { dakshinatyaVerse } from './dakshinatya.js';
+import { dakshinatyaVerse, dakshinatyaNasals } from './dakshinatya.js';
 
 const FACETS = {
   rishi: { label: 'Ṛṣi', deva: 'ऋषि', plural: 'seers', one: 'seer' },
@@ -120,7 +120,14 @@ function paintLipiToggle() {
 // ---------- Ṛgveda pāṭha: as South Indian books print it (default) or as VedaWeb publishes it ----------
 const PATHA = { dakshinatya: ['Dākṣiṇātya pāṭha', 'दाक्षिणात्यपाठः'], std: ['Antarjāla pāṭha', 'अन्तर्जालपाठः'] };
 // lines: the half-verses of one ṛk; pada: its padapāṭha words (word boundaries for nasals and avagraha)
-const svaraLines = (textId, lines, pada) => (prefs.patha === 'dakshinatya' && textId === 'rv' ? dakshinatyaVerse(lines, pada) : lines);
+// Ṛgveda: all four rules; Atharvaveda and Vājasaneyi: nasals inside a word as anusvāra (no
+// padapāṭha here, and they keep their own svara marks). The Taittirīya texts already print
+// the Taittirīya pāṭha, with its own nasals and avagrahas, so they are left as they are.
+const PATHA_TEXTS = new Set(['rv', 'av', 'yv']);
+const svaraLines = (textId, lines, pada) => {
+  if (prefs.patha !== 'dakshinatya' || !PATHA_TEXTS.has(textId)) return lines;
+  return textId === 'rv' ? dakshinatyaVerse(lines, pada) : dakshinatyaNasals(lines);
+};
 
 // ---------- menus in the reading script, or English ----------
 const SA = () => prefs.menu !== 'en';
@@ -236,6 +243,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.8.0', '2026-10-31', ['Kannada: an anudātta after ಁ (ಲೋಁ॒ ವೀಁ॒) also sits under its letter; checked over every accented syllable of all the Vedas.', 'Dākṣiṇātya pāṭha in the Atharvaveda and the Vājasaneyi Saṃhitā: nasals as anusvāra (इंद्र). The Taittirīya texts already print their own pāṭha.']],
   ['1.7.3', '2026-10-31', ['Kannada: every anudātta sits under its own letter, also under letters joined with their vowel sign (ಜಾ ಪು ವೋ) and before a visarga (ತೀಃ), instead of drifting toward the next letter.']],
   ['1.7.2', '2026-10-31', ['The Ṛgveda’s single-stroke pāṭha is now called Antarjāla pāṭha: the text as the online source gives it.']],
   ['1.7.1', '2026-10-31', ['The Ṛgveda’s single-stroke pāṭha is now called Sāmānya pāṭha (previously Śṛṅgeri style).']],
@@ -1030,7 +1038,7 @@ async function viewContainer(id, d1, d2, params) {
     hasDeva ? seg('Script', [['lipi', 'deva', 'देवनागरी'], ['lipi', 'knda', 'ಕನ್ನಡ']]).replace('class="seg"', 'class="seg lipi-seg"') : '',
     hasDeva && hasRoman ? seg('Show', [['script', 'both', T('Both', 'उभयम्')], ['script', 'deva', T('Script', 'लिपिः')], ['script', 'roman', 'IAST']]) : '',
     hasPada ? seg('Text', [['mode', 'samhita', T('Saṃhitā', 'संहितापाठः')], ['mode', 'pada', T('Padapāṭha', 'पदपाठः')]]) : '',
-    id === 'rv' && hasDeva ? seg('Pāṭha', Object.entries(PATHA).map(([k, [en, sa]]) => ['patha', k, `<span class="pt-m" lang="sa" aria-hidden="true">${k === 'dakshinatya' ? 'ई᳚' : 'ई॑'}</span>${T(en.replace(' style', '').replace(' pāṭha', ''), sa)}`])).replace('class="seg"', 'class="seg patha-seg"') : '',
+    PATHA_TEXTS.has(id) && hasDeva ? seg('Pāṭha', Object.entries(PATHA).map(([k, [en, sa]]) => ['patha', k, `<span class="pt-m" lang="sa" aria-hidden="true">${id !== 'rv' ? (k === 'dakshinatya' ? 'इं' : 'इन्') : k === 'dakshinatya' ? 'ई᳚' : 'ई॑'}</span>${T(en.replace(' style', '').replace(' pāṭha', ''), sa)}`])).replace('class="seg"', 'class="seg patha-seg"') : '',
     // translation, bhāṣya and ṛṣi · devatā · chandas: the one-tap toggles above (.quick)
   ].join('');
 
@@ -1536,7 +1544,7 @@ async function viewSettings() {
       <div class="seg wide-seg">${opt('menu', 'script', 'In the reading script')}${opt('menu', 'en', 'English')}</div></section>
     <section class="set"><h2>Script for Sanskrit text</h2><p>Names, headings and mantras switch together. Svara marks are kept.</p>
       <div class="seg wide-seg">${opt('lipi', 'deva', 'देवनागरी', 'dvb')}${opt('lipi', 'knda', 'ಕನ್ನಡ', 'knb')}</div></section>
-    <section class="set"><h2>Ṛgveda pāṭha</h2><p>Dākṣiṇātya pāṭha prints the Ṛgveda as South Indian recitation books do: a svarita on a heavy syllable with two strokes (dīrgha svarita <span lang="sa">ई᳚</span>), a nasal inside a word as anusvāra (<span lang="sa">इंद्र</span>), an avagraha where two pādas run together (<span lang="sa">दक्षि॑णेना॒ऽभि</span>), and a kampa with its vowel spelled out (<span lang="sa">र॒प्स्व(अ॒)न्१॒॑तः</span>). Antarjāla pāṭha is the text as the online source gives it (VedaWeb, after Aufrecht), every svarita with one stroke.</p>
+    <section class="set"><h2>Pāṭha</h2><p>Dākṣiṇātya pāṭha prints the Ṛgveda as South Indian recitation books do: a svarita on a heavy syllable with two strokes (dīrgha svarita <span lang="sa">ई᳚</span>), a nasal inside a word as anusvāra (<span lang="sa">इंद्र</span>), an avagraha where two pādas run together (<span lang="sa">दक्षि॑णेना॒ऽभि</span>), and a kampa with its vowel spelled out (<span lang="sa">र॒प्स्व(अ॒)न्१॒॑तः</span>). Antarjāla pāṭha is the text as the online source gives it (VedaWeb, after Aufrecht), every svarita with one stroke. In the Atharvaveda and the Vājasaneyi Saṃhitā the Dākṣiṇātya pāṭha writes nasals as anusvāra too; the Taittirīya texts keep their own pāṭha.</p>
       <div class="seg wide-seg">${opt('patha', 'dakshinatya', esc(PATHA.dakshinatya[0]))}${opt('patha', 'std', esc(PATHA.std[0]))}</div>
       <p class="svara-demo" lang="sa">${svaraLines('rv', ['आ नो॑ भर॒ दक्षि॑णेना॒भि स॒व्येन॒ प्र मृ॑श', 'इन्द्र॒ मा नो॒ वसो॒र्निर्भा॑क्'], ['ā', 'naḥ', 'bhara', 'dakṣiṇena', 'abhi', 'savyena', 'pra', 'mṛśa', 'indra', 'mā', 'naḥ', 'vasoḥ', 'niḥ', 'bhāk']).map((l) => `<span>${esc(l)}</span>`).join(' । ')}</p></section>
     <section class="set"><h2>Devanagari font</h2><p>Noto Serif is compact and even. Shobhika (IIT Bombay), made for Sanskrit and Vedic text, has larger letters and taller svarita marks. Kannada always uses Noto Serif Kannada.</p>

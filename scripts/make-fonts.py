@@ -256,52 +256,53 @@ def level_anudatta(font, level, gap, deep=None, under_letter=False):
 
 
 def visarga_swap(font):
-    """Kannada: let a svara mark after a visarga move in front of it, as it already does after ಂ.
+    """Kannada: let a svara mark after ಃ or ಁ move in front of it, as it already does after ಂ.
 
     The font hangs a svara mark from the glyph before it. After ಂ, the reph and the length
     mark ೕ it swaps the two (blws: [ಂ, mark] → [mark, ಂ], then reph, then ೕ), so the mark
-    reaches the letter. ಃ had no such rule, so in ತೀಃ॒, ನೋಃ॒, ರ್ಯಃ॒ the anudātta stopped at ೕ or the
-    reph and sat at the end of the letter, half under the next one. This adds ಃ to the
-    anusvāra rule: it takes the same slot in the syllable, so the later swaps carry the mark on.
+    reaches the letter. ಃ and ಁ had no such rule, so in ತೀಃ॒, ನೋಃ॒, ರ್ಯಃ॒, ಲ್ಲೋಁ॒, ವೀಁ॒ the
+    anudātta stopped at ೕ or the reph and sat at the end of the letter, half under the next
+    one. This adds ಃ and ಁ to the anusvāra rule: they take the same slot in the syllable, so
+    the later swaps carry the mark on.
     """
-    from fontTools.ttLib.tables import otTables as ot
     import copy
     cm = font.getBestCmap()
-    anus, vis = cm.get(0x0C82), cm.get(0x0C83)
-    if not anus or not vis:
-        return
+    anus = cm.get(0x0C82)
     gsub = font['GSUB'].table
     lookups = gsub.LookupList.Lookup
-    for lk in lookups:
-        if lk.LookupType != 5:
+    for cp in (0x0C83, 0x0C81):
+        x = cm.get(cp)
+        if not anus or not x:
             continue
-        for st in lk.SubTable:
-            if st.Format != 1 or anus not in st.Coverage.glyphs or vis in st.Coverage.glyphs:
+        for lk in lookups:
+            if lk.LookupType != 5:
+                continue
+            st = next((t for t in lk.SubTable if t.Format == 1 and anus in t.Coverage.glyphs), None)
+            if not st or x in st.Coverage.glyphs:
                 continue
             rs = st.SubRuleSet[st.Coverage.glyphs.index(anus)]
-            # each rule: (0, mark-from-ಂ lookup), (1, anything→ಂ lookup)
             to_anus = {r.SubstLookupRecord[1].LookupListIndex for r in rs.SubRule}
             if len(to_anus) != 1:
-                return
-            src = lookups[to_anus.pop()]
-            new = copy.deepcopy(src)
+                break
+            new = copy.deepcopy(lookups[to_anus.pop()])
             for t in new.SubTable:
-                t.mapping = {k: vis for k in t.mapping}
+                t.mapping = {k: x for k in t.mapping}
             lookups.append(new)
             gsub.LookupList.LookupCount = len(lookups)
             vi = len(lookups) - 1
-            for r in rs.SubRule:   # the mark-from-ಂ lookups learn ಃ too
+            for r in rs.SubRule:   # the mark-from-ಂ lookups learn this sign too
                 for t in lookups[r.SubstLookupRecord[0].LookupListIndex].SubTable:
-                    t.mapping[vis] = t.mapping[anus]
+                    t.mapping[x] = t.mapping[anus]
             nrs = copy.deepcopy(rs)
+            nrs.SubRule = [r for r in nrs.SubRule if r.Input[0] != x]   # not ಁ before ಁ
+            nrs.SubRuleCount = len(nrs.SubRule)
             for r in nrs.SubRule:
                 r.SubstLookupRecord[1].LookupListIndex = vi
-            pairs = sorted(zip(st.Coverage.glyphs + [vis], st.SubRuleSet + [nrs]), key=lambda x: font.getGlyphID(x[0]))
-            st.Coverage.glyphs = [x[0] for x in pairs]; st.SubRuleSet = [x[1] for x in pairs]
+            pairs = sorted(zip(st.Coverage.glyphs + [x], st.SubRuleSet + [nrs]), key=lambda p: font.getGlyphID(p[0]))
+            st.Coverage.glyphs = [p[0] for p in pairs]; st.SubRuleSet = [p[1] for p in pairs]
             st.SubRuleSetCount = len(pairs)
-            print(f'  svara marks move in front of ಃ ({len(nrs.SubRule)} rules)')
-            return
-
+            print(f'  svara marks move in front of U+{cp:04X} ({len(nrs.SubRule)} rules)')
+            break
 
 def blank(font, names):
     from fontTools.ttLib.tables._g_l_y_f import Glyph
