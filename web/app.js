@@ -294,6 +294,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.16.3', '2026-10-31', ['The Chant view button is back on every sūkta page and at the head of the reader. Since 1.13.0 it was only an icon at the far end of the options bar, off screen on phones.']],
   ['1.16.2', '2026-10-31', ['The shared picture opens with today’s brief pañcāṅga: date, place, māsa · pakṣa · tithi, saṃvatsara · ṛtu · ayana · vāra, nakṣatra and yoga.']],
   ['1.16.1', '2026-10-31', ['The shared picture is one card: all sections on one left edge, ivory on deep indigo with gold rules.']],
   ['1.16.0', '2026-10-31', ['Today’s mantra: a share button makes one picture of all its cards, and a star saves the mantra to My list. The pañcāṅga fold label no longer shows markup in the Sanskrit menu.']],
@@ -1081,7 +1082,7 @@ async function viewSuktaVersions(s, params) {
     <p class="sk-info">${T(VEDA_SHORT[s.veda] || '', VEDA_SA[s.veda])} · ${sukRef(s)} · ${T(k[0], k[1])} · ${SA() ? `<span lang="sa">${esc(s.devataDeva)}</span>` : `<em>Devatā</em> ${esc(s.devata)}`} · ${F(ver.verses.length)} ${T('verses', 'मन्त्राः')}</p>
     ${s.versions.length < 2 ? '' : `<div class="seg wide-seg sk-ver" role="group" aria-label="Pāṭha">${s.versions.map((v) => `<a data-r href="#/s/${s.id}${v === s.versions[0] ? '' : `?p=${v.id}`}" aria-pressed="${String(v === ver)}">${T(v.name, v.deva)}</a>`).join('')}</div>`}
     <p class="lede sk-note">${esc(ver.note)}${ver === s.versions[0] && s.versions.length > 1 ? ' Words that read differently in the Khila text are <mark class="pv">marked</mark>, with its reading under the verse.' : ''}</p>
-    <div class="sk-acts"><button type="button" class="chip" id="skCopy">${T('Copy', 'प्रतिलिपिः')}</button></div>
+    <div class="sk-acts">${chantBtn()}<button type="button" class="chip" id="skCopy">${T('Copy', 'प्रतिलिपिः')}</button></div>
     <div class="verses">${body}</div>
   </article>`;
   const cparts = [];
@@ -1154,6 +1155,7 @@ function suktaExtras(s, all, params, cparts) {
     onPlace: (k) => { lastRead.v = k + 1; try { localStorage.setItem('vedalokana.last', JSON.stringify(lastRead)); } catch { /* storage unavailable */ } },
   });
   obAdd('tsize', obStar(s.id), obChant(() => openChant(model(), 0)));
+  main.querySelector('.sk-acts .chant-btn')?.addEventListener('click', () => openChant(model(), 0));
   const v = Number(params?.get('v'));
   if (chantResume !== null) { const k = chantResume; chantResume = null; openChant(model(), k); }
   else if (v > 1) requestAnimationFrame(() => document.getElementById(`sv${v}`)?.scrollIntoView({ block: 'start' }));
@@ -1207,7 +1209,7 @@ async function viewSukta(sid, params) {
     ${listBar(s, all, params)}
     <h1>${SA() ? `<span lang="sa">${esc(s.deva)}</span>` : `${esc(s.name)}<span class="h1-deva" lang="sa">${esc(s.deva)}</span>`}</h1>
     <p class="sk-info">${T(vedaName?.name || '', VEDA_SA[s.veda])} · ${sukRef(s)} · ${T(k[0], k[1])} · ${SA() ? `<span lang="sa">${esc(s.devataDeva)}</span>` : `<em>Devatā</em> ${esc(s.devata)}`}${s.count > 1 ? ` · ${F(s.count)} ${T('verses', 'मन्त्राः')}` : ''}</p>
-    <div class="sk-acts">${s.reader ? `<a class="chip" href="${s.reader}">${T('Open in the reader', 'मूलग्रन्थे पठ')}</a>` : ''}<button type="button" class="chip" id="skCopy">${T('Copy', 'प्रतिलिपिः')}</button></div>
+    <div class="sk-acts">${chantBtn()}${s.reader ? `<a class="chip" href="${s.reader}">${T('Open in the reader', 'मूलग्रन्थे पठ')}</a>` : ''}<button type="button" class="chip" id="skCopy">${T('Copy', 'प्रतिलिपिः')}</button></div>
     <div class="verses">${body}</div>
   </article>`;
   // chant view: one part per place the sūkta is gathered from
@@ -1665,7 +1667,7 @@ async function viewContainer(id, d1, d2, params) {
     <div class="reader-head"><div>
       <h1>${cref ? (SA() && contSa(meta, cref) ? `<span lang="sa">${esc(contSa(meta, cref))}</span>` : `${esc(meta.levels[1] || meta.levels[2])} ${esc(cref)}`) : T(meta.name, meta.deva)}</h1>
       ${c[2] && meta.refFmt !== 'label' ? `<div class="ctitle" lang="sa">${esc(c[2])}</div>` : ''}
-    </div></div>
+    </div>${hasDeva ? chantBtn() : ''}</div>
 
     ${summary.length ? `<div class="tags" id="sumTags"${prefs.tags ? '' : ' hidden'}>${summary.map(([f, e]) => `<a class="tag" href="${findHref(id, { [f]: e[0] })}"><em>${T(FACETS[f].label, FACET_SA[f])}</em>${e[2] ? `<span class="dv" lang="sa">${esc(e[2])}</span>` : ''}${SA() && e[2] ? '' : `<span>${esc(cap(e[1]))}</span>`}</a>`).join('')}</div>` : ''}
 
@@ -1778,6 +1780,7 @@ async function viewContainer(id, d1, d2, params) {
   const sk = await sukOfSection(id, d1, d2, verses.length);
   obAdd(PATHA_TEXTS.has(id) && hasDeva && 'patha', hasPada && 'mode', hasDeva && hasRoman && 'script', summary.length && 'tags',
     hasTr && (hasDeva || hasRoman) && 'tr', hasBh && 'bhashya', 'tsize', sk && obStar(sk.id), hasDeva && obChant(() => openChant(chantModel(), 0)));
+  main.querySelector('.reader-head .chant-btn')?.addEventListener('click', () => openChant(chantModel(), 0));
   if (sk) visitSukta(sk.id);
   const chantModel = () => {
     const vs = verses.filter((v) => v[1].length);
