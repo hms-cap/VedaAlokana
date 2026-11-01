@@ -2,6 +2,12 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.18.0 — 2026-11-01
+- **A shorter Home** (about 1,450 px on a phone, from 3,200): *Sūktas* shows only the Veda buttons with their counts; a tap opens that Veda's sūkta chips, another tap closes them, and the open Veda is remembered until the app is closed. *My sūktas · n* is a button under Continue chanting. The Veda tiles are smaller and now come last.
+- **Veda order** everywhere (Home, Library, switcher): Ṛgveda, Kṛṣṇa Yajurveda, Atharvaveda, Śukla Yajurveda, Sāmaveda.
+- **Bottom bar:** Home · Library · My sūktas. The Sūktas tab is removed; the full list (A–Z, by Veda, by devatā) is behind **All 121** on Home. **My sūktas** is one plain list, without the Recent and Frequent tabs.
+- **Open sūktas in the chant view:** Settings → *Opening a sūkta*, or ⋯ → Reading. With *Chant view* on, a tap on a sūkta in Home, the full list or My sūktas opens the chant view at once; closing it leaves you on the reading page. Reading view stays the default.
+
 ## 1.17.0 — 2026-11-01
 - **One top bar.** Script, menus, theme, **Translation** and **Sāyaṇa bhāṣya** are always in the same place, then the page's own options (padapāṭha, ṛṣi·devatā·chandas, text size, star, chant). On pages with nothing to translate or explain (Library, My sūktas, Settings, the Yajurveda…) the two icons stay but are dimmed, and a tap says what they apply to. The svara-style (ई᳚/ई॑) and IAST switches are no longer in the bar; they remain in the ⋯ menu under *This page*. Defaults are unchanged (Dākṣiṇātya svara, IAST off).
 - **Translation and bhāṣya everywhere.** Sūkta pages show Griffith's translation and, for ṛks from the Ṛgveda, Sāyaṇa's bhāṣya folded under each ṛk; Śrī Sūkta-type pāṭha pages do the same for the ṛks they take from the Ṛgveda. On Home, Today's mantra gets *Translation* and *Sāyaṇa bhāṣya* cards when those are on and exist; the shared picture includes them. The chant view is unchanged.

@@ -124,7 +124,7 @@ const PREF_KEY = 'vedalokana.prefs';
 const prefs = (() => {
   // Default view is made for chanting: the text in script only, no romanisation or translation.
   // `v` is bumped when defaults change, so an earlier saved reading view moves to the new one once.
-  const d = { v: 3, script: 'deva', mode: 'samhita', tr: false, tags: true, bhashya: false, lipi: 'deva', svara: 'bold', suktaBy: 'veda', theme: 'system', menu: 'script', patha: 'dakshinatya', dfont: 'noto' };
+  const d = { v: 3, script: 'deva', mode: 'samhita', tr: false, tags: true, bhashya: false, lipi: 'deva', svara: 'bold', suktaBy: 'veda', theme: 'system', menu: 'script', patha: 'dakshinatya', dfont: 'noto', openIn: 'reading' };
   try {
     const saved = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
     if ((saved.v || 1) < 2) { delete saved.script; delete saved.tr; delete saved.mode; }
@@ -294,6 +294,10 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.18.0', '2026-11-01', [
+    'A shorter Home: Veda buttons with counts open their sūkta chips on a tap; a My sūktas button; smaller Veda tiles. Vedas are listed Ṛgveda, Kṛṣṇa Yajurveda, Atharvaveda, Śukla Yajurveda, Sāmaveda everywhere.',
+    'The Sūktas tab is gone (the full list is behind “All 121” on Home); My sūktas is one plain list.',
+    'New setting: open sūktas straight in the chant view (⋯ menu, Settings → Opening a sūkta).']],
   ['1.17.0', '2026-11-01', [
     'The top bar is the same on every page: script, menus, theme, then Translation and Sāyaṇa bhāṣya, dimmed where a page has none. The svara-style and IAST switches moved into the ⋯ menu.',
     'Translation and Sāyaṇa bhāṣya on sūkta pages, on Śrī Sūkta-type pāṭha pages and as cards on Home’s mantra (and in the shared picture).',
@@ -661,7 +665,15 @@ async function json(url) {
   if (!r.ok) throw new Error(`Could not load ${url} (${r.status})`);
   return r.json();
 }
-async function catalog() { return (cache.catalog ||= await json('data/catalog.json')); }
+const VEDA_ORDER = ['rv', 'kyv', 'av', 'syv', 'sv'];   // Ṛgveda, Kṛṣṇa Yajurveda, Atharvaveda, Śukla Yajurveda, Sāmaveda
+async function catalog() {
+  if (!cache.catalog) {
+    const c = await json('data/catalog.json');
+    c.vedas.sort((a, b) => VEDA_ORDER.indexOf(a.id) - VEDA_ORDER.indexOf(b.id));
+    cache.catalog = c;
+  }
+  return cache.catalog;
+}
 async function vedaMeta(id) { return (await catalog()).texts.find((v) => v.id === id); }
 async function vedaGroup(id) { return (await catalog()).vedas.find((v) => v.id === id); }
 async function index(id) {
@@ -1089,6 +1101,11 @@ async function viewHome() {
       <svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" class="ring-bg"/><circle cx="24" cy="24" r="20" class="ring" stroke-dasharray="${(pct * 125.7).toFixed(1)} 126" transform="rotate(-90 24 24)"/></svg>
       <span class="cont-t"><small>${T('Continue chanting', 'पाठम् अनुवर्तय')}</small><b>${SA() && last.whereSa ? `<span lang="sa">${esc(last.whereSa)}</span>` : esc(last.where)}</b><small>${SA() && last.textSa ? `<span lang="sa">${esc(last.textSa)}</span>` : esc(last.text)}${last.of ? ` · ${SA() ? `<span lang="sa">${dg(last.v)} / ${dg(last.of)}</span>` : `${last.v} of ${last.of}`}` : ''}</small></span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>` : ''}
+    <a class="my-btn" href="#/my"><span class="my-ic">${STAR(true)}</span><span class="my-t">${T('My sūktas', 'मम सूक्तानि')}</span><span class="my-n">${F(my.saved.length)}</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+    ${suk.length ? `<div class="sec-h"><h2>${T('Sūktas', 'सूक्तानि')}</h2><a href="#/suktas">${SA() ? `<span lang="sa">सर्वाणि ${dg(suk.length)}</span>` : `All ${suk.length}`}</a></div>
+    ${sukVedaButtons(cat, suk, homeSkOpen, 'button')}
+    <div class="schips" id="homeSk"${homeSkOpen ? '' : ' hidden'}>${homeSkOpen ? sukChips(suk, homeSkOpen) : ''}</div>` : ''}
     <div class="sec-h"><h2>${T('The Vedas', 'वेदाः')}</h2><a href="#/library">${T('Library', MENU_SA.library)}</a></div>
     <div class="vtiles">${cat.vedas.map((v) => {
     const s = v.layers.samhita.map((i) => byId[i]).find((x) => x.has.svara || x.has.roman) || byId[v.layers.samhita[0]];
@@ -1096,24 +1113,15 @@ async function viewHome() {
         ${VEDA_ICON[v.id] ? vedaIcon(v.id, 'vt-i') + vedaIcon(v.id, 'vt-w') : `<span class="vt-g" lang="sa">${esc(VEDA_GLYPH[v.id] || v.deva[0])}</span>`}
         <span class="vt-n"><b>${T(v.name, VEDA_SA[v.id])}</b><small>${s ? `${F(s.verses)} ${unitHTML(s)}` : ''}</small></span></a>`;
   }).join('')}</div>
-    ${suk.length ? `<div class="sec-h"><h2>${T('Sūktas', 'सूक्तानि')}</h2><a href="#/suktas">${SA() ? `<span lang="sa">सर्वाणि ${dg(suk.length)}</span>` : `All ${suk.length}`}</a></div>
-    ${sukVedaButtons(cat, suk, homeVeda(suk), 'button')}
-    <div class="schips" id="homeSk">${sukChips(suk, homeVeda(suk))}</div>` : ''}
     <p class="lede home-foot">Every text comes from an openly published digital edition.</p>
   </div>`;
   renderPanchanga(); homeOfflineChip();
   obCan.tr = !!dm.trEn; obCan.bhashya = !!dm.bhx;
   wireDaily(dm);
-  main.querySelectorAll('[data-myk]').forEach((b) => b.addEventListener('click', () => {
-    prefs.homeMy = b.dataset.myk; savePrefs();
-    main.querySelectorAll('[data-myk]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-    $('#homeMy').innerHTML = myChips(suk, prefs.homeMy);
-    $('#homeMyOpen')?.setAttribute('href', `#/suktas?list=${prefs.homeMy}`);
-  }));
   main.querySelectorAll('.skv [data-skv]').forEach((b) => b.addEventListener('click', () => {
-    prefs.homeSk = b.dataset.skv; savePrefs();
-    main.querySelectorAll('.skv [data-skv]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-    $('#homeSk').innerHTML = sukChips(suk, prefs.homeSk);
+    homeSkOpen = homeSkOpen === b.dataset.skv ? null : b.dataset.skv;   // tap again to close; kept until the app is closed
+    main.querySelectorAll('.skv [data-skv]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.skv === homeSkOpen)));
+    const box = $('#homeSk'); box.hidden = !homeSkOpen; box.innerHTML = homeSkOpen ? sukChips(suk, homeSkOpen) : '';
   }));
 }
 
@@ -1131,10 +1139,10 @@ function homeMy(suk) {
 }
 
 // ---------- sūktas: the Veda buttons and chips shared by Home and the Sūktas tab ----------
-const homeVeda = (suk) => (suk.some((e) => e.veda === prefs.homeSk) ? prefs.homeSk : 'rv');
+let homeSkOpen = null;   // the Veda whose sūkta chips are open on Home (this visit only)
 const sukRef = (e) => (SA() && e.refs?.length ? `<span lang="sa">${esc(e.refs.map(([t, r]) => (r ? `${REF_SA[t] || ''} ${dg(r)}` : (cache.catalog?.texts.find((x) => x.id === t)?.deva || dg(e.ref)))).join('; ').trim())}</span>` : SA() ? `<span lang="sa">${esc(dg(e.ref))}</span>` : esc(e.ref));
 function sukChips(suk, veda) {
-  return suk.filter((e) => e.veda === veda).map((e) => `<a class="schip" href="${esc(e.href)}"><span lang="sa">${esc(e.deva)}</span><small>${sukRef(e)}</small></a>`).join('');
+  return suk.filter((e) => e.veda === veda).map((e) => `<a class="schip" data-sk href="${esc(e.href)}"><span lang="sa">${esc(e.deva)}</span><small>${sukRef(e)}</small></a>`).join('');
 }
 // as buttons (Home: switch the chips in place) or as links (Sūktas tab: filter the list)
 function sukVedaButtons(cat, suk, cur, as, href) {
@@ -2261,6 +2269,7 @@ const OB = {
   bhashya: { en: 'Sāyaṇa bhāṣya', sa: 'सायणभाष्यम्', ch: [[true, 'Show', 'दर्शय'], [false, 'Hide', 'गोपय']], icon: () => OB_ICON.bhashya, on: (v) => v },
   tsize: { en: 'Text size', sa: 'अक्षरमानम्', icon: () => '<span class="ob-t" aria-hidden="true">A<small>A</small></span>', on: () => (prefs.tsize || 1) !== 1 },
   svara: { en: 'Svara marks', sa: 'स्वरचिह्नानि', ch: [['bold', 'Bold', 'स्थूलम्'], ['std', 'Standard', 'सामान्यम्']] },
+  openIn: { en: 'Open sūktas in', sa: 'सूक्तं पठ्यते', ch: [['reading', 'Reading view', 'पठनदृश्ये'], ['chant', 'Chant view', 'पारायणदृश्ये']] },
   dfont: { en: 'Devanagari font', sa: 'देवनागरीलिपिरूपम्', ch: [['noto', 'Noto Serif', 'Noto Serif'], ['shobhika', 'Shobhika', 'Shobhika']] },
 };
 const OB_GLOBAL = ['lipi', 'menu', 'theme', 'tr', 'bhashya'];
@@ -2345,7 +2354,7 @@ function openOptPanel(only) {
       ${pageKeys.length ? `<div class="ob-h">${T('This page', 'अस्मिन् पृष्ठे')}</div>${pageKeys.filter((k) => k !== 'tsize').map(row).join('')}` : ''}
       ${pageKeys.includes('tsize') ? sizeRow() : ''}
       ${acts.length ? `<div class="ob-acts">${acts.map((a) => `<button type="button" class="chip" data-pact="${a.id}"${a.on !== undefined ? ` aria-pressed="${String(!!a.on)}"` : ''}>${a.icon}<span>${esc(a.label)}</span></button>`).join('')}</div>` : ''}
-      <div class="ob-h">${T('Reading', 'पठनम्')}</div>${row('svara')}${row('dfont')}
+      <div class="ob-h">${T('Reading', 'पठनम्')}</div>${row('svara')}${row('dfont')}${row('openIn')}
       <div class="ob-links"><a class="ob-all" href="#/settings?s=offline">${T('Offline downloads', 'अनुजालविना पठनम्')} ›</a><a class="ob-all" href="#/settings">${T('All settings', 'सर्वे विन्यासाः')} ›</a></div>`;
     panel.querySelectorAll('[data-k]').forEach((b) => b.addEventListener('click', () => {
       const k = b.dataset.k; const raw = b.dataset.v;
@@ -2426,7 +2435,7 @@ function renderChrome(r, path) {
   const lastC = path[path.length - 1];
   $('#topTitle').textContent = lastC ? Tp(lastC.label, lastC.deva) : (named ? Tp(named, MENU_SA[page === 's' ? 'suktas' : page]) : '');
   // tabs
-  const tab = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 'about' ? 'settings' : page === 's' ? (r.params.get('from') === 'my' ? 'my' : 'suktas') : page);
+  const tab = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 'about' ? 'settings' : page === 's' ? (r.params.get('from') === 'my' ? 'my' : '') : page === 'suktas' ? '' : page);
   $('#tabbar').querySelectorAll('[data-tab]').forEach((a) => (a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
   document.body.classList.toggle('reading', page === 'v' && r.parts[2] === 'c');
   if (!(page === 'v' && r.parts[2] === 'c')) { $('#readerbar').hidden = true; readerNav = page === 's' ? sukNav : null; }
@@ -2493,7 +2502,7 @@ async function viewSuktas(params) {
   main.querySelectorAll('[data-by]').forEach((a) => a.addEventListener('click', () => { prefs.suktaBy = a.dataset.by; savePrefs(); }));
 }
 // one row of a sūkta list
-const sukRow = (by, listK) => (e) => `<a class="sk-row" href="${listK === 'saved' ? fromMy(e.href) : e.href}">
+const sukRow = (by, listK) => (e) => `<a class="sk-row" data-sk href="${listK === 'saved' ? fromMy(e.href) : e.href}">
       <span class="sk-top"><span class="sk-name"><span class="dv" lang="sa">${esc(e.deva)}</span><span class="ia">${esc(e.name)}</span></span><span class="sk-ref">${esc(e.ref)}</span></span>
       <span class="sk-line" lang="sa">${esc(e.line)}</span>
       <span class="sk-meta">${by !== 'devata' ? `<span><em>Devatā</em> ${esc(e.devata)}</span>` : ''}${by !== 'veda' ? `<span>${esc(VEDA_SHORT[e.veda])}</span>` : ''}<span>${esc((KIND[e.kind] || KIND.sūkta)[0])}${e.count > 1 ? ` · ${fmt(e.count)} verses` : ''}</span></span>
@@ -2502,11 +2511,9 @@ const sukRow = (by, listK) => (e) => `<a class="sk-row" href="${listK === 'saved
 async function viewMy(params) {
   setTitle('My sūktas');
   const all = (cache.suktas ||= await json('data/suktas.json'));
-  const k = MY_LISTS.some(([x]) => x === params.get('list')) ? params.get('list') : (prefs.myTab || 'saved');
-  if (prefs.myTab !== k) { prefs.myTab = k; savePrefs(); }
+  const k = 'saved';   // one plain list; recent and frequent are no longer shown
   main.innerHTML = `<div class="col">
     <h1>${T('My sūktas', 'मम सूक्तानि')}${SA() ? '' : '<span class="h1-deva" lang="sa">मम सूक्तानि</span>'}</h1>
-    <nav class="chips my-tabs" aria-label="My sūktas">${MY_LISTS.map(([x, en, sa]) => `<a class="chip" data-r href="#/my?list=${x}"${k === x ? ' aria-current="true"' : ''}>${x === 'saved' ? STAR(k === x) : ''}${T(en, sa)} <small>${F(myList(x, all).length)}</small></a>`).join('')}</nav>
     ${myListHTML(k, all, sukRow('veda-none', k))}
     <p class="my-foot">${T('Kept on this device. Export or import your list in', 'अस्मिन् यन्त्रे एव। सङ्ग्रहस्य निर्यातः आयातश्च')} <a href="#/settings?s=mysk">${T('Settings', 'विन्यासे')}</a>.</p>
   </div>`;
@@ -2555,6 +2562,8 @@ async function viewSettings() {
     <section class="set"><h2>Pāṭha</h2><p>Dākṣiṇātya pāṭha prints the Ṛgveda as South Indian recitation books do: a svarita on a heavy syllable with two strokes (dīrgha svarita <span lang="sa">ई᳚</span>), a nasal inside a word as anusvāra (<span lang="sa">इंद्र</span>), an avagraha where two pādas run together (<span lang="sa">दक्षि॑णेना॒ऽभि</span>), and a kampa with its vowel spelled out (<span lang="sa">र॒प्स्व(अ॒)न्१॒॑तः</span>). Antarjāla pāṭha is the text as the online source gives it (VedaWeb, after Aufrecht), every svarita with one stroke. In the Atharvaveda and the Vājasaneyi Saṃhitā the Dākṣiṇātya pāṭha writes nasals as anusvāra too; the Taittirīya texts keep their own pāṭha.</p>
       <div class="seg wide-seg">${opt('patha', 'dakshinatya', esc(PATHA.dakshinatya[0]))}${opt('patha', 'std', esc(PATHA.std[0]))}</div>
       <p class="svara-demo" lang="sa">${svaraLines('rv', ['आ नो॑ भर॒ दक्षि॑णेना॒भि स॒व्येन॒ प्र मृ॑श', 'इन्द्र॒ मा नो॒ वसो॒र्निर्भा॑क्'], ['ā', 'naḥ', 'bhara', 'dakṣiṇena', 'abhi', 'savyena', 'pra', 'mṛśa', 'indra', 'mā', 'naḥ', 'vasoḥ', 'niḥ', 'bhāk']).map((l) => `<span>${esc(l)}</span>`).join(' । ')}</p></section>
+    <section class="set"><h2>Opening a sūkta</h2><p>From Home, the Sūktas list and My sūktas, a sūkta can open on its reading page (with translation and bhāṣya) or straight in the chant view. Closing the chant view leaves you on the reading page.</p>
+      <div class="seg wide-seg">${opt('openIn', 'reading', 'Reading view')}${opt('openIn', 'chant', 'Chant view')}</div></section>
     <section class="set"><h2>Devanagari font</h2><p>Noto Serif is compact and even. Shobhika (IIT Bombay), made for Sanskrit and Vedic text, has larger letters and taller svarita marks. Kannada always uses Noto Serif Kannada.</p>
       <div class="seg wide-seg">${opt('dfont', 'noto', 'Noto Serif')}${opt('dfont', 'shobhika', 'Shobhika', 'fontb-shobhika')}</div></section>
     <section class="set"><h2>Svara marks</h2><p>Bold marks are drawn heavier so <span lang="sa">॑</span> and <span lang="sa">॒</span> stand out at reading size; Standard keeps each font’s own thin strokes. In both, every anudātta sits at the same depth under the line.</p>
@@ -2689,6 +2698,13 @@ if (MEMORY) {
 }
 setupSearch();
 document.querySelectorAll('#lipiToggle [data-lipi]').forEach((b) => b.addEventListener('click', () => setLipi(b.dataset.lipi)));
+// with "Open sūktas in: Chant view", a tap on a sūkta in a list opens the chant view at once
+document.addEventListener('click', (e) => {
+  const a = e.target.closest?.('a[data-sk]');
+  if (!a || prefs.openIn !== 'chant' || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey) return;
+  const h = a.getAttribute('href'); if (!h?.startsWith('#/s/')) return;
+  e.preventDefault(); chantResume = 0; go(h);
+});
 route();
 setTimeout(maybeWelcome, 2500);
 
