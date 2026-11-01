@@ -101,7 +101,12 @@ function aithal(name) {
   for (const v of verses) { if (!v.n) { head = v.head; continue; } out.push(head ? { ...v, head } : v); head = null; }
   return { versions: [{ id: 'main', name: '', deva: '', note: `As in Dayananda Aithal’s Saswara Ṛgveda${out.some((v) => v.src) ? '; its ṛks of the Ṛgveda are shown from the app’s Ṛgveda, in the chosen pāṭha' : ', with its svaras'}.`, verses: out }] };
 }
-const EXTRA = { 'sri-sukta': sriSukta, aithal };
+// The twelve devatā gāyatrīs of TĀ 10.1, complete, from the Āndhra pāṭha (scripts/sources/devata-gayatri.json).
+function devataGayatri() {
+  const src = JSON.parse(fs.readFileSync(new URL('./sources/devata-gayatri.json', import.meta.url), 'utf8'));
+  return { versions: [{ id: 'main', name: '', deva: '', note: 'The twelve gāyatrīs of Mahānārāyaṇa Upaniṣad / Taittirīya Āraṇyaka 10.1.5–7, in the Āndhra pāṭha with svaras.', verses: src.items.map((it, k) => ({ n: k + 1, head: it.head, lines: it.lines })) }] };
+}
+const EXTRA = { 'sri-sukta': sriSukta, 'devata-gayatri': devataGayatri, aithal };
 
 export function buildSuktas(OUT) {
   const cat = JSON.parse(fs.readFileSync(path.join(OUT, 'catalog.json'), 'utf8'));
@@ -231,9 +236,10 @@ export function buildSuktas(OUT) {
     }
     // a part may be [where, title, title deva]: a heading in the sūkta (Navagraha: सूर्यः, चन्द्रः …)
     const segs = e.parts.flatMap((p) => {
-      const [where, title, titleDeva] = Array.isArray(p) ? p : [p];
+      const [where, title, titleDeva, merge] = Array.isArray(p) ? p : [p];
       const out = typeof where === 'string' ? refSegs(where) : phraseSegs(where);
       if (title) Object.assign(out[0], { title, titleDeva });
+      if (merge) out.forEach((g) => { g.merge = true; });
       return out;
     });
     let id = slug(e.name); if (seen.has(id)) id = slug(`${e.name} ${e.veda}`); seen.add(id);
@@ -257,7 +263,7 @@ export function buildSuktas(OUT) {
     const single = segs.length === 1 && !s0.a && !s0.b;
     return {
       id, veda: e.veda, name: e.name, deva: e.deva, devata: e.devata, devataDeva: e.devataDeva, kind: e.kind, aliases: e.aliases,
-      ref, refs, text: s0.t, segs, count: verses.length, line: line.trim(), roman: (!s0.a && v0[2] && v0[2][0]) || '',
+      ref, refs, text: s0.t, segs, count: segs.every((g) => g.merge) ? segs.length : verses.length, line: line.trim(), roman: (!s0.a && v0[2] && v0[2][0]) || '',
       href: `#/s/${id}`, reader: single ? `#/v/${s0.t}/c/${s0.d1}/${s0.d2}${s0.v[0] !== file(s0.t, s0.d1)[s0.d2][0][0] ? `?v=${s0.v[0]}` : ''}` : '',
     };
   });

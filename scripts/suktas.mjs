@@ -23,6 +23,10 @@ const S = (veda, rows) => rows.map(([name, deva, devata, devataDeva, kind, label
   veda, name, deva, devata, devataDeva, kind: kind || 'sūkta', label, parts,
 }));
 
+// An praśna of the Taittirīya Saṃhitā: each anuvāka is its chunks (the source's
+// ~50-word units) gathered under one heading and one number.
+const ORD = ['प्रथमः', 'द्वितीयः', 'तृतीयः', 'चतुर्थः', 'पञ्चमः', 'षष्ठः', 'सप्तमः', 'अष्टमः', 'नवमः', 'दशमः', 'एकादशः'];
+const anuvakas = (ref, cuts) => cuts.map(([a, b], i) => [`ts ${ref}.${a}${b > a ? `-${b}` : ''}`, `Anuvāka ${i + 1}`, ORD[i].replace(/ः$/, 'ोऽनुवाकः'), 'merge']);
 const ENTRIES = [
   ...S('rv', [
     ['Gaṇapati Prārthanā (gaṇānāṃ tvā)', 'गणपतिप्रार्थना', 'Brahmaṇaspati', 'ब्रह्मणस्पतिः', 'mantra', '', 'rv 2.23.1'],
@@ -129,8 +133,10 @@ const ENTRIES = [
   ...S('kyv', [
     ['Gaṇapati Prārthanā (Taittirīya)', 'गणपतिप्रार्थना', 'Gaṇapati', 'गणपतिः', 'mantra', 'TS 2.3.14',
       { t: 'ts', in: '2.3', from: 'गणानां त्वा गणपतिं', to: 'सीद सादनम्' }],
-    ['Śrī Rudram (Namakam)', 'श्रीरुद्रम् (नमकम्)', 'Rudra', 'रुद्रः', 'praśna', 'TS 4.5', 'ts 4.5'],
-    ['Camakam', 'चमकम्', 'Agni and Viṣṇu', 'अग्नाविष्णू', 'praśna', 'TS 4.7', 'ts 4.7'],
+    ['Śrī Rudram (Namakam)', 'श्रीरुद्रम् (नमकम्)', 'Rudra', 'रुद्रः', 'praśna', 'TS 4.5',
+      ...anuvakas('4.5', [[1, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14], [15, 16], [17, 18], [19, 20], [21, 25], [26, 27]])],
+    ['Camakam', 'चमकम्', 'Agni and Viṣṇu', 'अग्नाविष्णू', 'praśna', 'TS 4.7',
+      ...anuvakas('4.7', [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14], [15, 15], [16, 16], [17, 18], [19, 20]])],
     ['Viṣṇu Sūkta (Taittirīya)', 'विष्णुसूक्तम्', 'Viṣṇu', 'विष्णुः', '', 'TS 1.2.13',
       { t: 'ts', in: '1.2', from: 'विष्णोर्नुकं वीर्याणि', to: 'विष्णवे त्वा' }],
     ['Bhū Sūkta (bhūmir bhūmnā)', 'भूसूक्तम्', 'Bhūmi', 'भूमिः', '', 'TS 1.5.3',
@@ -149,11 +155,13 @@ const ENTRIES = [
     ['Uttaranārāyaṇa', 'उत्तरनारायणम्', 'Puruṣa', 'पुरुषः', 'anuvāka', 'TĀ 3.13',
       { t: 'ta', in: '3', from: 'अद्भ्यः सम्भूतः', to: 'सर्वं मनिषाण' }],
     ['Mṛttikā Sūkta', 'मृत्तिकासूक्तम्', 'Mṛttikā', 'मृत्तिका', '', 'TĀ 10.1',
-      { t: 'ta', in: '10', from: 'भूमिर्धेनुर्धरणी', n: 1 }],
+      [{ t: 'ta', in: '10', from: 'अश्वक्रान्ते रथक्रान्ते', to: 'सविता च पुनन्तु पुनः पुनः' }, '', '', 'merge']],
+    ['Dūrvā Sūkta', 'दूर्वासूक्तम्', 'Dūrvā', 'दूर्वा', '', 'TĀ 10.1',
+      { t: 'ta', in: '10', from: 'सहस्रपरमा देवी', to: 'दुस्वप्ननाशिनी' }],
     ['Durgā Sūkta', 'दुर्गासूक्तम्', 'Durgā', 'दुर्गा', '', 'TĀ 10.2',
       { t: 'ta', in: '10', from: 'जातवेदसे सुनवाम', to: 'सौभगमायजस्व' }],
     ['Gāyatrī Mantras (devatā gāyatrīs)', 'देवतागायत्र्यः', 'Many devatās', 'नानादेवताः', 'anuvāka', 'TĀ 10.1',
-      { t: 'ta', in: '10', from: 'पुरुषस्य विद्म सहस्राक्षस्य', to: 'तन्नो दुर्गिः प्रचोदयात्' }],
+      { versions: 'devata-gayatri' }],
     ['Nārāyaṇa Sūkta', 'नारायणसूक्तम्', 'Nārāyaṇa', 'नारायणः', '', 'TĀ 10.13', 'ta 10.25-26'],
     ['Ṛtaṃ satyam', 'ऋतꣳ सत्यम्', 'Brahman', 'ब्रह्म', 'mantra', 'TĀ 10.12', 'ta 10.27'],
     ['Sandhyā mantras (agniś ca mā, sūryaś ca mā)', 'सन्ध्यामन्त्राः', 'Agni, Sūrya', 'अग्निः सूर्यः', 'anuvāka', 'TĀ 10.24–25', 'ta 10.39-40'],

@@ -287,6 +287,11 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.22.0', '2026-11-01', [
+    'Śrī Rudram and Camakam are rebuilt in their 11 anuvākas each, with an anuvāka heading and number (॥१॥ … ॥११॥) in the sūkta page and the chant view, instead of the source’s 50-word chunks numbered as mantras. Camakam now ends where it ends (it ran on through the following mantras).',
+    'Devatā Gāyatrīs now has all twelve (Rudra ×2, Dantī, Nandī, Ṣaṇmukha, Garuḍa, Brahmā, Viṣṇu, Nārasiṃha, Āditya, Agni, Durgi), from the Āndhra pāṭha with svaras.',
+    'Mṛttikā Sūkta starts at ‘aśvakrānte rathakrānte’ and ends at ‘punantu punaḥ punaḥ’; new Dūrvā Sūkta. The source’s own unit counts, such as ‘(6)’, are no longer shown in sūktas.'
+  ]],
   ['1.21.5', '2026-11-01', ['Search names index refreshed for the new sūktas (151 sūktas, 17 aliases), so they can be found by name; the search data is now checked automatically before every deploy.']],
   ['1.21.4', '2026-11-01', ['In every chant view, ✕ (and Esc) returns to the view you started chanting from, even after moving on with next / previous, instead of leaving you on the last sūkta.']],
   ['1.21.3', '2026-11-01', ['Each card in Ṛgveda by devatā has a round ▶ that chants that devatā’s hymns from the first. A key-hymn chip opens its hymn inside the same set. In a set, the previous / next arrows, swipes, arrow keys and chant view all stay within that devatā’s hymns.']],
@@ -1406,8 +1411,18 @@ async function viewSukta(sid, params) {
         const w = l.split(' ');
         return w.slice(a && li === a[0] ? a[1] : 0, b && li === b[0] ? b[1] + 1 : w.length).join(' ');
       }).filter((l) => l.trim());
-      blocks.push({ g, meta, v, lines, cut: !!(a || b) });
+      // the source's own count at the end of a unit, "(6)", is not part of the mantra
+      const clean = lines.map((l) => l.replace(/\s*\(\d+\)(\s*-\s*।\s*\d+\s*।)?\s*$/, '')).filter((l) => l.trim());
+      blocks.push({ g, meta, v, lines: clean, cut: !!(a || b) });
     });
+  }
+  // an anuvāka is its chunks run together under one number (the source's 50-word units mean nothing to a reader)
+  for (let i = 0; i < blocks.length; i++) {
+    if (!blocks[i].g.merge) continue;
+    let j = i + 1;
+    while (j < blocks.length && blocks[j].g === blocks[i].g) { blocks[i].lines = blocks[i].lines.concat(blocks[j].lines); j++; }
+    blocks[i].cut = true;
+    blocks.splice(i + 1, j - i - 1);
   }
   const showRoman = (b) => !b.cut && b.v[2]?.length && (prefs.script !== 'deva' || !b.lines.length);
   const vedaName = cat.vedas.find((v) => v.id === s.veda);
@@ -1415,12 +1430,12 @@ async function viewSukta(sid, params) {
   const body = blocks.map((b) => {
     n++;
     const head = b.g !== lastSeg && new Set(s.segs.map((x) => x.t)).size + s.segs.length > 2
-      ? `<h2 class="sk-seg">${b.g.title ? `${T(b.g.title, b.g.titleDeva)} · ` : ''}<a href="#/v/${b.g.t}/c/${b.g.d1}/${b.g.d2}?v=${b.g.v[0]}">${SA() ? `<span lang="sa">${esc(`${REF_SA[b.g.t] || b.meta.deva} ${dg(b.g.ref || '')}`)}</span>` : esc(`${b.meta.ref} ${b.g.ref || ''}`)}</a></h2>` : '';
+      ? (b.g.merge ? `<h2 class="sk-seg"><a href="#/v/${b.g.t}/c/${b.g.d1}/${b.g.d2}?v=${b.g.v[0]}">${T(b.g.title, b.g.titleDeva)}</a></h2>` : `<h2 class="sk-seg">${b.g.title ? `${T(b.g.title, b.g.titleDeva)} · ` : ''}<a href="#/v/${b.g.t}/c/${b.g.d1}/${b.g.d2}?v=${b.g.v[0]}">${SA() ? `<span lang="sa">${esc(`${REF_SA[b.g.t] || b.meta.deva} ${dg(b.g.ref || '')}`)}</span>` : esc(`${b.meta.ref} ${b.g.ref || ''}`)}</a></h2>`) : '';
     lastSeg = b.g;
     const ref = refOf(b.meta, b.g.d1, b.g.d2, b.v[0], b.v[5]);
     let html = '';
     if (b.lines.length && prefs.script !== 'roman') html += `<div class="deva" lang="sa">${svaraLines(b.g.t, b.lines, b.cut ? null : b.v[3]).map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
-    if (showRoman(b)) html += `<div class="roman" lang="sa-Latn">${b.v[2].map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
+    if (showRoman(b)) html += `<div class="roman" lang="sa-Latn">${b.v[2].map((l) => `<div>${esc(l.replace(/\s*\(\d+\)\s*$/, ''))}</div>`).join('')}</div>`;
     if (!b.cut && b.v[4] && prefs.tr) html += `<p class="tr" lang="en">${esc(b.v[4])}</p>`;
     if (!b.cut && b.g.t === 'rv' && prefs.bhashya) html += bhBox('rv', b.g.d1, b.g.d2, b.v[0]);
     return `${head}<section class="verse" id="sv${n}" aria-label="${esc(b.meta.ref)} ${esc(ref)}">
@@ -1444,10 +1459,10 @@ async function viewSukta(sid, params) {
     const rows = g.t === 'rv' ? rvx.rows.filter((r) => r[0] === g.d1 && r[1] === g.d2 && r[2] >= g.v[0] && r[2] <= g.v[1]) : [];
     return {
       title: g.titleDeva || '',
-      src: `(${REF_SA[g.t] || bs[0]?.meta.deva || ''} ${dg(String(g.ref || '').replace(/\./g, ','))})`,
+      src: g.merge ? '' : `(${REF_SA[g.t] || bs[0]?.meta.deva || ''} ${dg(String(g.ref || '').replace(/\./g, ','))})`,
       anu: g.t === 'rv' && bs.length ? anukramani(bs[0].lines, bs.length, rows, rvx.facets) : '',
       group: METRICAL.has(g.t) ? 5 : 1,
-      verses: bs.map((b) => ({ n: ++cn, lines: svaraLines(b.g.t, b.lines, b.cut ? null : b.v[3]), label: refText(b.meta, refOf(b.meta, b.g.d1, b.g.d2, b.v[0], b.v[5])) })),
+      verses: bs.map((b) => ({ n: ++cn, lines: svaraLines(b.g.t, b.lines, b.cut ? null : b.v[3]), label: b.g.merge ? `${b.meta.ref} ${b.g.ref}` : refText(b.meta, refOf(b.meta, b.g.d1, b.g.d2, b.v[0], b.v[5])) })),
     };
   });
   obAdd(s.segs.some((g) => PATHA_TEXTS.has(g.t)) && 'patha', blocks.some((b) => !b.cut && b.v[2]?.length && b.lines.length) && 'script');
