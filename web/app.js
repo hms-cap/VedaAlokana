@@ -285,6 +285,11 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.20.0', '2026-11-01', [
+    'Search understands names and words in English, Devanagari and Kannada: type agni suktam, ಪುರುಷ ಸೂಕ್ತ, श्रीसूक्तम्, rudram, hymn to dawn, or two names together such as indra trishtup.',
+    'The first words of a mantra, or any few of its words, find the mantra: tryambakam yajamahe, ಗಣಾನಾಂ ತ್ವಾ, अग्निमीळे, ekam sad viprah bahudha. The line is shown in your script with the matching words marked. This covers the Saṃhitās and the Upaniṣads.',
+    'Results come in groups (Mantras, Sūktas, Texts and parts, Ṛṣi · devatā · metre) with a Veda filter on the Search page; Devanagari and Kannada digits work in references.',
+    'Search works offline: names and opening words are saved with the app, and each Veda’s download now includes its word index.']],
   ['1.19.1', '2026-11-01', ['The offline icon in the title bar opens the downloads section, which now starts with a Download all button.']],
   ['1.19.0', '2026-11-01', [
     'Offline status and About are now small icons beside the title (green dot = everything saved, amber = partly, grey = nothing yet); the chip row on Home is gone.',

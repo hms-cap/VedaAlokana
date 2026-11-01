@@ -41,6 +41,7 @@ Details, licences and known gaps: [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md).
 - **Back** returns to the previous view (or the parent, when opened from a link); next/previous moves replace the view instead of adding back steps; sheets and the chant view close on Back.
 - **Options bar**: under the top bar, the settings that apply to the page (script, menus, theme, pāṭha, padapāṭha, IAST, tags, translation, bhāṣya, text size, save, chant); ⋯ opens them all with labels.
 - **My sūktas**: ☆ in the options bar saves a sūkta; the My sūktas tab shows My list · Recent · Frequent. Stored only on the device (`localStorage`, key `vedalokana.my`); export/import in Settings.
+- **Search**: one box, in English, Devanagari or Kannada (spellings are folded to one key by `web/search-key.js`). It takes a reference (`1.164.46`, `rv 10.90`, Devanagari or Kannada digits), a name (`agni suktam`, `rudram`, `श्रीसूक्तम्`), a deity, seer or metre alone or two together (`indra trishtup`), an everyday word (`hymn to dawn`), the first words of a mantra (`tryambakam yajamahe`) or any few of its words (`ekam sad viprah bahudha`; Saṃhitās and Upaniṣads). Results are grouped (Mantras, Sūktas, Texts and parts, Ṛṣi · devatā · metre); the Search page has a Veda filter. Details under *Search* below.
 - **Daily mantra**: on Home, five cards to swipe through — mantra, meaning, words and grammar, ṛṣi · devatā · chandas, use and significance (English, or Kannada with the Kannada script); 365 mantras, ↻ for another. Built by `node scripts/build-daily.mjs` from `scripts/daily/`.
 - **Chant view**: a book-style page (running text, ॥n॥, invocation, source, anukramaṇī) or one verse at a time.
 
@@ -90,11 +91,33 @@ The Ṛgveda can be shown two ways (Settings, or the switch in the reader):
 
 The Dākṣiṇātya pāṭha is computed in the browser by `web/dakshinatya.js`; the rules are written out at the top of that file. Word boundaries come from aligning each ṛk with its padapāṭha, and pāda boundaries from the syllable count of the half-verse. The dīrgha-svarita rules were derived from, and are tested against, Dayananda Aithal's [Saswara Rigveda Samhita](https://github.com/daithal/saswara-rigveda), whose dīrgha svaritas were themselves added by program: on all 10,552 ṛks they agree on 99.99% of svarita marks. No text is copied from that site. The other rules were read off printed Gaṇapati, Hiraṇyagarbha, Puruṣa and Devī sūktas, which the test reproduces exactly.
 
+## Search
+
+Everything runs in the browser from small files in `web/data/search/`, built by `node scripts/build-search.mjs` (also run by `build-data.mjs`; it works on the data already in `web/data`):
+
+| File | Holds | Loaded |
+|---|---|---|
+| `names.json` | sūktas and their aliases, texts, named parts, every ṛṣi · devatā · chandas | at the first query, stored on install |
+| `../search-aliases.json` | kind, facet, Veda, everyday and stop words | at the first query, stored on install |
+| `pratika.tsv` | the first three words of every mantra | for queries of seven letters or more, stored on install |
+| `text-<veda>.tsv` | one line per mantra: its whole phonetic key | when a query has two or more words that are not names; part of that Veda's offline download |
+
+- Sūktas get their aliases in `scripts/suktas.mjs`; the other word lists are in `scripts/search-aliases.json` (hand-edited; any script, they are folded to one key). Both are checked at build time.
+- Saṃhitā and Upaniṣad mantras are indexed (23,744); Brāhmaṇas and Āraṇyakas are not.
+- Ranking: a reference first; then, for the opening words of a named mantra, the verse and then the sūktas it belongs to; names before mantras that merely begin with them; exact before prefix before inside a name.
+- `web/search.js` (no DOM) is run unchanged by the tests; `scripts/search-tests.json` holds 73 queries with the expected first result (`scripts/search-tests.md` explains the fields).
+
 ## Tests
 
 ```sh
 node scripts/test-lipi.mjs   # Devanagari → Kannada: word checks + every line of the data
 node scripts/test-dakshinatya.mjs [path/to/saswara-rigveda]   # Dākṣiṇātya pāṭha vs. printed sūktas (and Aithal's edition)
+node scripts/test-search-key.mjs     # spellings that must fold together, every verse Devanagari vs IAST, Kannada round trip
+node scripts/test-names.mjs          # names index: seed names in four spellings
+node scripts/test-query.mjs          # query parser, result groups, highlighting
+node scripts/test-mantra-index.mjs   # every verse indexed, openings and middles found
+node scripts/test-search.mjs --check-baseline --min-top1 0.85 --min-top5 0.95   # 73 queries through the real search
+node scripts/test-all.mjs            # all of the above
 ```
 
 ## Layout
@@ -102,7 +125,7 @@ node scripts/test-dakshinatya.mjs [path/to/saswara-rigveda]   # Dākṣiṇātya
 ```
 web/            the app (index.html, app.js, lipi.js, panchanga.js, styles.css, version.js, sw.js,
                 manifest.webmanifest), icons/, fonts/ and data/
-scripts/        data pipeline, per-text parsers, Devanagari ⇄ IAST transliterator
+scripts/        data pipeline, per-text parsers, Devanagari ⇄ IAST transliterator, search indexes and tests
 docs/           data sources, licences, gaps
 ```
 

@@ -83,3 +83,11 @@ Not part of any text above; kept in `scripts/sources/sri-sukta.json` and shown a
 - Ṛṣi, devatā and chandas for the Ṛgveda and Atharvaveda come from their indexes; for the other texts they are given in the card file. The short notes on each ṛṣi, devatā and chandas are in `scripts/daily/gloss.mjs`.
 - The meaning, the word-and-grammar notes, and the use-and-significance note of each card are written for this app in English and Kannada. The meanings are plain paraphrases (not Griffith's translation); the grammar follows the standard Pāṇinian and Vedic analysis; the notes on use describe widespread practice (sandhyāvandana, pūjā, homa, saṃskāras) and where a verse is quoted in later texts. Practice differs between traditions and families — the notes describe common use, not a rule.
 - The day's card is the same for everyone: day number × 7919 mod 365, which visits every card once in 365 days.
+
+## Search
+
+The search indexes in `web/data/search/` are derived from the app's own data (no new sources): `names.json` from the catalog, `suktas.json` and the ṛṣi / devatā / chandas lists; `pratika.tsv` and `text-<veda>.tsv` from the Devanagari lines of every Saṃhitā and Upaniṣad verse (the IAST line where a verse has none), plus the verses kept in `suktas.json` for the Śrī Sūkta, Medhā Sūkta, Pavamāna Pariśiṣṭa and Gaṇeśa Atharvaśīrṣa. Brāhmaṇas and Āraṇyakas are left out; the English-only Sāmaveda has nothing to index.
+
+- Aliases of sūktas (`scripts/suktas.mjs`) and the kind, facet, Veda, everyday and stop words (`scripts/search-aliases.json`) were written for this app. The Kannada and Hindi everyday words (ಬೆಂಕಿ, ಮುಂಜಾನೆ, ಗಾಳಿ …) should be read by a native speaker.
+- Known limits: a few verse numbers repeat inside one section of the source (Atharvaveda 11.3, Yajurveda 1.6 and 1.12), so those verses cannot be told apart by number; Atharvaveda 16.8.5 has no text; the Devanagari and IAST editions of about 85 Ṛgveda verses differ in a letter (cit/cid), so a typed spelling may match one and not the other; a typo in a long query (sandhi, mis-heard words) and English words from the translation are not searched yet.
+
