@@ -5,7 +5,7 @@
 import { toKnda } from './lipi.js';
 import { dakshinatyaVerse, dakshinatyaNasals } from './dakshinatya.js';
 import { FACETS, FKEYS, LAYERS, cap, fmt, refOf, groupName, findHref } from './common.js';
-import { search } from './search.js';
+import { search, groupResults } from './search.js';
 
 const COL = { d1: 0, d2: 1, v: 2, rishi: 3, devata: 4, chandas: 5 };
 const LEVEL_DEVA = {
@@ -2044,13 +2044,19 @@ function notFound() {
 
 // ---------- search ----------
 let activeVeda = 'rv';
-const suggestions = (q) => search(q, { catalog, index, names, aliases }, { activeVeda });
+const suggestions = (q, opts = {}) => search(q, { catalog, index, names, aliases }, { activeVeda, ...opts });
+// result groups with a title each: HTML for the top-bar box and the Search page
+const groupTitle = (g) => `<div class="grp" role="presentation">${T(g.en, g.sa)}</div>`;
+const rowHTML = (it, i, sel) => `<a role="option" href="${it.href}" aria-selected="${i === sel}"><span>${esc(it.label)}</span><small>${esc(it.hint)}</small></a>`;
 function setupSearch() {
   const input = $('#q'); const box = $('#suggest'); let items = []; let sel = -1; let token = 0;
   const close = () => { box.hidden = true; sel = -1; };
+  let shown = []; // [{ group, items }]: what the box lists, two per group
   const paint = () => {
-    box.innerHTML = items.map((it, i) => `<a role="option" href="${it.href}" aria-selected="${i === sel}"><span>${esc(it.label)}</span><small>${esc(it.hint)}</small></a>`).join('')
-      || '<div style="padding:10px;color:var(--muted)">Type a reference like 1.164.46, or part of a name.</div>';
+    let i = 0;
+    box.innerHTML = shown.map((g) => groupTitle(g.group) + g.items.map((it) => rowHTML(it, i++, sel)).join('')).join('')
+      + (items.length ? `<a role="option" class="all" href="${items.at(-1).href}" aria-selected="${items.length - 1 === sel}"><span>${T('See all results', 'सर्वाणि फलानि')}</span></a>` : '')
+      || '<div style="padding:10px;color:var(--muted)">Type a reference like 1.164.46, a name like agni suktam, or the first words of a mantra.</div>';
     box.hidden = false;
   };
   input.addEventListener('input', async () => {
@@ -2058,7 +2064,11 @@ function setupSearch() {
     if (!q.trim()) return close();
     const r = await suggestions(q);
     if (my !== token) return;
-    items = r; sel = r.length ? 0 : -1; paint();
+    shown = groupResults(r, 2);
+    items = shown.flatMap((g) => g.items);
+    // the last row opens the Search page with every result of every group
+    if (items.length) items.push({ href: `#/search?q=${encodeURIComponent(q.trim())}` });
+    sel = items.length ? 0 : -1; paint();
   });
   input.addEventListener('keydown', (e) => {
     if (box.hidden) return;
@@ -2476,29 +2486,46 @@ async function viewMy(params) {
 
 async function viewSearch(params) {
   setTitle('Search');
+  const VEDAS = [['', 'All', 'सर्वम्'], ['rv', 'ṚV', 'ऋ'], ['kyv', 'KYV', 'कृ.य'], ['syv', 'ŚYV', 'शु.य'], ['av', 'AV', 'अ'], ['sv', 'SV', 'सा']];
+  let veda = VEDAS.some((v) => v[0] === params.get('veda')) ? params.get('veda') : '';
   main.innerHTML = `<div class="col">
     <h1 class="sr">Search</h1>
     <label class="big-search"><span class="sr">Search references, texts and names</span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
-      <input id="bq" autocomplete="off" placeholder="1.164.46, Kaṭha, Agni, अग्नि…"></label>
+      <input id="bq" autocomplete="off" placeholder="1.164.46, agni suktam, ಪುರುಷ ಸೂಕ್ತ, त्र्यम्बकं…"></label>
+    <div class="chips vchips" id="vchips" role="group" aria-label="Limit to one Veda"></div>
+    <p class="vnote" id="vnote" hidden>Ṛṣi, devatā and metre are recorded for the Ṛgveda, Atharvaveda and Sāmaveda only.</p>
     <div id="bres" class="search-results" aria-live="polite"></div>
     <div class="search-tips"><h2>Try</h2><div class="chips">
-      ${['1.164.46', 'rv 10.90', 'Kaṭha', 'Chāndogya', 'Agni', 'Vasiṣṭha', 'Gāyatrī'].map((t) => `<button class="chip" data-q="${esc(t)}">${esc(t)}</button>`).join('')}
-    </div><p class="lede">References jump to a mantra in the text you were last reading, or in the Ṛgveda. Prefix a text to change it, as in <b>av 7.1</b> or <b>ts 1.1</b>.</p></div>
+      ${['1.164.46', 'rv 10.90', 'agni suktam', 'ಪುರುಷ ಸೂಕ್ತ', 'त्र्यम्बकं', 'hymn to dawn', 'indra trishtup', 'Chāndogya'].map((t) => `<button class="chip" data-q="${esc(t)}">${esc(t)}</button>`).join('')}
+    </div><p class="lede">Type in English, Devanagari or Kannada: a reference, the name of a sūkta, a deity, seer or metre, or two of them together. References jump to a mantra in the text you were last reading, or in the Ṛgveda. Prefix a text to change it, as in <b>av 7.1</b> or <b>ts 1.1</b>.</p></div>
   </div>`;
   const input = $('#bq'); let token = 0;
+  const paintChips = () => {
+    $('#vchips').innerHTML = VEDAS.map(([id, en, sa]) => `<button class="chip" data-veda="${id}" aria-pressed="${String(veda === id)}">${id ? esc(en) : T(en, sa)}</button>`).join('');
+    $('#vnote').hidden = !(veda === 'kyv' || veda === 'syv');
+  };
+  paintChips();
   if (!params.get('q') && matchMedia('(max-width: 899px)').matches) setTimeout(() => input.focus({ preventScroll: true }), 50);
   const run = async () => {
     const my = ++token; const q = input.value;
     if (!q.trim()) { $('#bres').innerHTML = ''; return; }
-    const r = await suggestions(q);
+    const r = await suggestions(q, { veda: veda || null, limit: 60 });
     if (my !== token) return;
-    $('#bres').innerHTML = r.map((it) => `<a href="${it.href}"><span>${esc(it.label)}</span><small>${esc(it.hint)}</small></a>`).join('')
-      || '<p class="empty">No match. Try a reference like 1.1.1, or part of a name.</p>';
+    $('#bres').innerHTML = groupResults(r).map((g) => groupTitle(g.group) + g.items.map((it) => `<a href="${it.href}"><span>${esc(it.label)}</span><small>${esc(it.hint)}</small></a>`).join('')).join('')
+      || '<p class="empty">No match. Try a reference like 1.1.1, a name like agni suktam, or another Veda.</p>';
   };
-  // the query is kept in the address, so back from a result returns to the same results
-  const keepQ = () => { if (!MEMORY) history.replaceState(history.state, '', `#/search${input.value.trim() ? `?q=${encodeURIComponent(input.value)}` : ''}`); };
+  // the query and the Veda are kept in the address, so back from a result returns to the same results
+  const keepQ = () => {
+    if (MEMORY) return;
+    const u = new URLSearchParams(); if (input.value.trim()) u.set('q', input.value); if (veda) u.set('veda', veda);
+    history.replaceState(history.state, '', `#/search${u.toString() ? `?${u}` : ''}`);
+  };
   input.addEventListener('input', () => { run(); keepQ(); });
+  $('#vchips').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-veda]'); if (!b) return;
+    veda = b.dataset.veda; paintChips(); run(); keepQ();
+  });
   main.querySelectorAll('[data-q]').forEach((b) => b.addEventListener('click', () => { input.value = b.dataset.q; run(); keepQ(); input.focus(); }));
   if (params?.get('q')) { input.value = params.get('q'); await run(); } else if (matchMedia('(hover: hover)').matches) input.focus();
 }

@@ -8,7 +8,7 @@
 //   strictKey and the first looseKey are of the name without its bracket; further loose keys are of the
 //   full label, of the Devanagari name when it sounds different, and of each word of a facet name.
 //   type 's' sūkta (id = sūkta id, extra = [veda, reference, devatā, devatā in Devanagari])    'a' alias of a sūkta (same id, href, extra)
-//        't' text (id = text id, extra = layer)     'g' named part (id = text id, extra = d1)
+//        't' text (id = text id, extra = [layer, veda])     'g' named part (id = text id, extra = [d1, veda])
 //        'f' facet (id = facet id, extra = [facet, text, verse count])
 // The Kannada spelling is not stored: the keys fold Kannada, Devanagari and IAST to the same
 // string (web/search-key.js), so a Kannada query finds the same entry.
@@ -40,8 +40,8 @@ export function buildNames(dataDir) {
     for (const [en, deva] of s.aliases || []) add('a', s.id, en, deva, s.href, [s.veda, s.ref, s.devata, s.devataDeva]);
   }
   for (const t of catalog.texts) {
-    add('t', t.id, t.name, t.deva, `#/v/${t.id}`, t.layer);
-    for (const [d1, name] of Object.entries(t.groupNames || {})) add('g', t.id, name, '', `#/v/${t.id}/g/${d1}`, Number(d1));
+    add('t', t.id, t.name, t.deva, `#/v/${t.id}`, [t.layer, t.veda]);
+    for (const [d1, name] of Object.entries(t.groupNames || {})) add('g', t.id, name, '', `#/v/${t.id}/g/${d1}`, [Number(d1), t.veda]);
     const facets = read(t.id, 'index.json').facets || {};
     for (const [f, list] of Object.entries(facets)) {
       for (const [id, en, deva, count] of list) add('f', id, en, deva, findHref(t.id, { [f]: id }), [f, t.id, count]);

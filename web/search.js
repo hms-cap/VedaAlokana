@@ -15,7 +15,23 @@ export const REF_PREFIX = { rv: 'rv', ṛv: 'rv', av: 'av', avś: 'av', vs: 'yv'
 // Devanagari and Kannada digits → 0-9, so "१.१६४.४६" and "೧.೧೬೪.೪೬" read as references
 const asciiDigits = (s) => s.replace(/[०-९]/g, (c) => c.charCodeAt(0) - 0x966).replace(/[೦-೯]/g, (c) => c.charCodeAt(0) - 0xCE6);
 
-export async function search(q, data, { activeVeda = 'rv' } = {}) {
+// The groups a result list is sorted into, best first. A group is shown with its title in English or Sanskrit.
+export const RESULT_GROUPS = [
+  { id: 'ref', en: 'Go to', sa: 'गम्यताम्' },
+  { id: 'sukta', en: 'Sūktas', sa: 'सूक्तानि' },
+  { id: 'text', en: 'Texts and parts', sa: 'ग्रन्थाः' },
+  { id: 'facet', en: 'Ṛṣi · devatā · metre', sa: 'ऋषिः · देवता · छन्दः' },
+];
+
+/** Sorted results → [{ group, items }] in RESULT_GROUPS order; at most perGroup items each. */
+export function groupResults(items, perGroup = Infinity) {
+  return RESULT_GROUPS.map((g) => ({ group: g, all: items.filter((i) => i.group === g.id) }))
+    .filter((g) => g.all.length)
+    .map((g) => ({ group: g.group, items: g.all.slice(0, perGroup), more: Math.max(0, g.all.length - perGroup) }));
+}
+
+// veda: null (all) or one of rv kyv syv av sv; limit: how many rows at most
+export async function search(q, data, { activeVeda = 'rv', veda = null, limit = 9 } = {}) {
   q = asciiDigits(q);
   const out = [];
   const m = q.trim().toLowerCase().match(/^(?:([a-zṛś]{2,3})\s*)?(\d+)(?:[.\s:/](\d+))?(?:[.\s:/](\d+))?$/);
@@ -41,7 +57,9 @@ export async function search(q, data, { activeVeda = 'rv' } = {}) {
     const { entries } = await data.names();
     const sukta = new Map(entries.filter((e) => e[0] === 's').map((e) => [e[1], e]));
     const parsed = data.aliases ? parseQuery(q, vocabulary(await data.aliases())) : null;
-    const facetText = parsed?.vedas && ['rv', 'av', 'sv'].find((v) => parsed.vedas.has(v)) || activeVeda;
+    const vedas = veda ? new Set([veda]) : parsed?.vedas || null; // rows of sūktas and texts outside these Vedas are dropped
+    // ṛṣi / devatā / metre are only recorded for the Ṛgveda, Atharvaveda and Sāmaveda; a Yajurveda chip has none
+    const facetText = vedas ? ['rv', 'av', 'sv'].find((v) => vedas.has(v)) || (veda ? null : activeVeda) : activeVeda;
     const best = new Map(); // href → row, one row per target
     const keep = (row) => { const old = best.get(row.href); if (!old || old.score < row.score) best.set(row.href, row); };
     const hitOf = (keys, k) => keys.reduce((h, x) => Math.max(h, x === k ? 3 : x.startsWith(k) ? 2 : k.length >= 4 && x.includes(k) ? 1 : 0), 0);
@@ -57,8 +75,8 @@ export async function search(q, data, { activeVeda = 'rv' } = {}) {
         if (type === 's' || type === 'a') {
           const home = sukta.get(id);
           row = { group: 'sukta', score: hit * 1000 + 300 - (type === 'a' ? 1 : 0), href, label: `${type === 'a' ? `${label} → ${home[2]}` : label} · ${deva}`, hint: `Sūkta, ${extra[1]}`, veda: extra[0] };
-        } else if (type === 't') row = { group: 'text', score: hit * 1000 + 200, href, label: `${label} · ${deva}`, hint: LAYERS[extra].label };
-        else if (type === 'g') row = { group: 'text', score: hit * 1000 + 200, href, label: `${label}`, hint: 'Part of a text' };
+        } else if (type === 't') row = { group: 'text', score: hit * 1000 + 200, href, label: `${label} · ${deva}`, hint: LAYERS[extra[0]].label, veda: extra[1] };
+        else if (type === 'g') row = { group: 'text', score: hit * 1000 + 200, href, label: `${label}`, hint: 'Part of a text', veda: extra[1] };
         else {
           const [f, , count] = extra;
           row = { group: 'facet', score: hit * 1000 + 100 + Math.log(count + 1), href, label: `${cap(label)}${deva ? ` · ${deva}` : ''}`, hint: `${FACETS[f].label}, ${fmt(count)}`, facet: f };
@@ -84,7 +102,6 @@ export async function search(q, data, { activeVeda = 'rv' } = {}) {
         if (dev.some((k) => wanted.has(k))) keep({ group: 'sukta', score: parsed.kind ? 3050 : 2200, href, label: `${label} · ${deva}`, hint: `Sūkta, ${extra[1]}`, veda: extra[0] });
       }
       // a Veda word restricts sūktas; a facet word restricts the kind of ṛṣi / devatā / metre
-      if (parsed.vedas && (parsed.words.length || parsed.concepts.length)) for (const [h, r] of best) if (r.veda && !parsed.vedas.has(r.veda)) best.delete(h);
       if (parsed.facets.size && (parsed.words.length || parsed.concepts.length)) for (const [h, r] of best) if (r.facet && !parsed.facets.has(r.facet)) best.delete(h);
       // a kind word asks for sūktas: ṛṣi / devatā / metre rows come after them
       if (parsed.kind) for (const r of best.values()) if (r.group === 'facet') r.score -= 1500;
@@ -93,8 +110,10 @@ export async function search(q, data, { activeVeda = 'rv' } = {}) {
     if (parsed && !exactName && parsed.words.length >= 2 && parsed.words.length <= 3) {
       facetCombos(entries, facetText, parsed.words, parsed.facets).forEach((c, i) => keep({ group: 'facet', score: 5000 - i * 10, href: findHref(facetText, c.filters), label: c.label, hint: 'Filter' }));
     }
+    // a Veda chip (or Veda words next to a name) drops sūktas and texts of other Vedas
+    if (vedas && (veda || parsed?.words.length || parsed?.concepts.length)) for (const [h, r] of best) if (r.veda && !vedas.has(r.veda)) best.delete(h);
     const hits = [...best.values()].sort((a, b) => b.score - a.score);
-    for (const row of hits.slice(0, 9 - out.length)) out.push(row);
+    for (const row of hits.slice(0, limit - out.length)) out.push(row);
   }
   return out;
 }

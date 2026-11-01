@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import { parseQuery, vocabulary } from '../web/query.js';
 import { looseKey } from '../web/search-key.js';
+import { groupResults, RESULT_GROUPS } from '../web/search.js';
 
 const vocab = vocabulary(JSON.parse(fs.readFileSync(new URL('./search-aliases.json', import.meta.url), 'utf8')));
 let failed = 0;
@@ -58,5 +59,12 @@ for (const [name, ws] of Object.entries(lists)) {
     seen.set(k, name);
   }
 }
+// result groups: fixed order, empty groups left out, perGroup limit, the rest counted
+const rows = ['facet', 'sukta', 'facet', 'facet', 'ref', 'sukta'].map((group, i) => ({ group, href: `#${i}` }));
+const g = groupResults(rows, 2);
+const order = RESULT_GROUPS.map((x) => x.id).filter((id) => rows.some((r) => r.group === id));
+if (JSON.stringify(g.map((x) => x.group.id)) !== JSON.stringify(order)) { failed++; console.log('FAIL group order', g.map((x) => x.group.id)); }
+if (g.find((x) => x.group.id === 'facet').items.length !== 2 || g.find((x) => x.group.id === 'facet').more !== 1) { failed++; console.log('FAIL perGroup limit'); }
+if (groupResults(rows).some((x) => x.more)) { failed++; console.log('FAIL no limit should show all'); }
 console.log(`query parser: ${cases.length} queries, ${seen.size} vocabulary words — ${failed ? failed + ' failed' : 'ok'}`);
 process.exit(failed ? 1 : 0);
