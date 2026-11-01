@@ -287,6 +287,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.21.5', '2026-11-01', ['Search names index refreshed for the new sūktas (151 sūktas, 17 aliases), so they can be found by name; the search data is now checked automatically before every deploy.']],
   ['1.21.4', '2026-11-01', ['In every chant view, ✕ (and Esc) returns to the view you started chanting from, even after moving on with next / previous, instead of leaving you on the last sūkta.']],
   ['1.21.3', '2026-11-01', ['Each card in Ṛgveda by devatā has a round ▶ that chants that devatā’s hymns from the first. A key-hymn chip opens its hymn inside the same set. In a set, the previous / next arrows, swipes, arrow keys and chant view all stay within that devatā’s hymns.']],
   ['1.21.2', '2026-11-01', ['Chant buttons on every sūkta list: a Chant view button at the top of the Sūktas page and of each devatā list, one on each group heading, and a round ▶ on each row. Chant view opens from the first verse and moves on through the list you were looking at (as filtered), with a list bar showing the place in it.']],
