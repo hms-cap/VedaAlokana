@@ -286,6 +286,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.21.1', '2026-11-01', ['Tapping a devatā in Ṛgveda by devatā now opens a list of that devatā’s sūktas, each a tappable row (reference, ṛṣi, opening line, chandas), with maṇḍala chips, a find box and links to shared devatās (Indra → Indra–Agni …).']],
   ['1.21.0', '2026-11-01', [
     'New: Ṛgveda by devatā. A page of 29 devatā entry points (Indra, Agni, Soma, Aśvins, Maruts …) grouped by sphere, each opening all of that devatā’s hymns and listing the key hymns by number. Reach it from the Sūktas page or the first Ṛgveda chip on Home.',
     'Twenty-five more Ṛgveda sūktas for the devatās the table names (Vāyu, Ṛbhus, Marut, Mitra, Pūṣan, Aśvin, Savitṛ, Yama–Yamī, Dakṣiṇā and others).',
@@ -2423,7 +2424,7 @@ function renderChrome(r, path) {
   // back: the previous view; on the first view of a visit, the parent page
   const page = r.parts[0] || '';
   const topLevel = ['', 'library', 'suktas', 'my', 'search', 'settings'].includes(page);
-  const parentHref = topLevel ? null : path.length >= 2 ? path[path.length - 2].href : page === 'about' ? '#/settings' : page === 'devatas' ? '#/suktas?veda=rv' : page === 's' ? (r.params.get('from') === 'my' ? '#/my' : '#/suktas') : '#/library';
+  const parentHref = topLevel ? null : path.length >= 2 ? path[path.length - 2].href : page === 'about' ? '#/settings' : page === 'devatas' ? (r.parts[1] ? '#/devatas' : '#/suktas?veda=rv') : page === 's' ? (r.params.get('from') === 'my' ? '#/my' : '#/suktas') : '#/library';
   const back = $('#backBtn');
   back.hidden = !parentHref;
   if (parentHref) back.setAttribute('href', parentHref);
@@ -2514,11 +2515,60 @@ async function viewDevatas() {
       const items = d.items.filter((x) => x.sphere === k); if (!items.length) return '';
       return `<section class="sk-group"><h2>${T(en, sa)}<small>${F(items.length)}</small></h2><div class="dv-list">${items.map((x) => `<article class="dv-card">
         <div class="dv-top"><span class="dv-n"><span class="dv" lang="sa">${esc(x.deva)}</span><b>${esc(x.name)}</b></span>
-          ${x.key ? `<a class="dv-all" href="${findHref('rv', { devata: x.key })}">${T('All', 'सर्वाणि')} ${F(x.n)} ${T('hymns', 'सूक्तानि')} ›</a>` : ''}</div>
+          ${x.key ? `<a class="dv-all" href="#/devatas/${esc(x.key)}">${T('All', 'सर्वाणि')} ${F(x.n)} ${T('hymns', 'सूक्तानि')} ›</a>` : ''}</div>
         <p class="dv-w">${esc(x.where)}</p>
         <div class="dv-hs" aria-label="${esc(x.name)} key hymns">${x.hymns.map(hy).join('')}</div></article>`).join('')}</div></section>`;
     }).join('')}
   </div>`;
+}
+// the sūktas of one devatā: one tappable row each, ordered by maṇḍala and sūkta
+async function viewDevataList(key) {
+  const x = await index('rv'); const di = x.keyIndex.devata.get(key);
+  if (di === undefined) return notFound();
+  const e = x.facets.devata[di]; const d = (cache.devata ||= await json('data/devata.json'));
+  const card = d.items.find((i) => i.key === key);
+  setTitle(`${cap(e[1])} — Ṛgveda hymns`);
+  const hy = new Map();
+  for (const r of x.rows) if (r[COL.devata] === di) { const k = `${r[0]}.${r[1]}`; if (!hy.has(k)) hy.set(k, { m: r[0], s: r[1], n: 0, rishi: r[COL.rishi], chandas: r[COL.chandas] }); hy.get(k).n++; }
+  const all = [...hy.values()].sort((a, b) => a.m - b.m || a.s - b.s);
+  const mandalas = [...new Set(all.map((h) => h.m))];
+  const also = x.facets.devata.map((f, i) => [f, i]).filter(([f, i]) => i !== di && key.length >= 4 && f[0].includes(key) && f[4] >= 2).sort((a, b) => b[0][4] - a[0][4]).slice(0, 8);
+  const tot = new Map(); for (const [m, cs] of x.groups) for (const c of cs) tot.set(`${m}.${c[0]}`, c[1]);
+  let mf = 0; let q = ''; let shown = 60;
+  main.innerHTML = `<div class="col">
+    <div class="crumbs"><a href="#/devatas">${T('Ṛgveda by devatā', 'देवतानुसारम्')}</a></div>
+    <h1>${SA() ? `<span lang="sa">${esc(e[2])}</span>` : `${esc(card?.name || cap(e[1]))}<span class="h1-deva" lang="sa">${esc(e[2])}</span>`}</h1>
+    <p class="lede">${F(all.length)} ${T('hymns in the Ṛgveda. Tap one to read it. “3 of 12 ṛk” means only those verses are addressed to this devatā.', 'सूक्तानि। पठितुं स्पृशतु।')}</p>
+    ${also.length ? `<p class="dv-also"><em>${T('Shared with', 'सह')}</em> ${also.map(([f]) => `<a href="#/devatas/${esc(f[0])}">${esc(cap(f[1]))} <small>${F(f[4])}</small></a>`).join('')}</p>` : ''}
+    <div class="vchips dv-mf" role="group" aria-label="Maṇḍala"></div>
+    <label class="big-search dv-find"><span class="sr">Find in this list</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+      <input id="dvq" autocomplete="off" placeholder="1.32, Gotama, Triṣṭup…"></label>
+    <div class="sk-list" id="dvl"></div><button type="button" class="off-btn ghost dv-more" id="dvm" hidden></button></div>`;
+  const chipsEl = main.querySelector('.dv-mf');
+  const paintChips = () => {
+    chipsEl.innerHTML = [[0, T('All', 'सर्वे'), all.length], ...mandalas.map((m) => [m, `${T('Maṇḍala', 'मण्डलम्')} ${F(m)}`, all.filter((h) => h.m === m).length])]
+      .map(([m, l, n]) => `<button type="button" class="chip" data-m="${m}" aria-pressed="${m === mf}">${l} <small>${F(n)}</small></button>`).join('');
+    chipsEl.querySelectorAll('[data-m]').forEach((b) => b.addEventListener('click', () => { mf = Number(b.dataset.m); shown = 60; paintChips(); paint(); }));
+  };
+  const norm = (t) => foldName(t);
+  const paint = async () => {
+    const qq = norm(q.trim());
+    const list = all.filter((h) => (!mf || h.m === mf) && (!qq || `${h.m}.${h.s}`.startsWith(qq) || norm(`${x.facets.rishi[h.rishi][1]} ${x.facets.chandas[h.chandas][1]}`).includes(qq)));
+    const part = list.slice(0, shown);
+    const texts = await Promise.all([...new Set(part.map((h) => h.m))].map((m) => text('rv', m)));
+    const tm = new Map([...new Set(part.map((h) => h.m))].map((m, i) => [m, texts[i]]));
+    $('#dvl').innerHTML = part.map((h) => {
+      const line = tm.get(h.m)?.[h.s]?.[0]?.[1]?.[0] || '';
+      return `<a class="sk-row" data-sk href="#/v/rv/c/${h.m}/${h.s}"><span class="sk-top"><span class="sk-name"><span class="dv" lang="sa">${SA() ? `ऋ. ${esc(dg(`${h.m}.${h.s}`))}` : `RV ${h.m}.${h.s}`}</span><span class="ia">${esc(cap(x.facets.rishi[h.rishi][1]))}</span></span><span class="sk-ref">${(tot.get(`${h.m}.${h.s}`) || h.n) > h.n ? `${F(h.n)} ${T('of', 'मध्ये')} ${F(tot.get(`${h.m}.${h.s}`))}` : F(h.n)} ${T('ṛk', 'ऋचः')}</span></span>
+        <span class="sk-line" lang="sa">${esc(line.replace(/\s*[।॥]\s*$/, ''))}</span>
+        <span class="sk-meta"><span><em>Chandas</em> ${esc(cap(x.facets.chandas[h.chandas][1]))}</span><span>${T('Maṇḍala', 'मण्डलम्')} ${F(h.m)}</span></span></a>`;
+    }).join('') || `<p class="empty">${T('No hymn matches.', 'न किमपि सूक्तम्।')}</p>`;
+    const more = $('#dvm'); more.hidden = list.length <= shown; more.innerHTML = `${T('Show more', 'अधिकम्')} (${F(list.length - shown)})`;
+  };
+  $('#dvm').addEventListener('click', () => { shown += 60; paint(); });
+  $('#dvq').addEventListener('input', (ev) => { q = ev.target.value; shown = 60; paint(); });
+  paintChips(); paint();
 }
 // one row of a sūkta list
 const sukRow = (by, listK) => (e) => `<a class="sk-row" data-sk href="${listK === 'saved' ? fromMy(e.href) : e.href}">
@@ -2681,7 +2731,7 @@ async function route() {
     else if (a === 'about') await viewAbout();
     else if (a === 'library') await viewLibrary();
     else if (a === 'suktas') await viewSuktas(r.params);
-    else if (a === 'devatas') await viewDevatas();
+    else if (a === 'devatas') await (id ? viewDevataList(id) : viewDevatas());
     else if (a === 'my') await viewMy(r.params);
     else if (a === 's') await viewSukta(id, r.params);
     else if (a === 'search') await viewSearch(r.params);

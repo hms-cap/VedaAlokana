@@ -1062,3 +1062,10 @@ a.mrow { display: block; }
 .dv-hs { display: flex; flex-wrap: wrap; gap: 6px; }
 .dv-h { display: inline-flex; align-items: center; min-height: 32px; padding: 0 12px; border-radius: 16px; border: 1px solid var(--line-soft); color: var(--ink); font-size: 14px; }
 .dv-h:hover { text-decoration: none; border-color: var(--indigo); color: var(--indigo); }
+.dv-also { margin: 0 0 10px; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; font-size: 14px; color: var(--muted); }
+.dv-also em { font-style: normal; }
+.dv-also small { color: var(--muted); }
+.dv-mf { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; }
+.dv-mf .chip { flex: none; }
+.dv-find { margin: 8px 0 12px; }
+.dv-more { width: 100%; margin: 12px 0; }

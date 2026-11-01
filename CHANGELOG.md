@@ -2,6 +2,9 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.21.1 — 2026-11-01
+- A devatā in Ṛgveda by devatā opens a list of its sūktas (`#/devatas/<devatā>`) instead of verse search results: maṇḍala chips, find box, shared-devatā links; partly-addressed hymns show “3 of 12 ṛk”.
+
 ## 1.21.0 — 2026-11-01
 - Ṛgveda by devatā: 29 entry points (`#/devatas`, data in `scripts/devata-index.mjs`) from the devatā table of the classification reference, each opening that devatā's hymns and naming its key hymns.
 - 25 more Ṛgveda sūktas (devatās named in the table) and, for the Kṛṣṇa Yajurveda, Nīlā, Bhāgya and Pavamāna Sūktas (Taittirīya), the Mahānārāyaṇa Upaniṣad and the principal sections of Udaka Śānti.
