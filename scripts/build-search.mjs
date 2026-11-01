@@ -67,12 +67,71 @@ export function copyAliases(dataDir) {
   fs.writeFileSync(path.join(dataDir, 'search-aliases.json'), JSON.stringify(a));
 }
 
+// ---- mantra words: opening words (pratika.tsv) and the whole mantra (text-<veda>.tsv) ----
+// Saṃhitās and Upaniṣads (Hemanth); the Brāhmaṇas and Āraṇyakas are not indexed. One unit per verse.
+// A unit is named by a ref: "<text>/<d1>/<d2>/<verse>" for a verse in the reading files (the app link is
+// #/v/<text>/c/<d1>/<d2>?v=<verse>), "s/<sūkta id>/<n>" for a verse of a sūkta whose text is kept in
+// suktas.json (the app link is #/s/<sūkta id>).
+//   text-<veda>.tsv   <ref> TAB <loose key of the whole mantra>        one file per Veda, so a query loads one
+//   pratika.tsv       <loose key of the first three words> TAB <refs, space separated>   sorted by key
+// Keys are made by web/search-key.js, the same code that folds a typed query. No strict key is stored here:
+// it would add 45% to a file read at the first keystroke and only separates spellings that differ in a diacritic.
+const INDEXED_LAYERS = new Set(['samhita', 'upanishad']);
+const words = (lines) => lines.join(' ').split(/\s+/).filter((w) => /[\p{L}\p{M}]/u.test(w) && !/^[।॥|]+$/.test(w));
+
+export function buildMantras(dataDir) {
+  const read = (...p) => JSON.parse(fs.readFileSync(path.join(dataDir, ...p), 'utf8'));
+  const catalog = read('catalog.json');
+  const perVeda = {}; // veda → [ref, key]
+  const opening = new Map(); // loose key of the first three words → { strict, refs }
+  let units = 0;
+  const unit = (veda, ref, lines) => {
+    const ws = words(lines);
+    if (!ws.length) return;
+    const lk = looseKey(ws.join(' '));
+    if (!lk) return;
+    (perVeda[veda] ||= []).push(`${ref}\t${lk}`);
+    // a leading ॐ is not part of how a mantra is named: "pūrṇam adaḥ …", not "oṃ pūrṇam adaḥ"
+    let from = 0; while (from < ws.length - 1 && looseKey(ws[from]) === 'o') from++;
+    const first = ws.slice(from, from + 3).join(' ');
+    const pk = looseKey(first);
+    const o = opening.get(pk) || { refs: [] };
+    o.refs.push(ref); opening.set(pk, o);
+    units++;
+  };
+  for (const t of catalog.texts) {
+    if (!INDEXED_LAYERS.has(t.layer) || !t.has?.roman && !t.has?.svara) continue; // sv has the English only
+    for (const f of fs.readdirSync(path.join(dataDir, t.id)).filter((n) => /^t\d+\.json$/.test(n))) {
+      const d1 = f.slice(1, -5);
+      for (const [d2, verses] of Object.entries(read(t.id, f))) {
+        for (const v of verses) unit(t.veda, `${t.id}/${d1}/${d2}/${v[0]}`, v[1].length ? v[1] : v[2]);
+      }
+    }
+  }
+  // sūktas whose text lives in suktas.json (Śrī Sūkta, Medhā Sūkta …): their verses are not in a reading file
+  for (const s of read('suktas.json')) {
+    if (s.segs.length) continue;
+    for (const v of s.versions[0].verses) if (v.lines) unit(s.veda, `s/${s.id}/${v.n}`, v.lines);
+  }
+  fs.mkdirSync(path.join(dataDir, 'search'), { recursive: true });
+  const sizes = {};
+  for (const [veda, rows] of Object.entries(perVeda)) {
+    fs.writeFileSync(path.join(dataDir, 'search', `text-${veda}.tsv`), rows.join('\n'));
+    sizes[veda] = rows.length;
+  }
+  const lines = [...opening].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([k, o]) => `${k}\t${o.refs.join(' ')}`);
+  fs.writeFileSync(path.join(dataDir, 'search', 'pratika.tsv'), lines.join('\n'));
+  return { units, openings: lines.length, perVeda: sizes };
+}
+
 export function buildSearch(dataDir) {
   copyAliases(dataDir);
   const names = buildNames(dataDir);
   const by = {}; for (const e of names.entries) by[e[0]] = (by[e[0]] || 0) + 1;
   console.log('search/names.json:', names.entries.length, by);
-  return { names };
+  const m = buildMantras(dataDir);
+  console.log('search/pratika.tsv + text-<veda>.tsv:', m.units, 'mantras,', m.openings, 'distinct openings', m.perVeda);
+  return { names, mantras: m };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) buildSearch(process.argv[2] || 'web/data');
