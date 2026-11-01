@@ -1,5 +1,7 @@
 /* Vedāvalokanam service worker: makes the installed app work without a connection.
    - The app shell (code, styles, fonts, icons) is stored on install, per app version.
+   - Search: the names, the word lists and the opening words of mantras (data/search/) are stored on install; the
+     per-Veda word index (data/search/text-<veda>.tsv) comes with that Veda's offline download, or on first use.
    - Texts (data/*.json) are kept in one cache that outlives app versions. Anything read once,
      or downloaded from Settings → Offline, opens offline from then on; when online it is
      refreshed in the background so corrections in the data still arrive. */
@@ -15,7 +17,7 @@ const SHELL_FILES = [
   'fonts/Shobhika-Vedic.woff', 'fonts/Shobhika-Std.woff',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/apple-touch-icon.png',
 ];
-const DATA_CORE = ['data/catalog.json', 'data/suktas.json', 'data/offline.json', 'data/search/names.json', 'data/search-aliases.json'];
+const DATA_CORE = ['data/catalog.json', 'data/suktas.json', 'data/offline.json', 'data/search/names.json', 'data/search-aliases.json', 'data/search/pratika.tsv'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil((async () => {

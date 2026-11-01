@@ -192,7 +192,8 @@ async function mantraRows(q, qk, entries, data, { vedas, activeVeda, cat, limit,
   if (data.mantraText && unnamed.length >= 2 && qk.length >= 8) {
     const scope = ['rv', 'syv', 'kyv', 'av', 'sv'].filter((v) => !vedas || vedas.has(v));
     const found = [];
-    for (const v of scope) for (const [ref, key] of await data.mantraText(v)) { const pos = key.indexOf(qk); if (pos >= 0) found.push([ref, pos]); }
+    // a Veda whose word index is not stored (offline, not downloaded) is skipped, the others still answer
+    for (const v of scope) for (const [ref, key] of await data.mantraText(v).catch(() => [])) { const pos = key.indexOf(qk); if (pos >= 0) found.push([ref, pos]); }
     found.sort((a, b) => a[1] - b[1]);
     for (const [ref, pos] of found.slice(0, 40)) add(ref, 2000 - pos / 1000, pos, qk.length);
   }
@@ -214,7 +215,7 @@ async function mantraRows(q, qk, entries, data, { vedas, activeVeda, cat, limit,
     // first, the sūktas next"
     if (strong && i < 3) for (const s of sk) out.push({ group: 'sukta', score: 4500 - i, href: s.href, label: `${s.name} · ${s.deva}`, hint: `Sūkta, ${s.ref}`, veda: s.veda });
     if (i < 8 && data.verse) {
-      const v = await data.verse(r.ref);
+      const v = await data.verse(r.ref).catch(() => null); // the verse file may not be stored yet: the row stays, without its line
       if (v?.lines?.length) {
         if (v.label && meta?.refFmt === 'label') row.label = `${meta.ref} ${v.label}`;
         row.snippet = snippet(v.lines, r.pos, r.len);
