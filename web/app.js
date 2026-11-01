@@ -286,6 +286,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.21.2', '2026-11-01', ['Chant buttons on every sūkta list: a Chant view button at the top of the Sūktas page and of each devatā list, one on each group heading, and a round ▶ on each row. Chant view opens from the first verse and moves on through the list you were looking at (as filtered), with a list bar showing the place in it.']],
   ['1.21.1', '2026-11-01', ['Tapping a devatā in Ṛgveda by devatā now opens a list of that devatā’s sūktas, each a tappable row (reference, ṛṣi, opening line, chandas), with maṇḍala chips, a find box and links to shared devatās (Indra → Indra–Agni …).']],
   ['1.21.0', '2026-11-01', [
     'New: Ṛgveda by devatā. A page of 29 devatā entry points (Indra, Agni, Soma, Aśvins, Maruts …) grouped by sphere, each opening all of that devatā’s hymns and listing the key hymns by number. Reach it from the Sūktas page or the first Ṛgveda chip on Home.',
@@ -1287,7 +1288,7 @@ function myListHTML(k, all, row) {
       <button type="button" data-mv="1" data-id="${e.id}" aria-label="Move down"${j === items.length - 1 ? ' disabled' : ''}>↓</button>
       <button type="button" data-rm="${e.id}" aria-label="Remove from my list">✕</button></span>`;
   return `<div class="sk-acts"><button type="button" class="chant-btn" id="chantList"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10-6.5a1 1 0 0 0 0-1.8l-10-6.5A1 1 0 0 0 8 5.5z"/></svg>${T('Chant my list', 'सङ्ग्रहं पठ')}</button></div>
-    <div class="sk-list my-list">${items.map((e, j) => `<div class="my-row">${row(e)}${ctl(e, j)}</div>`).join('')}</div>`;
+    <div class="sk-list my-list">${items.map((e, j) => `<div class="my-row">${row(e)}${chantRow(j).replace('data-chant=', 'data-chantmy=')}${ctl(e, j)}</div>`).join('')}</div>`;
 }
 function wireMyList(all) {
   main.querySelectorAll('[data-mv]').forEach((b) => b.addEventListener('click', () => {
@@ -1299,6 +1300,10 @@ function wireMyList(all) {
   main.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => {
     toggleSaved(b.dataset.rm); keepScrollY = window.scrollY; route();
   }));
+  main.querySelectorAll('[data-chantmy]').forEach((b) => b.addEventListener('click', () => {
+    const e = myList('saved', all)[Number(b.dataset.chantmy)];
+    if (e) { chantResume = 0; go(fromMy(e.href)); }
+  }));
   $('#chantList')?.addEventListener('click', () => {
     const first = myList('saved', all)[0];
     if (first) { chantResume = 0; go(fromMy(first.href)); }
@@ -1308,7 +1313,41 @@ function wireMyList(all) {
 // ---------- what every sūkta page has: save, chant, My-list moves, Continue ----------
 const chantBtn = () => `<button class="chant-btn" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10-6.5a1 1 0 0 0 0-1.8l-10-6.5A1 1 0 0 0 8 5.5z"/></svg>${T('Chant view', 'पारायणम्')}</button>`;
 let sukNav = null;   // My-list neighbours of the open sūkta, kept through renderChrome
+// A playlist: the list the person was looking at when they pressed chant. Pages opened with ?play=1
+// take their previous / next from it, so chant view moves on through that list. Kept for this visit.
+const PLAY_KEY = 'vedalokana.play';
+const withPlay = (href) => `${href}${href.includes('?') ? '&' : '?'}play=1`;
+const hrefKey = (h) => String(h).split('?')[0];
+function setPlay(name, nameSa, back, items) {
+  try { sessionStorage.setItem(PLAY_KEY, JSON.stringify({ name, nameSa, back, items })); } catch { /* storage unavailable */ }
+}
+function playNeighbours(href) {
+  let pl = null; try { pl = JSON.parse(sessionStorage.getItem(PLAY_KEY) || 'null'); } catch { /* storage unavailable */ }
+  if (!pl) return {};
+  const k = pl.items.findIndex((x) => hrefKey(x.href) === hrefKey(href));
+  if (k < 0) return {};
+  const at = (e) => e && { href: withPlay(e.href), label: e.label };
+  return { prev: at(pl.items[k - 1]), next: at(pl.items[k + 1]), pos: k, of: pl.items.length, name: pl.name, nameSa: pl.nameSa, back: pl.back };
+}
+// start chanting a list: the playlist is set, then the first (or the chosen) page opens in chant view
+function startChant(name, nameSa, back, items, at = 0) {
+  if (!items.length) return;
+  setPlay(name, nameSa, back, items);
+  chantResume = 0; go(withPlay(items[at].href));
+}
+const playIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10-6.5a1 1 0 0 0 0-1.8l-10-6.5A1 1 0 0 0 8 5.5z"/></svg>`;
+const chantAll = (id = 'chantAll') => `<button class="chant-btn" type="button" id="${id}">${playIcon.replace('16', '18').replace('16', '18')}${T('Chant view', 'पारायणम्')}</button>`;
+const chantRow = (i) => `<button type="button" class="sk-chant" data-chant="${i}" aria-label="${SA() ? 'पारायणम्' : 'Chant from here'}">${playIcon}</button>`;
 function listBar(s, all, params) {
+  if (params?.get('play') && params?.get('from') !== 'my') {
+    const pn = playNeighbours(`#/s/${s.id}`);
+    if (pn.pos === undefined) return '';
+    const ar = (d) => `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+    return `<nav class="list-bar" aria-label="${esc(pn.name)}">
+      ${pn.prev ? `<a data-r href="${esc(pn.prev.href)}" aria-label="Previous in the list">${ar('M15 5l-7 7 7 7')}</a>` : '<span></span>'}
+      <a href="${esc(pn.back)}"><b>${T(pn.name, pn.nameSa || pn.name)}</b> <small>${F(pn.pos + 1)} / ${F(pn.of)}</small></a>
+      ${pn.next ? `<a data-r href="${esc(pn.next.href)}" aria-label="Next in the list">${ar('M9 5l7 7-7 7')}</a>` : '<span></span>'}</nav>`;
+  }
   if (params?.get('from') !== 'my') return '';
   const nb = listNeighbours(s.id, all);
   if (nb.pos === undefined) return '';
@@ -1320,7 +1359,8 @@ function listBar(s, all, params) {
 }
 function suktaExtras(s, all, params, cparts) {
   visitSukta(s.id);
-  const nb = params?.get('from') === 'my' ? listNeighbours(s.id, all) : {};
+  let nb = params?.get('from') === 'my' ? listNeighbours(s.id, all) : {};
+  if (nb.pos === undefined && params?.get('play')) nb = playNeighbours(`#/s/${s.id}`);
   sukNav = nb.pos !== undefined ? { prev: nb.prev, next: nb.next, sec: 'sūkta' } : null;
   readerNav = sukNav;
   lastRead = { href: `#/s/${s.id}${nb.pos !== undefined ? '?from=my' : ''}`, text: 'Sūktas', textSa: 'सूक्तानि', where: s.name, whereSa: s.deva, v: 1, of: s.count };
@@ -1955,7 +1995,8 @@ async function viewContainer(id, d1, d2, params) {
     if (c2) openSheet({ title: c2.title, items: await c2.items(), layout: c2.layout || 'grid' });
   });
   const sec = (meta.levels[1] || 'section').toLowerCase();
-  readerNav = {
+  const pn = params?.get('play') ? playNeighbours(`#/v/${id}/c/${d1}/${d2}`) : {};
+  readerNav = pn.pos !== undefined ? { prev: pn.prev, next: pn.next, sec: 'sūkta' } : {
     prev: prev && { href: `#/v/${id}/c/${prev[0]}/${prev[1]}`, label: refText(meta, containerRef(meta, prev[0], prev[1], prev[2])) },
     next: next && { href: `#/v/${id}/c/${next[0]}/${next[1]}`, label: refText(meta, containerRef(meta, next[0], next[1], next[2])) },
     sec,
@@ -2490,6 +2531,7 @@ async function viewSuktas(params) {
   if (MY_LISTS.some(([k]) => k === params.get('list'))) { go(`#/my?list=${params.get('list')}`, { replace: true }); return; }
   const listK = '';
   const row = sukRow(by, listK);
+  const flat = groups.flatMap((g) => g.items);
   main.innerHTML = `<div class="col">
     <h1>${T('Sūktas', 'सूक्तानि')}${SA() ? '' : '<span class="h1-deva" lang="sa">सूक्तानि</span>'}</h1>
     <p class="lede">The sūktas, mantras and śānti pāṭhas of recitation books such as the Sasvara Vedamantrāḥ, from every Veda. Each opens as one piece, even when it is gathered from several places.</p>
@@ -2498,9 +2540,17 @@ async function viewSuktas(params) {
     <div class="seg sk-sort" role="group" aria-label="List by">
       ${[['veda', 'By Veda'], ['devata', 'By devatā'], ['az', 'A–Z']].map(([k, l]) => `<a data-r href="${href({ by: k })}" data-by="${k}" aria-pressed="${by === k}">${l}</a>`).join('')}
     </div>
-    ${groups.map((g) => `<section class="sk-group"><h2>${esc(g.title)}${g.deva ? `<span class="h2-deva" lang="sa">${esc(g.deva)}</span>` : ''}<small>${g.items.length}</small></h2>
-      <div class="sk-list">${g.items.map(row).join('')}</div></section>`).join('')}
+    <div class="sk-acts">${chantAll()}</div>
+    ${groups.map((g, gi) => `<section class="sk-group"><h2>${esc(g.title)}${g.deva ? `<span class="h2-deva" lang="sa">${esc(g.deva)}</span>` : ''}<small>${g.items.length}</small>
+      <button type="button" class="sk-chant sk-chant-g" data-chantg="${gi}" aria-label="${SA() ? 'पारायणम्' : 'Chant this group'}">${playIcon}</button></h2>
+      <div class="sk-list">${g.items.map((e) => `<div class="sk-item">${row(e)}${chantRow(flat.indexOf(e))}</div>`).join('')}</div></section>`).join('')}
   </div>`;
+  const toItems = (l) => l.map((e) => ({ href: e.href, label: e.deva }));
+  const listName = vedaF ? VEDA_SHORT[vedaF] : 'Sūktas';
+  const back = `#/suktas${location.hash.includes('?') ? location.hash.slice(location.hash.indexOf('?')) : ''}`;
+  $('#chantAll')?.addEventListener('click', () => startChant(listName, listName, back, toItems(flat)));
+  main.querySelectorAll('[data-chantg]').forEach((b) => b.addEventListener('click', () => { const g = groups[Number(b.dataset.chantg)]; startChant(g.title, g.deva || g.title, back, toItems(g.items)); }));
+  main.querySelectorAll('[data-chant]').forEach((b) => b.addEventListener('click', () => startChant(listName, listName, back, toItems(flat), Number(b.dataset.chant))));
   main.querySelectorAll('[data-by]').forEach((a) => a.addEventListener('click', () => { prefs.suktaBy = a.dataset.by; savePrefs(); }));
 }
 // ---------- Ṛgveda by devatā: entry points from the devatā table, each opening that devatā's hymns ----------
@@ -2534,12 +2584,13 @@ async function viewDevataList(key) {
   const mandalas = [...new Set(all.map((h) => h.m))];
   const also = x.facets.devata.map((f, i) => [f, i]).filter(([f, i]) => i !== di && key.length >= 4 && f[0].includes(key) && f[4] >= 2).sort((a, b) => b[0][4] - a[0][4]).slice(0, 8);
   const tot = new Map(); for (const [m, cs] of x.groups) for (const c of cs) tot.set(`${m}.${c[0]}`, c[1]);
-  let mf = 0; let q = ''; let shown = 60;
+  let mf = 0; let q = ''; let shown = 60; let cur = all;
   main.innerHTML = `<div class="col">
     <div class="crumbs"><a href="#/devatas">${T('Ṛgveda by devatā', 'देवतानुसारम्')}</a></div>
     <h1>${SA() ? `<span lang="sa">${esc(e[2])}</span>` : `${esc(card?.name || cap(e[1]))}<span class="h1-deva" lang="sa">${esc(e[2])}</span>`}</h1>
     <p class="lede">${F(all.length)} ${T('hymns in the Ṛgveda. Tap one to read it. “3 of 12 ṛk” means only those verses are addressed to this devatā.', 'सूक्तानि। पठितुं स्पृशतु।')}</p>
     ${also.length ? `<p class="dv-also"><em>${T('Shared with', 'सह')}</em> ${also.map(([f]) => `<a href="#/devatas/${esc(f[0])}">${esc(cap(f[1]))} <small>${F(f[4])}</small></a>`).join('')}</p>` : ''}
+    <div class="sk-acts">${chantAll('dvChant')}</div>
     <div class="vchips dv-mf" role="group" aria-label="Maṇḍala"></div>
     <label class="big-search dv-find"><span class="sr">Find in this list</span>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
@@ -2555,18 +2606,23 @@ async function viewDevataList(key) {
   const paint = async () => {
     const qq = norm(q.trim());
     const list = all.filter((h) => (!mf || h.m === mf) && (!qq || `${h.m}.${h.s}`.startsWith(qq) || norm(`${x.facets.rishi[h.rishi][1]} ${x.facets.chandas[h.chandas][1]}`).includes(qq)));
+    cur = list;
     const part = list.slice(0, shown);
     const texts = await Promise.all([...new Set(part.map((h) => h.m))].map((m) => text('rv', m)));
     const tm = new Map([...new Set(part.map((h) => h.m))].map((m, i) => [m, texts[i]]));
     $('#dvl').innerHTML = part.map((h) => {
       const line = tm.get(h.m)?.[h.s]?.[0]?.[1]?.[0] || '';
-      return `<a class="sk-row" data-sk href="#/v/rv/c/${h.m}/${h.s}"><span class="sk-top"><span class="sk-name"><span class="dv" lang="sa">${SA() ? `ऋ. ${esc(dg(`${h.m}.${h.s}`))}` : `RV ${h.m}.${h.s}`}</span><span class="ia">${esc(cap(x.facets.rishi[h.rishi][1]))}</span></span><span class="sk-ref">${(tot.get(`${h.m}.${h.s}`) || h.n) > h.n ? `${F(h.n)} ${T('of', 'मध्ये')} ${F(tot.get(`${h.m}.${h.s}`))}` : F(h.n)} ${T('ṛk', 'ऋचः')}</span></span>
+      return `<div class="sk-item"><a class="sk-row" data-sk href="#/v/rv/c/${h.m}/${h.s}"><span class="sk-top"><span class="sk-name"><span class="dv" lang="sa">${SA() ? `ऋ. ${esc(dg(`${h.m}.${h.s}`))}` : `RV ${h.m}.${h.s}`}</span><span class="ia">${esc(cap(x.facets.rishi[h.rishi][1]))}</span></span><span class="sk-ref">${(tot.get(`${h.m}.${h.s}`) || h.n) > h.n ? `${F(h.n)} ${T('of', 'मध्ये')} ${F(tot.get(`${h.m}.${h.s}`))}` : F(h.n)} ${T('ṛk', 'ऋचः')}</span></span>
         <span class="sk-line" lang="sa">${esc(line.replace(/\s*[।॥]\s*$/, ''))}</span>
-        <span class="sk-meta"><span><em>Chandas</em> ${esc(cap(x.facets.chandas[h.chandas][1]))}</span><span>${T('Maṇḍala', 'मण्डलम्')} ${F(h.m)}</span></span></a>`;
+        <span class="sk-meta"><span><em>Chandas</em> ${esc(cap(x.facets.chandas[h.chandas][1]))}</span><span>${T('Maṇḍala', 'मण्डलम्')} ${F(h.m)}</span></span></a>${chantRow(list.indexOf(h))}</div>`;
     }).join('') || `<p class="empty">${T('No hymn matches.', 'न किमपि सूक्तम्।')}</p>`;
     const more = $('#dvm'); more.hidden = list.length <= shown; more.innerHTML = `${T('Show more', 'अधिकम्')} (${F(list.length - shown)})`;
   };
   $('#dvm').addEventListener('click', () => { shown += 60; paint(); });
+  const items = () => cur.map((h) => ({ href: `#/v/rv/c/${h.m}/${h.s}`, label: SA() ? `ऋ. ${dg(`${h.m}.${h.s}`)}` : `RV ${h.m}.${h.s}` }));
+  const nm = card?.name || cap(e[1]); const back = `#/devatas/${key}`;
+  $('#dvChant')?.addEventListener('click', () => startChant(nm, e[2], back, items()));
+  $('#dvl').addEventListener('click', (ev) => { const b = ev.target.closest('[data-chant]'); if (b) startChant(nm, e[2], back, items(), Number(b.dataset.chant)); });
   $('#dvq').addEventListener('input', (ev) => { q = ev.target.value; shown = 60; paint(); });
   paintChips(); paint();
 }

@@ -1069,3 +1069,14 @@ a.mrow { display: block; }
 .dv-mf .chip { flex: none; }
 .dv-find { margin: 8px 0 12px; }
 .dv-more { width: 100%; margin: 12px 0; }
+
+/* chant buttons in lists */
+.sk-item { position: relative; }
+.sk-item .sk-row { padding-right: 58px; }
+.sk-chant { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--vc, var(--v-rv)); cursor: pointer; flex: none; }
+.sk-chant:hover { border-color: var(--indigo); }
+.sk-item .sk-chant { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); }
+.my-row .sk-chant { align-self: center; margin-right: 4px; }
+.sk-group h2 .sk-chant-g { width: 32px; height: 32px; margin-left: 8px; }
+.sk-group h2 .sk-chant-g svg { width: 14px; height: 14px; }
+.sk-acts { display: flex; gap: 8px; margin: 10px 0; }
