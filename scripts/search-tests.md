@@ -18,3 +18,9 @@ app's own data, so they are the converter's canonical spelling, not hand-typed v
 
 When comparing links, ignore the order of `?` parameters (`devata=indra&chandas=tristup`
 and `chandas=tristup&devata=indra` are the same).
+
+## Ranking rule these tests assume
+
+When the query is the opening words of a named mantra (tryambakam yajamahe, tat savitur
+vareṇyaṃ, gaṇānāṃ tvā), the **verse is the first result** and the named sūkta follows it.
+Queries that are a sūkta's name (agni suktam, purusha suktam) put the sūkta first.
