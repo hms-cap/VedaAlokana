@@ -2,6 +2,11 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.19.0 — 2026-11-01
+- Offline status and About became small icons beside the title; the Home chip row was removed.
+- Search returned to the bottom bar (Home · Library · Search · My sūktas), with a highlighted current tab, a saved-count badge on My sūktas, and hide-on-scroll-down.
+- Smaller pañcāṅga place chip and More / Less toggle.
+
 ## 1.18.0 — 2026-11-01
 - **A shorter Home** (about 1,450 px on a phone, from 3,200): *Sūktas* shows only the Veda buttons with their counts; a tap opens that Veda's sūkta chips, another tap closes them, and the open Veda is remembered until the app is closed. *My sūktas · n* is a button under Continue chanting. The Veda tiles are smaller and now come last.
 - **Veda order** everywhere (Home, Library, switcher): Ṛgveda, Kṛṣṇa Yajurveda, Atharvaveda, Śukla Yajurveda, Sāmaveda.

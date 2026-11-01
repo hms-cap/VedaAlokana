@@ -207,6 +207,7 @@ function applyMenu() {
     span.innerHTML = T(en, MENU_SA[k]);
   });
   $('#brand span').innerHTML = T('Vedāvalokanam', 'वेदावलोकनम्');
+  paintOfflineIcon(); paintAboutIcon(); paintMyBadge();
   const b = $('#menuBtn');
   if (b) { b.setAttribute('aria-pressed', String(!SA())); b.title = SA() ? 'Show menus in English' : 'Show menus in the reading script'; }
 }
@@ -294,6 +295,10 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.19.0', '2026-11-01', [
+    'Offline status and About are now small icons beside the title (green dot = everything saved, amber = partly, grey = nothing yet); the chip row on Home is gone.',
+    'Search is back on the bottom bar: Home · Library · Search · My sūktas. The current tab has a soft highlight, My sūktas shows how many you have saved, and the bar slides away while you scroll down.',
+    'The pañcāṅga place chip and the More / Less toggle are smaller.']],
   ['1.18.0', '2026-11-01', [
     'A shorter Home: Veda buttons with counts open their sūkta chips on a tap; a My sūktas button; smaller Veda tiles. Vedas are listed Ṛgveda, Kṛṣṇa Yajurveda, Atharvaveda, Śukla Yajurveda, Sāmaveda everywhere.',
     'The Sūktas tab is gone (the full list is behind “All 121” on Home); My sūktas is one plain list.',
@@ -490,6 +495,7 @@ async function downloadPack(pack, onTick) {
     }
   };
   await Promise.all(Array.from({ length: 6 }, worker));
+  paintOfflineIcon();
   return failed;
 }
 // fetch what a page needs, so that it is stored for later (the service worker keeps every data file it serves)
@@ -578,13 +584,26 @@ async function readerNudge(veda) {
     box.querySelector('.nudge-b').remove(); setTimeout(() => box.remove(), 3000);
   });
 }
-// Home: is anything stored for offline use?
-async function homeOfflineChip() {
-  const el = document.getElementById('homeOff'); if (!el) return;
-  const st = await packStatus(); if (!st) { el.remove(); return; }
+// Title bar: is anything stored for offline use? (green = all, amber = partly, grey = none)
+async function paintOfflineIcon() {
+  const el = document.getElementById('tbOff'); if (!el) return;
+  const st = await packStatus().catch(() => null); if (!st) { el.hidden = true; return; }
   const f = Object.values(st.frac); const all = f.every((x) => x === 1); const some = f.some((x) => x > 0);
-  el.classList.toggle('ok', all);
-  el.lastElementChild.textContent = all ? Tp('Offline ready', 'जालं विना सज्जम्') : some ? Tp('Partly saved offline', 'अंशतः सङ्गृहीतम्') : Tp('Not saved for offline', 'जालं विना न सज्जम्');
+  el.hidden = false; el.dataset.s = all ? 'all' : some ? 'some' : 'none';
+  const t = all ? Tp('Offline ready', 'जालं विना सज्जम्') : some ? Tp('Partly saved offline', 'अंशतः सङ्गृहीतम्') : Tp('Not saved for offline', 'जालं विना न सङ्गृहीतम्');
+  el.setAttribute('aria-label', t); el.title = t;
+}
+function paintAboutIcon() {
+  const el = document.getElementById('tbAbout'); if (!el) return;
+  const t = `${Tp('About', 'परिचयः')} · ${APP.version}`; el.setAttribute('aria-label', t); el.title = t;
+}
+function paintMyBadge() {
+  if (typeof my === 'undefined') return;
+  const a = document.querySelector('#tabbar [data-tab="my"]'); if (!a) return;
+  let b = a.querySelector('.bd'); const n = my.saved.length;
+  if (!n) { b?.remove(); return; }
+  if (!b) { b = document.createElement('i'); b.className = 'bd'; b.setAttribute('aria-hidden', 'true'); a.appendChild(b); }
+  b.textContent = n > 99 ? '99+' : F(n);
 }
 
 async function renderOffline(el) {
@@ -1090,11 +1109,6 @@ async function viewHome() {
   try { suk = (cache.suktas ||= await json('data/suktas.json')); } catch { /* optional */ }
   const pct = last?.of ? Math.min(1, last.v / last.of) : 0;
   main.innerHTML = `${ASHRAMA_SVG}<div class="home">
-    <div class="home-top">
-      <a class="home-off" id="homeOff" href="#/settings?s=offline" aria-label="${esc(Tp('Offline downloads', 'अनुजालविना पठनम्'))}"><span class="dot" aria-hidden="true"></span><span>…</span></a>
-      <a class="home-about" href="#/about" aria-label="About Vedāvalokanam, version ${esc(APP.version)}: sources and what’s new">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.6v.1"/></svg>
-        <span>${T('About', 'परिचयः')}</span><small>${esc(APP.version)}</small></a></div>
     <section class="pc" id="pc" aria-label="Today’s pañcāṅga"></section>
     <section class="hero dm" id="dm" aria-roledescription="carousel" aria-labelledby="todayH">${dailyHTML(dm)}</section>
     ${last ? `<a class="cont" href="${esc(last.v > 1 ? `${last.href}${last.href.includes('?') ? '&' : '?'}v=${last.v}` : last.href)}">
@@ -1115,7 +1129,7 @@ async function viewHome() {
   }).join('')}</div>
     <p class="lede home-foot">Every text comes from an openly published digital edition.</p>
   </div>`;
-  renderPanchanga(); homeOfflineChip();
+  renderPanchanga();
   obCan.tr = !!dm.trEn; obCan.bhashya = !!dm.bhx;
   wireDaily(dm);
   main.querySelectorAll('.skv [data-skv]').forEach((b) => b.addEventListener('click', () => {
@@ -1175,7 +1189,7 @@ const isSaved = (sid) => my.saved.includes(sid);
 function toggleSaved(sid, entry) {
   if (isSaved(sid)) { my.saved = my.saved.filter((x) => x !== sid); delete my.dm[sid]; }
   else { my.saved = [...my.saved, sid]; if (entry) my.dm[sid] = entry; prefetchSaved(sid, entry); }   // a single mantra keeps its own entry; a sūkta is looked up by id
-  saveMy();
+  saveMy(); paintMyBadge();
 }
 const fromMy = (href) => `${href}${href.includes('?') ? '&' : '?'}from=my`;
 function myList(kind, all) {
@@ -1437,7 +1451,7 @@ async function renderPanchanga() {
     ? `<span lang="sa">${esc(dg(new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric' }).replace(/\//g, '-')))}</span>`
     : esc(new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' }))}</span>
       <button class="pc-loc" type="button" aria-label="Pañcāṅga place: ${esc(pl.name)}. Use my location">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/></svg>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/></svg>
         <span>${esc(pl.name)}</span></button>
     </div>
     <div class="pc-main"><span lang="sa">${esc(p.masa)} ${esc(p.paksha)} ${esc(p.tithi)}</span></div>
@@ -1452,12 +1466,13 @@ async function renderPanchanga() {
     </dl>
     ${pl.guess ? `<p class="pc-note">${T('Times for the place shown. Tap it to use your location.', 'दर्शितस्थानस्य कालाः। स्वस्थानाय स्पृशतु।')}</p>` : ''}
     </div>
-    <button class="pc-tog" type="button" aria-controls="pcMore"><span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>`;
+    <button class="pc-tog" type="button" aria-controls="pcMore"><span></span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>`;
   const setOpen = (o) => {
     el.classList.toggle('open', o);
     const b = el.querySelector('.pc-tog');
     b.setAttribute('aria-expanded', o);
-    b.firstChild.textContent = o ? Tp('Less', 'न्यूनम्') : Tp('Tithi, nakṣatra, yoga, karaṇa, sun', 'तिथिः नक्षत्रं योगः करणं सूर्यः');
+    b.firstChild.textContent = o ? Tp('Less', 'न्यूनम्') : Tp('More', 'अधिकम्');
+    b.setAttribute('aria-label', o ? 'Hide tithi, nakṣatra, yoga, karaṇa and sun times' : 'Show tithi, nakṣatra, yoga, karaṇa and sun times');
   };
   let open = false; try { open = localStorage.getItem(PC_OPEN) === '1'; } catch { /* storage unavailable */ }
   setOpen(open);
@@ -2533,6 +2548,7 @@ async function viewSearch(params) {
     </div><p class="lede">References jump to a mantra in the text you were last reading, or in the Ṛgveda. Prefix a text to change it, as in <b>av 7.1</b> or <b>ts 1.1</b>.</p></div>
   </div>`;
   const input = $('#bq'); let token = 0;
+  if (!params.get('q') && matchMedia('(max-width: 899px)').matches) setTimeout(() => input.focus({ preventScroll: true }), 50);
   const run = async () => {
     const my = ++token; const q = input.value;
     if (!q.trim()) { $('#bres').innerHTML = ''; return; }
@@ -2981,3 +2997,14 @@ function openChant(model, start = 0) {
   try { navigator.wakeLock?.request('screen').then((l) => { wakeLock = l; }).catch(() => {}); } catch { /* not supported */ }
   render();
 }
+
+// bottom bar slides away while scrolling down, returns on scroll up
+(() => {
+  const bar = document.getElementById('tabbar'); let y = window.scrollY;
+  window.addEventListener('scroll', () => {
+    const n = window.scrollY; const d = n - y; y = n;
+    if (Math.abs(d) < 8) return;
+    bar.classList.toggle('away', d > 0 && n > 120);
+  }, { passive: true });
+  window.addEventListener('hashchange', () => bar.classList.remove('away'));
+})();
