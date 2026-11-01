@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import { parseQuery, vocabulary } from '../web/query.js';
 import { looseKey } from '../web/search-key.js';
-import { groupResults, RESULT_GROUPS } from '../web/search.js';
+import { groupResults, RESULT_GROUPS, snippet } from '../web/search.js';
 
 const vocab = vocabulary(JSON.parse(fs.readFileSync(new URL('./search-aliases.json', import.meta.url), 'utf8')));
 let failed = 0;
@@ -66,5 +66,14 @@ const order = RESULT_GROUPS.map((x) => x.id).filter((id) => rows.some((r) => r.g
 if (JSON.stringify(g.map((x) => x.group.id)) !== JSON.stringify(order)) { failed++; console.log('FAIL group order', g.map((x) => x.group.id)); }
 if (g.find((x) => x.group.id === 'facet').items.length !== 2 || g.find((x) => x.group.id === 'facet').more !== 1) { failed++; console.log('FAIL perGroup limit'); }
 if (groupResults(rows).some((x) => x.more)) { failed++; console.log('FAIL no limit should show all'); }
+// snippet: the words of a verse that a typed run covers are marked, in any script of the query
+const verse = ['एकं॒ सद्विप्रा॑ बहु॒धा व॑दन्त्य॒ग्निं य॒मं', 'मा॑त॒रिश्वा॑नमाहुः'];
+const marked = (q, lines = verse) => { const k = looseKey(q); const sn = snippet(lines, looseKey(lines.join(' ')).indexOf(k), k.length); return sn.map((l) => l.filter((w) => w[1]).map((w) => w[0]).join(' ')); };
+const eq = (a, b, what) => { if (JSON.stringify(a) !== JSON.stringify(b)) { failed++; console.log('FAIL snippet', what, JSON.stringify(a)); } };
+eq(marked('ekam sad viprah bahudha'), ['एकं॒ सद्विप्रा॑ बहु॒धा'], 'three words');
+eq(marked('बहुधा वदन्त्यग्निं'), ['बहु॒धा व॑दन्त्य॒ग्निं'], 'two words, Devanagari');
+const long = [Array.from({ length: 30 }, (_, i) => (i === 15 ? 'अग्निमीळे' : 'देव')).join(' ')];
+const cut = snippet(long, looseKey(long[0]).indexOf(looseKey('अग्निमीळे')), looseKey('अग्निमीळे').length)[0];
+if (cut.length !== 11 || cut[0][0] !== '…' || cut.at(-1)[0] !== '…') { failed++; console.log('FAIL snippet window', cut.length); }
 console.log(`query parser: ${cases.length} queries, ${seen.size} vocabulary words — ${failed ? failed + ' failed' : 'ok'}`);
 process.exit(failed ? 1 : 0);

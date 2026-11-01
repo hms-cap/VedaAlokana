@@ -3,8 +3,8 @@
  "veda": "rv",
  "overall": {
   "tests": 73,
-  "top1": 57,
-  "top5": 56
+  "top1": 71,
+  "top5": 71
  },
  "byScript": {
   "any": {
@@ -14,18 +14,18 @@
   },
   "deva": {
    "tests": 18,
-   "top1": 13,
-   "top5": 13
+   "top1": 18,
+   "top5": 18
   },
   "en": {
    "tests": 30,
-   "top1": 23,
-   "top5": 22
+   "top1": 28,
+   "top5": 28
   },
   "kn": {
    "tests": 17,
-   "top1": 13,
-   "top5": 13
+   "top1": 17,
+   "top5": 17
   }
  },
  "byPhase": {
@@ -35,9 +35,9 @@
    "top5": 6
   },
   "p1": {
-   "tests": 39,
-   "top1": 39,
-   "top5": 38
+   "tests": 37,
+   "top1": 37,
+   "top5": 37
   },
   "p2": {
    "tests": 12,
@@ -45,9 +45,9 @@
    "top5": 12
   },
   "p3": {
-   "tests": 14,
-   "top1": 0,
-   "top5": 0
+   "tests": 16,
+   "top1": 16,
+   "top5": 16
   },
   "p4": {
    "tests": 2,
@@ -130,7 +130,7 @@
   },
   "en|isha upanishad": {
    "top1": true,
-   "top5": false
+   "top5": true
   },
   "en|chandogya upanishad": {
    "top1": true,
@@ -165,28 +165,28 @@
    "top5": true
   },
   "en|agnimile": {
-   "top1": false,
-   "top5": false
+   "top1": true,
+   "top5": true
   },
   "en|tryambakam yajamahe": {
-   "top1": false,
-   "top5": false
+   "top1": true,
+   "top5": true
   },
   "en|ekam sad viprah bahudha": {
-   "top1": false,
-   "top5": false
+   "top1": true,
+   "top5": true
   },
   "en|ekam sad viprah bahudha vadanti": {
    "top1": false,
    "top5": false
   },
   "en|asato ma sadgamaya": {
-   "top1": false,
-   "top5": false
+   "top1": true,
+   "top5": true
   },
   "en|purnamadah purnamidam": {
-   "top1": false,
-   "top5": false
+   "top1": true,
+   "top5": true
   },
   "en|dice": {
    "top1": false,
@@ -241,20 +241,20 @@
    "top5": true
   },
   "kn|ಗಣಾನಾಂ ತ್ವಾ ಗಣಪತಿಂ": {
-   "top1": false,
-   "top5": false
+   "top1": true,
+   "top5": true
   },
   "kn|ಅಗ್ನಿಮೀಳೇ": {
-   "top1": false,
-   "top5": false
+   "top1": true,
+   "top5": true
   },
   "kn|ಏಕಂ ಸದ್ವಿಪ್ರಾ ಬಹುಧಾ ವದನ್ತ್ಯಗ್ನಿಂ ಯಮಂ": {
-   "top1": false,
-   "top5": false
+   "top1": true,
+   "top5": true
   },
   "kn|ತ್ರ್ಯಮ್ಬಕಂ ಯಜಾಮಹೇ": {
-   "top1": false,
-   "top5": false
+   "top1": true,
+   "top5": true
   },
   "deva|अग्निसूक्तम्": {
    "top1": true,
@@ -305,24 +305,24 @@
    "top5": true
   },
   "deva|अग्निमीळे": {
-   "top1": false,
-   "top5": false
+   "top1": true,
+   "top5": true
   },
   "deva|त्र्यम्बकं यजामहे": {
-   "top1": false,
-   "top5": false
+   "top1": true,
+   "top5": true
   },
   "deva|तत्सवितुर्वरेण्यं": {
-   "top1": false,
-   "top5": false
+   "top1": true,
+   "top5": true
   },
   "deva|हिरण्यवर्णां हरिणीं": {
-   "top1": false,
-   "top5": false
+   "top1": true,
+   "top5": true
   },
   "deva|असतो मा सद्गमय": {
-   "top1": false,
-   "top5": false
+   "top1": true,
+   "top5": true
   },
   "kn|ಅಗ್ನಿ ಸೂಕ್ತ": {
    "top1": true,

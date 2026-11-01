@@ -73,9 +73,10 @@ function foldJoined(k) {
  *   - long vowels → short; ṛ ri → r; ḷ ḻ → l; ś ṣ sh → s; ṭ ḍ ṇ → t d n
  *   - aspirates fold (kh th bh → k t b); doubled letters collapse (taittirīya = taitiriya)
  *   - anusvāra, ṅ ñ ṇ → n; m before a consonant → n; the extra t of -ntsu- dropped
- *   - visarga dropped; a final m or n is dropped (suktam = sukta)
+ *   - visarga dropped; a final m or n is dropped (suktam = sukta), unless { keepFinal: true } (used to
+ *     measure where a word ends inside a longer key)
  */
-export function looseKey(s) {
+export function looseKey(s, { keepFinal = false } = {}) {
   const t = toIast(s)
     .replace(JOINERS, '')
     .replace(/ḥ/g, '') // ḥ: visarga
@@ -83,5 +84,5 @@ export function looseKey(s) {
     .normalize('NFD').replace(/[̀-ͯ]/g, ''); // every other diacritic: ā → a, ṣ → s, ṭ → t …
   const words = t.split(/[^a-z]+/).filter(Boolean).map((w) => w.replace(/([aeiou])h$/, '$1')); // typed visarga: agnih → agni
   const k = foldJoined(words.join(''));
-  return k.replace(/[mn]$/, '');
+  return keepFinal ? k : k.replace(/[mn]$/, '');
 }

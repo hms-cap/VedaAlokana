@@ -1,7 +1,9 @@
 // Search: turns what someone typed into a list of links. No DOM and no module state, so the build
 // scripts and tests can run it too. The app passes in how to load data and which Veda is open:
 //
-//   search(query, { catalog: () => Promise<catalog>, index: (id) => Promise<index>, names: () => Promise<names>, aliases?: () => Promise<aliases> }, { activeVeda })
+//   search(query, { catalog: () => Promise<catalog>, index: (id) => Promise<index>, names: () => Promise<names>, aliases?: () => Promise<aliases>,
+//     pratika?: () => Promise<[[key, refs[]]]>, mantraText?: (veda) => Promise<[[ref, key]]>,
+//     verse?: (ref) => Promise<{ lines, label } | null>, suktas?: () => Promise<suktas> }, { activeVeda })
 //     → [{ group, score, href, label, hint }]
 //
 // The app reads href, label and hint; group ('ref' | 'sukta' | 'text' | 'facet') and score are for ranking.
@@ -18,15 +20,18 @@ const asciiDigits = (s) => s.replace(/[०-९]/g, (c) => c.charCodeAt(0) - 0x96
 // The groups a result list is sorted into, best first. A group is shown with its title in English or Sanskrit.
 export const RESULT_GROUPS = [
   { id: 'ref', en: 'Go to', sa: 'गम्यताम्' },
+  { id: 'mantra', en: 'Mantras', sa: 'मन्त्राः' },
   { id: 'sukta', en: 'Sūktas', sa: 'सूक्तानि' },
   { id: 'text', en: 'Texts and parts', sa: 'ग्रन्थाः' },
   { id: 'facet', en: 'Ṛṣi · devatā · metre', sa: 'ऋषिः · देवता · छन्दः' },
 ];
 
-/** Sorted results → [{ group, items }] in RESULT_GROUPS order; at most perGroup items each. */
+/** Sorted results → [{ group, items, more }]; the group with the best row first (RESULT_GROUPS order on a tie); at most perGroup items each. */
 export function groupResults(items, perGroup = Infinity) {
   return RESULT_GROUPS.map((g) => ({ group: g, all: items.filter((i) => i.group === g.id) }))
     .filter((g) => g.all.length)
+    .map((g) => ({ ...g, best: Math.max(...g.all.map((i) => i.score ?? 0)) }))
+    .sort((a, b) => b.best - a.best)
     .map((g) => ({ group: g.group, items: g.all.slice(0, perGroup), more: Math.max(0, g.all.length - perGroup) }));
 }
 
@@ -45,8 +50,8 @@ export async function search(q, data, { activeVeda = 'rv', veda = null, limit = 
     if (meta.refFmt === 'v') { d1 = x.groups[0][0]; d2 = x.groups[0][1][0][0]; [v] = nums; }
     else if (meta.refFmt === 'd2.v') { d1 = x.groups[0][0]; [d2, v] = nums; } else [d1, d2, v] = nums;
     const g = x.groups.find((e) => e[0] === d1);
-    if (g && d2 === undefined) out.push({ group: 'ref', score: 1000, href: x.groups.length > 1 ? `#/v/${id}/g/${d1}` : `#/v/${id}/c/${d1}/${d1}`, label: `${meta.name}, ${groupName(meta, d1)}`, hint: 'Open' });
-    else if (meta.refFmt !== 'label' && g && g[1].some((c) => c[0] === d2)) out.push({ group: 'ref', score: 1000, href: `#/v/${id}/c/${d1}/${d2}${v ? `?v=${v}` : ''}`, label: `${meta.ref} ${refOf(meta, d1, d2, v)}`, hint: meta.name });
+    if (g && d2 === undefined) out.push({ group: 'ref', score: 10000, href: x.groups.length > 1 ? `#/v/${id}/g/${d1}` : `#/v/${id}/c/${d1}/${d1}`, label: `${meta.name}, ${groupName(meta, d1)}`, hint: 'Open' });
+    else if (meta.refFmt !== 'label' && g && g[1].some((c) => c[0] === d2)) out.push({ group: 'ref', score: 10000, href: `#/v/${id}/c/${d1}/${d2}${v ? `?v=${v}` : ''}`, label: `${meta.ref} ${refOf(meta, d1, d2, v)}`, hint: meta.name });
   }
   // names: sūktas and their aliases, texts, named parts and the ṛṣis, devatās and metres of the open Veda.
   // Every spelling (Kannada, Devanagari, IAST, plain English) is folded to a loose key first.
@@ -74,7 +79,7 @@ export async function search(q, data, { activeVeda = 'rv', veda = null, limit = 
         let row;
         if (type === 's' || type === 'a') {
           const home = sukta.get(id);
-          row = { group: 'sukta', score: hit * 1000 + 300 - (type === 'a' ? 1 : 0), href, label: `${type === 'a' ? `${label} → ${home[2]}` : label} · ${deva}`, hint: `Sūkta, ${extra[1]}`, veda: extra[0] };
+          row = { group: 'sukta', score: hit * 1000 + (type === 'a' ? 150 : 300), href, label: `${type === 'a' ? `${label} → ${home[2]}` : label} · ${deva}`, hint: `Sūkta, ${extra[1]}`, veda: extra[0] };
         } else if (type === 't') row = { group: 'text', score: hit * 1000 + 200, href, label: `${label} · ${deva}`, hint: LAYERS[extra[0]].label, veda: extra[1] };
         else if (type === 'g') row = { group: 'text', score: hit * 1000 + 200, href, label: `${label}`, hint: 'Part of a text', veda: extra[1] };
         else {
@@ -110,6 +115,12 @@ export async function search(q, data, { activeVeda = 'rv', veda = null, limit = 
     if (parsed && !exactName && parsed.words.length >= 2 && parsed.words.length <= 3) {
       facetCombos(entries, facetText, parsed.words, parsed.facets).forEach((c, i) => keep({ group: 'facet', score: 5000 - i * 10, href: findHref(facetText, c.filters), label: c.label, hint: 'Filter' }));
     }
+    // ---- mantra words: the opening of a mantra, or any run of its words ----
+    if (data.pratika && !parsed?.facets.size) try {
+      const exactName = [...best.values()].some((r) => r.score >= 3000 && r.group !== 'mantra');
+      const mantras = await mantraRows(q, qk, entries, data, { vedas, activeVeda, cat, limit: Math.min(limit, 30), exactName });
+      for (const row of mantras) keep(row);
+    } catch { /* the mantra indexes are optional: not yet cached and offline */ }
     // a Veda chip (or Veda words next to a name) drops sūktas and texts of other Vedas
     if (vedas && (veda || parsed?.words.length || parsed?.concepts.length)) for (const [h, r] of best) if (r.veda && !vedas.has(r.veda)) best.delete(h);
     const hits = [...best.values()].sort((a, b) => b.score - a.score);
@@ -144,4 +155,101 @@ function facetCombos(entries, text, words, only) {
     filters: Object.fromEntries(chosen.map((c) => [c.f, c.id])),
     label: chosen.map((c) => `${FACETS[c.f].label} ${cap(c.label)}`).join(' + '),
   }));
+}
+
+// ---------- mantra words ----------
+const textVeda = (cat, id) => cat.texts.find((t) => t.id === id)?.veda;
+const hrefOf = (ref) => { const [t, a, b, n] = ref.split('/'); return t === 's' ? `#/s/${a}` : `#/v/${t}/c/${a}/${b}?v=${n}`; };
+
+/** The sūktas (suktas.json) that contain a verse of the reading files. */
+function suktasOf(list, ref) {
+  const [t, d1, d2, n] = ref.split('/');
+  if (t === 's') return [];
+  return list.filter((s) => s.segs.some((g) => g.t === t && String(g.d1) === d1 && String(g.d2) === d2 && n >= g.v[0] && n <= g.v[1]));
+}
+
+async function mantraRows(q, qk, entries, data, { vedas, activeVeda, cat, limit, exactName }) {
+  const rows = []; const seen = new Set();
+  const inScope = (ref) => !vedas || vedas.has(ref.startsWith('s/') ? sukVeda.get(ref.split('/')[1]) : textVeda(cat, ref.split('/')[0]));
+  const sukVeda = new Map(); let sukList = [];
+  if (data.suktas) { sukList = await data.suktas(); for (const s of sukList) sukVeda.set(s.id, s.veda); }
+  // when the whole query is already a name (a sūkta, a seer …) mantras that begin with it come after the names;
+  // otherwise it is the opening of a mantra: the verse first, the sūktas it belongs to next
+  const base = exactName ? 1200 : 4200;
+  const order = (ref) => { const [t, a, b, n] = ref.split('/'); return [cat.texts.findIndex((x) => x.id === t) + (t === 's' ? 99 : 0), Number(a) || 0, Number(b) || 0, Number(n) || 0]; };
+  const add = (ref, score, pos, len) => { if (!seen.has(ref) && inScope(ref)) { seen.add(ref); rows.push({ ref, score, pos, len }); } };
+
+  // opening words (pratīka): what is typed is the start of the first three words, or more than three words
+  // typed whose first three are an opening
+  if (qk.length >= 7) {
+    for (const [pk, refs] of await data.pratika()) {
+      if (pk.startsWith(qk) || (pk.length >= 6 && qk.startsWith(pk))) for (const r of refs) add(r, base + (pk === qk ? 20 : 0) + (r.startsWith(`${activeVeda}/`) ? 5 : 0), 0, Math.min(qk.length, pk.length));
+    }
+  }
+  // any run of words: when at least two words of the query are not names
+  const words = q.trim().split(/\s+/).map((w) => looseKey(w)).filter((k) => k.length >= 3);
+  const unnamed = words.filter((w) => !entries.some((e) => e[6].includes(w)));
+  if (data.mantraText && unnamed.length >= 2 && qk.length >= 8) {
+    const scope = ['rv', 'syv', 'kyv', 'av', 'sv'].filter((v) => !vedas || vedas.has(v));
+    const found = [];
+    for (const v of scope) for (const [ref, key] of await data.mantraText(v)) { const pos = key.indexOf(qk); if (pos >= 0) found.push([ref, pos]); }
+    found.sort((a, b) => a[1] - b[1]);
+    for (const [ref, pos] of found.slice(0, 40)) add(ref, 2000 - pos / 1000, pos, qk.length);
+  }
+  // equal scores: the earlier text and place first (Ṛgveda 1.1.1 before 10.20.2)
+  rows.sort((a, b) => b.score - a.score || (() => { const x = order(a.ref); const y = order(b.ref); return x.findIndex((v, i) => v !== y[i]) < 0 ? 0 : x[x.findIndex((v, i) => v !== y[i])] - y[x.findIndex((v, i) => v !== y[i])]; })());
+  const out = [];
+  const shown = rows.slice(0, limit);
+  for (const [i, r] of shown.entries()) {
+    const href = hrefOf(r.ref);
+    const strong = !exactName && r.score >= 4200;
+    const row = { group: 'mantra', score: strong && i === 0 ? 5000 : r.score, href, label: r.ref, hint: '', ref: r.ref };
+    const [t, a, b, n] = r.ref.split('/');
+    const meta = t === 's' ? null : cat.texts.find((x) => x.id === t);
+    row.label = meta ? `${meta.ref} ${refOf(meta, a, b, n)}` : (sukList.find((s) => s.id === a)?.name || r.ref);
+    row.hint = meta ? meta.name : 'Sūkta';
+    const sk = suktasOf(sukList, r.ref);
+    if (sk.length) row.hint = `${sk[0].name}${sk.length > 1 ? ` +${sk.length - 1}` : ''}`;
+    // the sūktas this mantra opens or belongs to come straight after the best mantra: "a named mantra: the verse
+    // first, the sūktas next"
+    if (strong && i < 3) for (const s of sk) out.push({ group: 'sukta', score: 4500 - i, href: s.href, label: `${s.name} · ${s.deva}`, hint: `Sūkta, ${s.ref}`, veda: s.veda });
+    if (i < 8 && data.verse) {
+      const v = await data.verse(r.ref);
+      if (v?.lines?.length) {
+        if (v.label && meta?.refFmt === 'label') row.label = `${meta.ref} ${v.label}`;
+        row.snippet = snippet(v.lines, r.pos, r.len);
+      }
+    }
+    out.push(row);
+  }
+  return out;
+}
+
+/**
+ * The lines of a verse as [[word, hit], …] per line, only the lines with a hit (two at most).
+ * pos/len locate the match in the verse's loose key; each word's span in that key is found by measuring
+ * the key of the words up to it. If the pieces do not add up to the whole key, the first line is marked
+ * whole rather than guessing.
+ */
+export function snippet(lines, pos, len) {
+  const words = lines.flatMap((l, li) => l.split(/\s+/).filter(Boolean).map((w) => [li, w]));
+  const keyLen = (n) => looseKey(words.slice(0, n).map((w) => w[1]).join(' '), { keepFinal: true }).length;
+  const ends = words.map((_, i) => keyLen(i + 1));
+  const whole = looseKey(words.map((w) => w[1]).join(' ')).length;
+  const sound = ends.length && (ends.at(-1) === whole || ends.at(-1) === whole + 1) && ends.every((e, i) => e >= (ends[i - 1] || 0));
+  let hit = new Set();
+  // a word counts when the match covers at least two of its letters (one letter shared by a doubled vowel at a
+  // word break, deva+agni → devagni, does not make the neighbour part of the match)
+  if (sound) words.forEach((_, i) => { const start = ends[i - 1] || 0; const overlap = Math.min(ends[i], pos + len) - Math.max(start, pos); if (overlap >= Math.min(2, ends[i] - start) && ends[i] > start) hit.add(i); });
+  if (!hit.size) { hit = new Set(words.map((w, i) => (w[0] === 0 ? i : -1)).filter((i) => i >= 0)); }
+  const byLine = [];
+  words.forEach((w, i) => { (byLine[w[0]] ||= []).push([w[1], hit.has(i)]); });
+  // a long line (yajus prose) is cut to the hit and four words either side
+  const cut = (l) => {
+    if (l.length <= 14) return l;
+    const a = l.findIndex((w) => w[1]); const b = l.length - 1 - [...l].reverse().findIndex((w) => w[1]);
+    const from = Math.max(0, a - 4); const to = Math.min(l.length, b + 5);
+    return [...(from ? [['…', false]] : []), ...l.slice(from, to), ...(to < l.length ? [['…', false]] : [])];
+  };
+  return byLine.filter((l) => l && l.some((w) => w[1])).slice(0, 2).map(cut);
 }

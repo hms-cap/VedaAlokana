@@ -2044,10 +2044,30 @@ function notFound() {
 
 // ---------- search ----------
 let activeVeda = 'rv';
-const suggestions = (q, opts = {}) => search(q, { catalog, index, names, aliases }, { activeVeda, ...opts });
+async function tsv(url) { const r = await fetch(url); if (!r.ok) throw new Error(`Could not load ${url} (${r.status})`); return (await r.text()).split('\n'); }
+const searchData = {
+  catalog, index, names, aliases,
+  pratika: () => (cache.pratika ||= tsv('data/search/pratika.tsv').then((ls) => ls.map((l) => { const [k, r] = l.split('\t'); return [k, r.split(' ')]; })).catch((e) => { cache.pratika = null; throw e; })),
+  mantraText: (v) => (cache[`mt-${v}`] ||= tsv(`data/search/text-${v}.tsv`).then((ls) => ls.map((l) => l.split('\t'))).catch((e) => { cache[`mt-${v}`] = null; throw e; })),
+  suktas: async () => (cache.suktas ||= await json('data/suktas.json')),
+  // a verse by its ref in the mantra indexes: "rv/1/164/46" or "s/sri-sukta/3"
+  verse: async (ref) => {
+    const [t, a, b, n] = ref.split('/');
+    if (t === 's') { const v = (await searchData.suktas()).find((x) => x.id === a)?.versions?.[0].verses.find((x) => String(x.n) === n); return v?.lines ? { lines: v.lines } : null; }
+    const v = ((await text(t, a))[b] || []).find((x) => String(x[0]) === n);
+    return v ? { lines: v[1].length ? v[1] : v[2], label: v[5] } : null;
+  },
+};
+const suggestions = (q, opts = {}) => search(q, searchData, { activeVeda, ...opts });
 // result groups with a title each: HTML for the top-bar box and the Search page
 const groupTitle = (g) => `<div class="grp" role="presentation">${T(g.en, g.sa)}</div>`;
-const rowHTML = (it, i, sel) => `<a role="option" href="${it.href}" aria-selected="${i === sel}"><span>${esc(it.label)}</span><small>${esc(it.hint)}</small></a>`;
+// one result: a name and its kind, or (a mantra) its reference, sūkta and the matching line with the matched words marked
+const snippetHTML = (sn) => sn.map((line) => line.map(([w, hit]) => (hit ? `<mark>${esc(w)}</mark>` : esc(w))).join(' ')).join('<br>');
+const rowHTML = (it, i, sel, page = false) => {
+  const attrs = page ? '' : ` role="option" aria-selected="${i === sel}"`;
+  if (it.snippet) return `<a class="mrow"${attrs} href="${it.href}"><span class="mh"><b>${esc(it.label)}</b><small>${esc(it.hint)}</small></span><span class="mline" lang="sa">${snippetHTML(it.snippet)}</span></a>`;
+  return `<a href="${it.href}"${attrs}><span>${esc(it.label)}</span><small>${esc(it.hint)}</small></a>`;
+};
 function setupSearch() {
   const input = $('#q'); const box = $('#suggest'); let items = []; let sel = -1; let token = 0;
   const close = () => { box.hidden = true; sel = -1; };
@@ -2512,7 +2532,7 @@ async function viewSearch(params) {
     if (!q.trim()) { $('#bres').innerHTML = ''; return; }
     const r = await suggestions(q, { veda: veda || null, limit: 60 });
     if (my !== token) return;
-    $('#bres').innerHTML = groupResults(r).map((g) => groupTitle(g.group) + g.items.map((it) => `<a href="${it.href}"><span>${esc(it.label)}</span><small>${esc(it.hint)}</small></a>`).join('')).join('')
+    $('#bres').innerHTML = groupResults(r).map((g) => groupTitle(g.group) + g.items.map((it) => rowHTML(it, -1, -1, true)).join('')).join('')
       || '<p class="empty">No match. Try a reference like 1.1.1, a name like agni suktam, or another Veda.</p>';
   };
   // the query and the Veda are kept in the address, so back from a result returns to the same results

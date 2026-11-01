@@ -26,7 +26,17 @@ const baselineFile = path.join(here, 'search-baseline.json');
 // ---- data, loaded the way the app loads it (the search only reads texts, groups and facets) ----
 const cache = {};
 const read = (rel) => (cache[rel] ||= JSON.parse(fs.readFileSync(path.join(dataDir, rel), 'utf8')));
-const data = { catalog: async () => read('catalog.json'), index: async (id) => read(`${id}/index.json`), names: async () => read('search/names.json'), aliases: async () => read('search-aliases.json') };
+const data = { catalog: async () => read('catalog.json'), index: async (id) => read(`${id}/index.json`), names: async () => read('search/names.json'), aliases: async () => read('search-aliases.json'),
+  pratika: async () => (cache.pratika ||= fs.readFileSync(path.join(dataDir, 'search/pratika.tsv'), 'utf8').split('\n').map((l) => { const [k, r] = l.split('\t'); return [k, r.split(' ')]; })),
+  mantraText: async (v) => (cache['text-' + v] ||= fs.readFileSync(path.join(dataDir, `search/text-${v}.tsv`), 'utf8').split('\n').map((l) => l.split('\t'))),
+  suktas: async () => read('suktas.json'),
+  verse: async (ref) => {
+    const [t, a, b, n] = ref.split('/');
+    if (t === 's') { const s = read('suktas.json').find((x) => x.id === a); const v = s?.versions[0].verses.find((x) => String(x.n) === n); return v?.lines ? { lines: v.lines } : null; }
+    const v = (read(`${t}/t${a}.json`)[b] || []).find((x) => String(x[0]) === n);
+    return v ? { lines: v[1].length ? v[1] : v[2], label: v[5] } : null;
+  },
+};
 
 // ---- matching: ignore the order of ?parameters; a trailing * accepts anything that starts with it ----
 const norm = (h) => {
