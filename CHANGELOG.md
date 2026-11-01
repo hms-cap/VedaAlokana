@@ -2,6 +2,9 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.21.4 — 2026-11-01
+- Chant view: ✕ and Esc return to the view chant was started from (a list, a devatā card, a sūkta page), even after next / previous. History depth is now tracked per entry (`h` in the history state).
+
 ## 1.21.3 — 2026-11-01
 - Ṛgveda by devatā: chant button on every card; key-hymn chips and the reader's previous/next bar, swipes and chant view stay within the devatā's set (`?play=1`).
 

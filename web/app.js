@@ -59,20 +59,20 @@ const SCROLL_KEY = 'vedalokana.scroll';
 let scrolls = {};
 try { scrolls = JSON.parse(sessionStorage.getItem(SCROLL_KEY) || '{}'); } catch { /* storage unavailable */ }
 const newKey = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-let navK = null; let navI = 0; let pendingReplace = false; let routing = false;
+let navK = null; let navI = 0; let navH = 0; let pendingReplace = false; let routing = false;   // navH: how deep this entry sits in the history, overlays included
 if (!MEMORY) {
   const st = history.state;
-  if (st && st.k) { navK = st.k; navI = st.i || 0; } else { navK = newKey(); navI = 0; history.replaceState({ k: navK, i: 0 }, ''); }
+  if (st && st.k) { navK = st.k; navI = st.i || 0; navH = st.h || 0; } else { navK = newKey(); navI = 0; navH = 0; history.replaceState({ k: navK, i: 0, h: 0 }, ''); }
 }
 // Called on every hash change before the view is drawn: a new entry gets a key and a depth; an entry
 // we have been on before (back / forward) gets its scroll position back.
 function navArrive() {
   if (MEMORY) return null;
   const st = history.state;
-  if (st && st.k) { navK = st.k; navI = st.i || 0; return st.ov ? null : (scrolls[navK] ?? null); }
-  navI = pendingReplace ? navI : navI + 1; pendingReplace = false;
+  if (st && st.k) { navK = st.k; navI = st.i || 0; navH = st.h || 0; return st.ov ? null : (scrolls[navK] ?? null); }
+  navI = pendingReplace ? navI : navI + 1; navH = pendingReplace ? navH : navH + 1; pendingReplace = false;
   navK = newKey();
-  history.replaceState({ k: navK, i: navI }, '');
+  history.replaceState({ k: navK, i: navI, h: navH }, '');
   return null;
 }
 let scrollSaveT = 0;
@@ -97,7 +97,7 @@ document.addEventListener('click', (e) => {
 let overlayClose = null; let ignorePop = false;
 function overlayOpen(close) {
   overlayClose = close;
-  if (!MEMORY) history.pushState({ k: navK, i: navI, ov: 1 }, '');
+  if (!MEMORY) { navH += 1; history.pushState({ k: navK, i: navI, ov: 1, h: navH }, ''); }
 }
 // The overlay was closed by its own button: drop its entry. `leaving`: a link inside it is being
 // followed, which replaces the entry instead.
@@ -106,6 +106,7 @@ function overlayDone(leaving) {
   if (!MEMORY && !leaving && history.state?.ov) { ignorePop = true; history.back(); }
 }
 window.addEventListener('popstate', () => {
+  if (history.state && history.state.h !== undefined) navH = history.state.h;
   if (ignorePop) { ignorePop = false; return; }
   if (overlayClose) { const f = overlayClose; overlayClose = null; f(); }
 });
@@ -286,6 +287,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.21.4', '2026-11-01', ['In every chant view, ✕ (and Esc) returns to the view you started chanting from, even after moving on with next / previous, instead of leaving you on the last sūkta.']],
   ['1.21.3', '2026-11-01', ['Each card in Ṛgveda by devatā has a round ▶ that chants that devatā’s hymns from the first. A key-hymn chip opens its hymn inside the same set. In a set, the previous / next arrows, swipes, arrow keys and chant view all stay within that devatā’s hymns.']],
   ['1.21.2', '2026-11-01', ['Chant buttons on every sūkta list: a Chant view button at the top of the Sūktas page and of each devatā list, one on each group heading, and a round ▶ on each row. Chant view opens from the first verse and moves on through the list you were looking at (as filtered), with a list bar showing the place in it.']],
   ['1.21.1', '2026-11-01', ['Tapping a devatā in Ṛgveda by devatā now opens a list of that devatā’s sūktas, each a tappable row (reference, ṛṣi, opening line, chandas), with maṇḍala chips, a find box and links to shared devatās (Indra → Indra–Agni …).']],
@@ -1303,11 +1305,11 @@ function wireMyList(all) {
   }));
   main.querySelectorAll('[data-chantmy]').forEach((b) => b.addEventListener('click', () => {
     const e = myList('saved', all)[Number(b.dataset.chantmy)];
-    if (e) { chantResume = 0; go(fromMy(e.href)); }
+    if (e) { chantOrigin = { hash: getHash(), h: navH }; chantResume = 0; go(fromMy(e.href)); }
   }));
   $('#chantList')?.addEventListener('click', () => {
     const first = myList('saved', all)[0];
-    if (first) { chantResume = 0; go(fromMy(first.href)); }
+    if (first) { chantOrigin = { hash: getHash(), h: navH }; chantResume = 0; go(fromMy(first.href)); }
   });
 }
 
@@ -1334,6 +1336,7 @@ function playNeighbours(href) {
 function startChant(name, nameSa, back, items, at = 0) {
   if (!items.length) return;
   setPlay(name, nameSa, back, items);
+  chantOrigin = { hash: getHash(), h: navH };
   chantResume = 0; go(withPlay(items[at].href));
 }
 const playIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10-6.5a1 1 0 0 0 0-1.8l-10-6.5A1 1 0 0 0 8 5.5z"/></svg>`;
@@ -1374,7 +1377,7 @@ function suktaExtras(s, all, params, cparts) {
   obAdd('tsize', obStar(s.id), obChant(() => openChant(model(), 0)));
   main.querySelector('.sk-acts .chant-btn')?.addEventListener('click', () => openChant(model(), 0));
   const v = Number(params?.get('v'));
-  if (chantResume !== null) { const k = chantResume; chantResume = null; openChant(model(), k); }
+  if (chantResume !== null) { const k = chantResume; chantResume = null; chantKeep = true; openChant(model(), k); }
   else if (v > 1) requestAnimationFrame(() => document.getElementById(`sv${v}`)?.scrollIntoView({ block: 'start' }));
   if (swipeIn) {
     const dir = swipeIn; swipeIn = 0;
@@ -2034,7 +2037,7 @@ async function viewContainer(id, d1, d2, params) {
       onPlace: (k) => { if (lastRead) { lastRead.v = k + 1; try { localStorage.setItem('vedalokana.last', JSON.stringify(lastRead)); } catch { /* storage unavailable */ } } },
     };
   };
-  if (chantResume !== null) { const k = chantResume; chantResume = null; openChant(chantModel(), k); }
+  if (chantResume !== null) { const k = chantResume; chantResume = null; chantKeep = true; openChant(chantModel(), k); }
   if (swipeIn) {
     const dir = swipeIn; swipeIn = 0;
     if (!REDUCED_MOTION()) main.querySelector('article')?.animate(
@@ -2875,7 +2878,7 @@ document.addEventListener('click', (e) => {
   const a = e.target.closest?.('a[data-sk]');
   if (!a || prefs.openIn !== 'chant' || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey) return;
   const h = a.getAttribute('href'); if (!h?.startsWith('#/s/')) return;
-  e.preventDefault(); chantResume = 0; go(h);
+  e.preventDefault(); chantOrigin = { hash: getHash(), h: navH }; chantResume = 0; go(h);
 });
 route();
 setTimeout(maybeWelcome, 2500);
@@ -2999,6 +3002,8 @@ window.addEventListener('scroll', () => {
 // lines are the Devanagari lines as the page shows them (pāṭha applied); `group` ṛks make a paragraph.
 let wakeLock = null;
 let chantResume = null; // open the chant view on the next page drawn (next sūkta, next section)
+let chantOrigin = null; // where chant view was started from: { hash, h }, so ✕ returns to the view before it
+let chantKeep = false;  // the chant view being opened continues one that was already started
 const INVOCATION = '॥ ॐ श्रीगुरुभ्यो नमः हरिः ॐ ॥';
 // texts whose verses are ṛks / mantras: a paragraph every five, as the books print the vargas
 const METRICAL = new Set(['rv', 'av', 'yv', 'svs', 'sv']);
@@ -3022,6 +3027,8 @@ function bookVerse(lines, n) {
 
 function openChant(model, start = 0) {
   document.querySelector('.chant')?.remove();
+  if (!chantKeep) chantOrigin = { hash: getHash(), h: navH };
+  chantKeep = false;
   const flat = model.parts.flatMap((p) => p.verses);
   if (!flat.length) return;
   let i = Math.max(0, Math.min(start, flat.length - 1));
@@ -3104,7 +3111,7 @@ function openChant(model, start = 0) {
     }));
   }
   function wire() {
-    el.querySelector('.ch-x').addEventListener('click', () => finish(false));
+    el.querySelector('.ch-x').addEventListener('click', exitChant);
     el.querySelectorAll('[data-lay]').forEach((b) => b.addEventListener('click', () => {
       if (prefs.chantLayout === b.dataset.lay || (!prefs.chantLayout && b.dataset.lay === 'book')) return;
       prefs.chantLayout = b.dataset.lay; savePrefs(); render();
@@ -3131,7 +3138,7 @@ function openChant(model, start = 0) {
     el.querySelector(dx < 0 ? '.ch-next' : '.ch-prev')?.click();
   });
   const onKey = (e) => {
-    if (e.key === 'Escape') { e.preventDefault(); finish(false); return; }
+    if (e.key === 'Escape') { e.preventDefault(); exitChant(); return; }
     if (!one.step) return;
     if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); one.step(1); }
     else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); one.step(-1); }
@@ -3147,6 +3154,13 @@ function openChant(model, start = 0) {
     teardown();
     if (overlayClose === popClose) overlayDone(leaving);
     if (!leaving) model.onClose?.(Math.min(i, flat.length - 1));
+  }
+  // ✕ and Esc return to the view the chant was started from, however far it moved on since (next / previous)
+  function exitChant() {
+    const o = chantOrigin; const depth = o ? navH - o.h : 0;
+    if (o && !MEMORY && depth > 1) { finish(true); ignorePop = true; history.go(-depth); return; }
+    if (o && MEMORY && o.hash !== getHash()) { finish(true); go(o.hash); return; }
+    finish(false);
   }
   function popClose() { teardown(); model.onClose?.(Math.min(i, flat.length - 1)); }
   overlayOpen(popClose);
