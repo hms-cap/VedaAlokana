@@ -294,6 +294,11 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.17.0', '2026-11-01', [
+    'The top bar is the same on every page: script, menus, theme, then Translation and Sāyaṇa bhāṣya, dimmed where a page has none. The svara-style and IAST switches moved into the ⋯ menu.',
+    'Translation and Sāyaṇa bhāṣya on sūkta pages, on Śrī Sūkta-type pāṭha pages and as cards on Home’s mantra (and in the shared picture).',
+    'The Settings tab is gone from the bottom bar; ⋯ now also opens Offline downloads.',
+    'Offline: a welcome sheet on the installed app’s first launch, a one-line offer in the reader for a Veda you open often, a status on Home, “Download when online”, and starred sūktas are kept offline.']],
   ['1.16.4', '2026-11-01', ['Offline: the daily mantra cards are now a download of their own and part of Download everything, so Home’s mantra cards also work without a connection.']],
   ['1.16.3', '2026-10-31', ['The Chant view button is back on every sūkta page and at the head of the reader. Since 1.13.0 it was only an icon at the far end of the options bar, off screen on phones.']],
   ['1.16.2', '2026-10-31', ['The shared picture opens with today’s brief pañcāṅga: date, place, māsa · pakṣa · tithi, saṃvatsara · ṛtu · ayana · vāra, nakṣatra and yoga.']],
@@ -455,6 +460,129 @@ async function storedSet() {
 }
 const abs = (f) => new URL(f, document.baseURI).href;
 
+// ---------- asking people to keep texts on the phone: welcome sheet, reader nudge, status, download-when-online ----------
+const WEL_KEY = 'vedalokana.welcome'; const NUDGE_KEY = 'vedalokana.nudge'; const PEND_KEY = 'vedalokana.pending';
+const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k) || 'null') ?? d; } catch { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage unavailable */ } };
+// which packs are stored: { idx, have, frac: { packId: 0..1 } }, or null when this view cannot store anything
+async function packStatus() {
+  try {
+    if (!('caches' in window)) return null;
+    const idx = await offlineIndex(); const have = await storedSet();
+    return { idx, have, frac: Object.fromEntries(idx.packs.map((p) => [p.id, p.files.filter((f) => have.has(abs(f))).length / p.files.length])) };
+  } catch { return null; }
+}
+async function downloadPack(pack, onTick) {
+  navigator.storage?.persist?.().catch(() => {});
+  const c = await caches.open(DATA_CACHE); const have = await storedSet();
+  const todo = pack.files.filter((f) => !have.has(abs(f)));
+  let done = pack.files.length - todo.length; let failed = 0;
+  onTick?.(done / pack.files.length);
+  const worker = async () => {
+    while (todo.length) {
+      const f = todo.shift();
+      try { const r = await fetch(f); if (!r.ok) throw new Error(r.status); await c.put(abs(f), r); } catch { failed++; }
+      done++; onTick?.(done / pack.files.length);
+    }
+  };
+  await Promise.all(Array.from({ length: 6 }, worker));
+  return failed;
+}
+// fetch what a page needs, so that it is stored for later (the service worker keeps every data file it serves)
+function prefetchHash(hash) {
+  const q = (p) => p?.catch?.(() => {});
+  const m = String(hash).match(/^#\/v\/([^/]+)\/c\/(\d+)\/(\d+)/);
+  if (m) { q(text(m[1], +m[2])); if (m[1] === 'rv') q(bhashya('rv', +m[2], +m[3])); return; }
+  const k = String(hash).match(/^#\/s\/([^/?]+)/);
+  if (k) (cache.suktas || []).find((x) => x.id === k[1])?.segs?.forEach((g) => { q(text(g.t, g.d1)); if (g.t === 'rv') q(bhashya('rv', g.d1, g.d2)); });
+}
+const prefetchSaved = (sid, entry) => { if (navigator.onLine) prefetchHash(entry?.href || `#/s/${sid}`); };
+// a page that could not load offline is fetched when the connection returns
+window.addEventListener('online', () => {
+  const pend = lsGet(PEND_KEY, null); if (!pend) return;
+  lsSet(PEND_KEY, null);
+  prefetchHash(pend);
+  if (getHash() === pend) route();
+  toast(esc(Tp('Back online — downloaded for offline use.', 'पुनः जाले — अनुजालविना पठनाय सङ्गृहीतम्।')), 3500);
+});
+
+// first launch of the installed app: offer the Ṛgveda or everything, once
+function maybeWelcome() {
+  if (!IS_STANDALONE() || lsGet(WEL_KEY, 0) || !swOK || !navigator.onLine || document.querySelector('.wl-wrap')) return;
+  packStatus().then((st) => {
+    if (!st) return;
+    if (st.idx.packs.every((p) => st.frac[p.id] === 1)) { lsSet(WEL_KEY, 1); return; }
+    showWelcome(st);
+  });
+}
+function showWelcome(st) {
+  const rv = st.idx.packs.find((p) => p.id === 'rv'); const total = st.idx.packs.reduce((a, p) => a + p.bytes, 0);
+  const conn = navigator.connection; const mobile = !!(conn && (conn.type === 'cellular' || conn.saveData));
+  const wrap = document.createElement('div'); wrap.className = 'wl-wrap';
+  wrap.innerHTML = `<div class="wl-scrim"></div><section class="wl" role="dialog" aria-modal="true" aria-labelledby="wlH">
+    <h2 id="wlH">${T('Keep the texts on this phone', 'ग्रन्थान् अस्मिन् यन्त्रे रक्ष')}</h2>
+    <p>${T('Download once and read without a connection. Nothing is sent anywhere; you can remove any of it in Settings.', 'एकवारं सङ्गृह्य जालं विना पठ। किमपि कुत्रापि न प्रेष्यते; विन्यासे अपनेतुं शक्यम्।')}</p>
+    <div class="wl-acts">
+      <button type="button" class="off-btn" data-wl="rv">${T('Ṛgveda', 'ऋग्वेदः')} · ${fmtMB(rv.bytes)} <small>${T('recommended', 'अनुशंसितम्')}</small></button>
+      <button type="button" class="off-btn ghost" data-wl="all">${T('Everything', 'सर्वम्')} · ${fmtMB(total)}</button>
+      <button type="button" class="off-btn ghost" data-wl="later">${T('Later', 'पश्चात्')}</button>
+    </div>
+    <div class="wl-prog" hidden><span class="off-bar"><i></i></span><p class="wl-s" role="status"></p></div>
+    <p class="wl-note">${mobile ? `${T('You are on mobile data; Wi-Fi is better for this.', 'चलद्दत्तांशे असि; अस्य कृते वाय्-फाय् श्रेयः।')} ` : ''}${IS_IOS ? T('On iPhone, open the app every few weeks so that iOS keeps what you downloaded.', 'आइफोन्-यन्त्रे कतिपयसप्ताहेषु एकवारम् एतद् उद्घाटय, येन iOS सङ्गृहीतं रक्षेत्।') : ''}</p>
+  </section>`;
+  document.body.append(wrap);
+  const close = () => { wrap.remove(); document.removeEventListener('keydown', onKey); };
+  const later = () => { lsSet(WEL_KEY, 1); close(); };
+  const onKey = (e) => { if (e.key === 'Escape') later(); };
+  document.addEventListener('keydown', onKey);
+  wrap.querySelector('.wl-scrim').addEventListener('click', later);
+  wrap.querySelector('[data-wl="later"]').addEventListener('click', later);
+  wrap.querySelectorAll('[data-wl="rv"], [data-wl="all"]').forEach((b) => b.addEventListener('click', async () => {
+    const packs = b.dataset.wl === 'rv' ? [rv] : st.idx.packs;
+    wrap.querySelector('.wl-acts').hidden = true; wrap.querySelector('.wl-prog').hidden = false;
+    const fill = wrap.querySelector('.off-bar i'); const say = wrap.querySelector('.wl-s');
+    const all = packs.reduce((a, p) => a + p.files.length, 0); let before = 0; let failed = 0;
+    for (const p of packs) {
+      failed += await downloadPack(p, (f) => { const n = before + f * p.files.length; fill.style.width = `${(n / all) * 100}%`; say.textContent = `${Tp('Downloading…', 'सङ्गृह्यते…')} ${Math.round((n / all) * 100)}%`; });
+      before += p.files.length;
+    }
+    lsSet(WEL_KEY, 1);
+    say.textContent = failed ? Tp('Some files could not be downloaded. Finish in Settings → Offline.', 'केचन सङ्गृहीतुं न शक्ताः। विन्यासे पूरय।') : Tp('Ready to read offline.', 'जालं विना पठनाय सज्जम्।');
+    setTimeout(close, failed ? 3500 : 1600);
+  }));
+  wrap.querySelector('[data-wl="rv"]').focus();
+}
+
+// a Veda opened on two different days and not yet stored: one line at the top of the reader
+async function readerNudge(veda) {
+  const today = new Date().toISOString().slice(0, 10);
+  const st = lsGet(NUDGE_KEY, { days: {}, mute: {} });
+  const d = (st.days[veda] ||= []);
+  if (!d.includes(today)) { d.push(today); if (d.length > 5) d.shift(); lsSet(NUDGE_KEY, st); }
+  if (d.length < 2 || (st.mute[veda] || 0) > Date.now() || !swOK || !navigator.onLine || (IS_IOS && !IS_STANDALONE())) return;
+  const ps = await packStatus(); const p = ps?.idx.packs.find((x) => x.id === veda);
+  if (!p || ps.frac[p.id] === 1 || !main.querySelector('.crumbs') || main.querySelector('.nudge')) return;
+  const nm = SA() && p.deva ? `<span lang="sa">${esc(p.deva)}</span>` : esc(p.name);
+  main.querySelector('.crumbs').insertAdjacentHTML('afterend', `<div class="nudge" role="note"><span>${T('Keep the', 'रक्ष')} ${nm} ${T('on this phone?', 'अस्मिन् यन्त्रे?')} <small>${fmtMB(p.bytes)}</small></span>
+    <span class="nudge-b"><button type="button" class="off-btn" data-n="get">${T('Download', 'सङ्गृहाण')}</button><button type="button" class="off-btn ghost" data-n="no">${T('Not now', 'न इदानीम्')}</button></span></div>`);
+  const box = main.querySelector('.nudge');
+  box.querySelector('[data-n="no"]').addEventListener('click', () => { st.mute[veda] = Date.now() + 21 * 864e5; lsSet(NUDGE_KEY, st); box.remove(); });
+  box.querySelector('[data-n="get"]').addEventListener('click', async (e) => {
+    e.currentTarget.disabled = true;
+    const failed = await downloadPack(p, (f) => { box.firstElementChild.innerHTML = `${Tp('Downloading…', 'सङ्गृह्यते…')} ${Math.round(f * 100)}%`; });
+    box.firstElementChild.textContent = failed ? Tp('Some files could not be downloaded. Finish in Settings → Offline.', 'केचन सङ्गृहीतुं न शक्ताः।') : Tp('Saved for offline use.', 'जालं विना पठनाय सङ्गृहीतम्।');
+    box.querySelector('.nudge-b').remove(); setTimeout(() => box.remove(), 3000);
+  });
+}
+// Home: is anything stored for offline use?
+async function homeOfflineChip() {
+  const el = document.getElementById('homeOff'); if (!el) return;
+  const st = await packStatus(); if (!st) { el.remove(); return; }
+  const f = Object.values(st.frac); const all = f.every((x) => x === 1); const some = f.some((x) => x > 0);
+  el.classList.toggle('ok', all);
+  el.lastElementChild.textContent = all ? Tp('Offline ready', 'जालं विना सज्जम्') : some ? Tp('Partly saved offline', 'अंशतः सङ्गृहीतम्') : Tp('Not saved for offline', 'जालं विना न सज्जम्');
+}
+
 async function renderOffline(el) {
   if (!el) return;
   if (!('caches' in window)) { el.innerHTML = '<p>Offline storage isn’t available in this browser view. Open the app from its own address to install it.</p>'; return; }
@@ -556,6 +684,17 @@ async function bhashya(id, d1, d2) {
   try { return ((cache.bhashya[k] ||= await json(`data/${k}.json`)) || {})[d2] || {}; } catch { return {}; }
 }
 // “word marks a word of the mantra being explained (pratīka); shown in bold.
+// the Sāyaṇa bhāṣya of one ṛk, folded under it; filled in by fillBhashya() once the page is drawn
+const bhBox = (t, d1, d2, v) => `<details class="bh" data-bhk="${t}|${d1}|${d2}|${v}"><summary>${SA() ? '<span lang="sa">सायणभाष्यम्</span>' : 'Sāyaṇa bhāṣya <span class="dv" lang="sa">सायणभाष्यम्</span>'}</summary><div class="bh-text" lang="sa"><p class="bh-wait">Loading…</p></div></details>`;
+function fillBhashya(root) {
+  root.querySelectorAll('[data-bhk]').forEach(async (el) => {
+    const [t, d1, d2, v] = el.dataset.bhk.split('|'); const n = Number(v);
+    const b = await bhashya(t, Number(d1), Number(d2)); const tx = b[n];
+    el.querySelector('.bh-text').innerHTML = tx
+      ? tx.split(/(?<=॥)\s+/).map((q) => `<p lang="sa">${bhashyaHTML(q)}</p>`).join('')
+      : `<p class="bh-none">${t === 'rv' && d1 === '1' && d2 === '65' && b[n - 1] ? 'Explained together with the previous ṛk (this sūkta is in two-line pairs).' : 'Not available for this ṛk in the Wikisource text.'}</p>`;
+  });
+}
 const bhashyaHTML = (t) => esc(t).replace(/[“"]([^\s।॥,;:()'‘’“”"]+)”?/g, '<b>$1</b>');
 
 function refOf(meta, d1, d2, v, label) {
@@ -669,9 +808,19 @@ async function dailyItem(pick) {
     const day = Math.floor((now.getTime() - now.getTimezoneOffset() * 60000) / 86400000);
     const k = pick ? pick.k : (day * 7919) % ix.n;
     const items = await json(`data/daily/c${Math.floor(k / ix.chunk)}.json`);
-    return { ...items[k % ix.chunk], k, today: !pick };
-  } catch { return { ...GAYATRI, today: true }; }
+    return await dailyExtras({ ...items[k % ix.chunk], k, today: !pick });
+  } catch { return dailyExtras({ ...GAYATRI, today: true }); }
 }
+// the translation (Griffith: Ṛgveda, Sāmaveda) and the Sāyaṇa bhāṣya (Ṛgveda) of the day's ṛk, for the bar's toggles
+async function dailyExtras(m) {
+  const mm = m.t !== 'sk' && String(m.href || '').match(/^#\/v\/([^/]+)\/c\/(\d+)\/(\d+)\?v=(\d+)/);
+  if (!mm) return m;
+  const [, t, d1, d2, v] = mm;
+  try { const row = ((await text(t, +d1))[+d2] || []).find((x) => x[0] === +v); if (row?.[4]) m.trEn = row[4]; } catch { /* not stored yet */ }
+  if (t === 'rv') { try { const x = (await bhashya('rv', +d1, +d2))[+v]; if (x) m.bhx = x; } catch { /* not stored yet */ } }
+  return m;
+}
+const bhExcerpt = (t) => { const p = String(t).split(/(?<=॥)\s+/)[0]; return p.length > 460 ? `${p.slice(0, 460).replace(/\s+\S*$/, '')} …` : p; };
 const dmKn = () => prefs.lipi === 'knda';
 const dmL = (pair) => esc(pair?.[dmKn() ? 1 : 0] || pair?.[0] || '');
 function dailyCards(m) {
@@ -682,6 +831,7 @@ function dailyCards(m) {
   const cards = [{ k: T('Mantra', 'मन्त्रः'), html: `<div class="hero-m" lang="sa">${lines.map((l) => `<div>${esc(l)}</div>`).join('')}</div>
       <div class="hero-r"><b>${ref}</b><span>${tags}</span></div>` }];
   if (m.m) cards.push({ k: T('Meaning', 'अर्थः'), html: `<p class="dm-p">${dmL(m.m)}</p>` });
+  if (prefs.tr && m.trEn) cards.push({ k: T('Translation', 'अनुवादः'), html: `<p class="dm-p" lang="en">${esc(m.trEn)}</p>` });
   if (m.w?.length) cards.push({ k: T('Words and grammar', 'पदानि व्याकरणं च'), html: `<dl class="dm-w">${m.w.map((w) => `<div><dt lang="sa">${esc(w[0])}</dt><dd>${esc(w[dmKn() ? 2 : 1] || w[1])}</dd></div>`).join('')}</dl>` });
   const g = dmIndex?.gloss || {};
   const who = [['r', 'rishi', 'Ṛṣi', 'ऋषिः'], ['d', 'devata', 'Devatā', 'देवता'], ['c', 'chandas', 'Chandas', 'छन्दः']].filter(([f]) => m[f]);
@@ -691,6 +841,7 @@ function dailyCards(m) {
       return `<div><dt><small>${T(en, sa)}</small> <span lang="sa">${esc(x[2] || x[1])}</span></dt>${note ? `<dd>${esc(note[dmKn() ? 1 : 0])}</dd>` : ''}</div>`;
     }).join('')}</dl>` });
   }
+  if (prefs.bhashya && m.bhx) cards.push({ k: T('Sāyaṇa bhāṣya', 'सायणभाष्यम्'), html: `<p class="dm-p dm-bh" lang="sa">${bhashyaHTML(bhExcerpt(m.bhx))}</p>` });
   if (m.u) cards.push({ k: T('Use and significance', 'विनियोगः महत्त्वं च'), html: `<p class="dm-p">${dmL(m.u)}</p>` });
   return cards;
 }
@@ -714,10 +865,12 @@ function dailyPlain(m) {
   const out = [{ k: Tp('Mantra', 'मन्त्रः'), lines, ref: dmRefPlain(m), tags: dmTagsPlain(m) }];
   const pair = (x) => x?.[kn ? 1 : 0] || x?.[0] || '';
   if (m.m) out.push({ k: Tp('Meaning', 'अर्थः'), text: pair(m.m) });
+  if (prefs.tr && m.trEn) out.push({ k: Tp('Translation', 'अनुवादः'), text: m.trEn });
   if (m.w?.length) out.push({ k: Tp('Words and grammar', 'पदानि व्याकरणं च'), words: m.w.map((w) => [lip(w[0]), w[kn ? 2 : 1] || w[1]]) });
   const g = dmIndex?.gloss || {};
   const who = [['r', 'rishi', 'Ṛṣi', 'ऋषिः'], ['d', 'devata', 'Devatā', 'देवता'], ['c', 'chandas', 'Chandas', 'छन्दः']].filter(([f]) => m[f]);
   if (m.m && who.length) out.push({ k: Tp('Ṛṣi · devatā · chandas', 'ऋषिः · देवता · छन्दः'), who: who.map(([f, kind, en, sa]) => { const x = m[f]; const note = g[kind]?.[x[0]]; return [Tp(en, sa), lip(x[2] || x[1]), note ? pair(note) : '']; }) });
+  if (prefs.bhashya && m.bhx) out.push({ k: Tp('Sāyaṇa bhāṣya', 'सायणभाष्यम्'), text: lip(bhExcerpt(m.bhx).replace(/[“”"]/g, '')), sa: true });
   if (m.u) out.push({ k: Tp('Use and significance', 'विनियोगः महत्त्वं च'), text: pair(m.u) });
   return out;
 }
@@ -782,8 +935,8 @@ function paintDaily(ctx, cards, m, W, draw, hs = []) {
       ctx.font = `700 30px ${lab}`; txt(c.ref, cy + 30, `700 30px ${lab}`, C.saffron); cy += 46;
       if (c.tags) { ctx.font = `500 28px ${lab}`; for (const l of wrap(c.tags, cw)) { txt(l, cy + 28, `500 28px ${lab}`, C.muted); cy += 42; } }
     } else if (c.text) {
-      ctx.font = `400 32px ${body}`;
-      for (const l of wrap(c.text, cw)) { txt(l, cy + 32, `400 32px ${body}`, C.ink); cy += 52; }
+      const tf = c.sa ? deva : body; ctx.font = `400 32px ${tf}`;
+      for (const l of wrap(c.text, cw)) { txt(l, cy + 32, `400 32px ${tf}`, C.ink); cy += 52; }
     } else {
       for (const [w, g] of (c.words || c.who.map(([kind, name, note]) => [`${kind} · ${name}`, note]))) {
         ctx.font = `600 38px ${deva}`; txt(w, cy + 38, `600 38px ${deva}`, C.ink); cy += 56;
@@ -892,6 +1045,7 @@ function wireDaily(m) {
     dmPick = pick;
     const m2 = await dailyItem(pick);
     box.innerHTML = dailyHTML(m2);
+    obCan.tr = !!m2.trEn; obCan.bhashya = !!m2.bhx; paintOptbar();
     wireDaily(m2);
     if (!REDUCED_MOTION()) box.querySelector('.dm-view')?.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220 });
   };
@@ -924,9 +1078,11 @@ async function viewHome() {
   try { suk = (cache.suktas ||= await json('data/suktas.json')); } catch { /* optional */ }
   const pct = last?.of ? Math.min(1, last.v / last.of) : 0;
   main.innerHTML = `${ASHRAMA_SVG}<div class="home">
-    <a class="home-about" href="#/about" aria-label="About Vedāvalokanam, version ${esc(APP.version)}: sources and what’s new">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.6v.1"/></svg>
-      <span>${T('About', 'परिचयः')}</span><small>${esc(APP.version)}</small></a>
+    <div class="home-top">
+      <a class="home-off" id="homeOff" href="#/settings?s=offline" aria-label="${esc(Tp('Offline downloads', 'अनुजालविना पठनम्'))}"><span class="dot" aria-hidden="true"></span><span>…</span></a>
+      <a class="home-about" href="#/about" aria-label="About Vedāvalokanam, version ${esc(APP.version)}: sources and what’s new">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.6v.1"/></svg>
+        <span>${T('About', 'परिचयः')}</span><small>${esc(APP.version)}</small></a></div>
     <section class="pc" id="pc" aria-label="Today’s pañcāṅga"></section>
     <section class="hero dm" id="dm" aria-roledescription="carousel" aria-labelledby="todayH">${dailyHTML(dm)}</section>
     ${last ? `<a class="cont" href="${esc(last.v > 1 ? `${last.href}${last.href.includes('?') ? '&' : '?'}v=${last.v}` : last.href)}">
@@ -945,7 +1101,8 @@ async function viewHome() {
     <div class="schips" id="homeSk">${sukChips(suk, homeVeda(suk))}</div>` : ''}
     <p class="lede home-foot">Every text comes from an openly published digital edition.</p>
   </div>`;
-  renderPanchanga();
+  renderPanchanga(); homeOfflineChip();
+  obCan.tr = !!dm.trEn; obCan.bhashya = !!dm.bhx;
   wireDaily(dm);
   main.querySelectorAll('[data-myk]').forEach((b) => b.addEventListener('click', () => {
     prefs.homeMy = b.dataset.myk; savePrefs();
@@ -1009,7 +1166,7 @@ function visitSukta(sid) {
 const isSaved = (sid) => my.saved.includes(sid);
 function toggleSaved(sid, entry) {
   if (isSaved(sid)) { my.saved = my.saved.filter((x) => x !== sid); delete my.dm[sid]; }
-  else { my.saved = [...my.saved, sid]; if (entry) my.dm[sid] = entry; }   // a single mantra keeps its own entry; a sūkta is looked up by id
+  else { my.saved = [...my.saved, sid]; if (entry) my.dm[sid] = entry; prefetchSaved(sid, entry); }   // a single mantra keeps its own entry; a sūkta is looked up by id
   saveMy();
 }
 const fromMy = (href) => `${href}${href.includes('?') ? '&' : '?'}from=my`;
@@ -1073,7 +1230,9 @@ async function viewSuktaVersions(s, params) {
     const lines = linesOf(v, i);
     const where = v.src ? `<a href="#/v/${v.src[0]}/c/${v.src[1]}/${v.src[2]}?v=${v.src[3]}" class="pv-src">${SA() ? `<span lang="sa">${esc(`${REF_SA.rv} ${dg(v.src.slice(1).join('.'))}`)}</span>` : esc(`RV ${v.src.slice(1).join('.')}`)}</a>` : '';
     const note = v.reads?.length ? `<p class="pv-note">${SA() ? `<span lang="sa">खिलपाठः ${esc(dg(`2.6.${v.khila}`))}:</span>` : `Khila 2.6.${esc(v.khila)} reads`} <span lang="sa">${v.reads.map(esc).join(' · ')}</span></p>` : '';
-    body += `<section class="verse" id="sv${i + 1}"><div class="vnum">${N(String(v.n))}</div><div><div class="deva" lang="sa">${lines.map((l, li) => `<div>${wordsHTML(l, li, v.marks)}</div>`).join('')}</div>${note}${where}</div></section>`;
+    const tr = prefs.tr && rv[i]?.[4] ? `<p class="tr" lang="en">${esc(rv[i][4])}</p>` : '';
+    const bh = prefs.bhashya && v.src?.[0] === 'rv' ? bhBox('rv', v.src[1], v.src[2], v.src[3]) : '';
+    body += `<section class="verse" id="sv${i + 1}"><div class="vnum">${N(String(v.n))}</div><div><div class="deva" lang="sa">${lines.map((l, li) => `<div>${wordsHTML(l, li, v.marks)}</div>`).join('')}</div>${tr}${note}${where}${bh}</div></section>`;
   });
   const k = KIND[s.kind] || KIND.sūkta;
   const all = cache.suktas;
@@ -1086,6 +1245,8 @@ async function viewSuktaVersions(s, params) {
     <div class="sk-acts">${chantBtn()}<button type="button" class="chip" id="skCopy">${T('Copy', 'प्रतिलिपिः')}</button></div>
     <div class="verses">${body}</div>
   </article>`;
+  fillBhashya(main);
+  obCan.tr = rv.some((x) => x?.[4]); obCan.bhashya = ver.verses.some((v) => v.src?.[0] === 'rv');
   const cparts = [];
   ver.verses.forEach((v, j) => {
     if (!cparts.length || v.head) cparts.push({ title: v.head ? v.head[1] : '', group: s.veda === 'rv' ? 5 : 1, verses: [] });
@@ -1202,6 +1363,7 @@ async function viewSukta(sid, params) {
     if (b.lines.length && prefs.script !== 'roman') html += `<div class="deva" lang="sa">${svaraLines(b.g.t, b.lines, b.cut ? null : b.v[3]).map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
     if (showRoman(b)) html += `<div class="roman" lang="sa-Latn">${b.v[2].map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
     if (!b.cut && b.v[4] && prefs.tr) html += `<p class="tr" lang="en">${esc(b.v[4])}</p>`;
+    if (!b.cut && b.g.t === 'rv' && prefs.bhashya) html += bhBox('rv', b.g.d1, b.g.d2, b.v[0]);
     return `${head}<section class="verse" id="sv${n}" aria-label="${esc(b.meta.ref)} ${esc(ref)}">
       <div class="vnum"><a href="#/v/${b.g.t}/c/${b.g.d1}/${b.g.d2}?v=${b.v[0]}" title="${esc(`${b.meta.ref} ${ref}`)}">${N(String(n))}</a></div><div>${html}</div></section>`;
   }).join('');
@@ -1213,6 +1375,8 @@ async function viewSukta(sid, params) {
     <div class="sk-acts">${chantBtn()}${s.reader ? `<a class="chip" href="${s.reader}">${T('Open in the reader', 'मूलग्रन्थे पठ')}</a>` : ''}<button type="button" class="chip" id="skCopy">${T('Copy', 'प्रतिलिपिः')}</button></div>
     <div class="verses">${body}</div>
   </article>`;
+  fillBhashya(main);
+  obCan.tr = blocks.some((b) => !b.cut && b.v[4]); obCan.bhashya = blocks.some((b) => !b.cut && b.g.t === 'rv');
   // chant view: one part per place the sūkta is gathered from
   const rvx = s.segs.some((g) => g.t === 'rv') ? await index('rv') : null;
   let cn = 0;
@@ -1227,8 +1391,7 @@ async function viewSukta(sid, params) {
       verses: bs.map((b) => ({ n: ++cn, lines: svaraLines(b.g.t, b.lines, b.cut ? null : b.v[3]), label: refText(b.meta, refOf(b.meta, b.g.d1, b.g.d2, b.v[0], b.v[5])) })),
     };
   });
-  obAdd(s.segs.some((g) => PATHA_TEXTS.has(g.t)) && 'patha', blocks.some((b) => !b.cut && b.v[2]?.length && b.lines.length) && 'script',
-    blocks.some((b) => !b.cut && b.v[4]) && 'tr');
+  obAdd(s.segs.some((g) => PATHA_TEXTS.has(g.t)) && 'patha', blocks.some((b) => !b.cut && b.v[2]?.length && b.lines.length) && 'script');
   suktaExtras(s, all, params, cparts);
   $('#skCopy')?.addEventListener('click', async (e) => {
     const txt = [s.deva, ...blocks.flatMap((b) => svaraLines(b.g.t, b.lines, b.cut ? null : b.v[3]).map((l) => (prefs.lipi === 'knda' ? toKnda(l) : l))), `— ${s.ref}`].join('\n');
@@ -1759,6 +1922,7 @@ async function viewContainer(id, d1, d2, params) {
     b.parentElement.querySelectorAll('button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
     syncToggles(); draw();
   }));
+  readerNudge(meta.veda);
   lastRead = { href: `#/v/${id}/c/${d1}/${d2}`, text: meta.name, textSa: meta.deva, where: cref ? `${meta.ref} ${cref}` : meta.name, whereSa: cref ? refSa(meta, cref) : meta.deva, v: 1, of: verses.length };
   try { localStorage.setItem('vedalokana.last', JSON.stringify(lastRead)); } catch { /* storage unavailable */ }
   // phone reader bar: previous · section picker · next
@@ -1779,8 +1943,9 @@ async function viewContainer(id, d1, d2, params) {
   };
   // chant view: this section as a book page
   const sk = await sukOfSection(id, d1, d2, verses.length);
+  obCan.tr = !!(hasTr && (hasDeva || hasRoman)); obCan.bhashya = hasBh;
   obAdd(PATHA_TEXTS.has(id) && hasDeva && 'patha', hasPada && 'mode', hasDeva && hasRoman && 'script', summary.length && 'tags',
-    hasTr && (hasDeva || hasRoman) && 'tr', hasBh && 'bhashya', 'tsize', sk && obStar(sk.id), hasDeva && obChant(() => openChant(chantModel(), 0)));
+    'tsize', sk && obStar(sk.id), hasDeva && obChant(() => openChant(chantModel(), 0)));
   main.querySelector('.reader-head .chant-btn')?.addEventListener('click', () => openChant(chantModel(), 0));
   if (sk) visitSukta(sk.id);
   const chantModel = () => {
@@ -2098,7 +2263,9 @@ const OB = {
   svara: { en: 'Svara marks', sa: 'स्वरचिह्नानि', ch: [['bold', 'Bold', 'स्थूलम्'], ['std', 'Standard', 'सामान्यम्']] },
   dfont: { en: 'Devanagari font', sa: 'देवनागरीलिपिरूपम्', ch: [['noto', 'Noto Serif', 'Noto Serif'], ['shobhika', 'Shobhika', 'Shobhika']] },
 };
-const OB_GLOBAL = ['lipi', 'menu', 'theme'];
+const OB_GLOBAL = ['lipi', 'menu', 'theme', 'tr', 'bhashya'];
+const OB_PANEL_ONLY = new Set(['patha', 'script']);   // svara style and IAST: in the ⋯ panel, not the bar
+let obCan = { tr: false, bhashya: false };            // does this page have a translation / bhāṣya to show?
 let obPage = [];   // this page's options: pref keys, or { id, en, sa, icon, on, act } actions
 const obAdd = (...xs) => { obPage.push(...xs.filter(Boolean)); };
 let obPanel = null;
@@ -2128,20 +2295,25 @@ function setPref(k, v) {
     const el = a && document.getElementById(a.id); window.scrollTo(0, el ? window.scrollY + el.getBoundingClientRect().top - a.top : y); paintOptbar(); return; }
   keepPlace(); route();
 }
+const OB_HINT = { tr: ['nothing to translate here (Ṛgveda and Sāmaveda mantras only)', 'अत्र अनुवादः नास्ति (ऋग्वेद-सामवेदमन्त्राणां केवलम्)'],
+  bhashya: ['no bhāṣya here (Ṛgveda mantras only)', 'अत्र भाष्यं नास्ति (ऋग्वेदमन्त्राणां केवलम्)'] };
 const obNext = (k) => { const o = OB[k]; const i = o.ch.findIndex(([x]) => x === prefs[k]); return o.ch[(i + 1) % o.ch.length][0]; };
 function paintOptbar() {
   const bar = $('#optbar'); if (!bar) return;
   const btn = (k) => {
     if (typeof k === 'object') return `<button type="button" class="ob-b${k.on ? ' on' : ''}" data-act="${k.id}" aria-label="${esc(k.label)}" title="${esc(k.label)}"${k.on !== undefined ? ` aria-pressed="${String(!!k.on)}"` : ''}>${k.icon}</button>`;
     const o = OB[k]; const v = prefs[k];
-    const lab = k === 'tsize' ? `${Tp(o.en, o.sa)}: ${Math.round((prefs.tsize || 1) * 100)}%` : obLabel(o, v);
-    return `<button type="button" class="ob-b${o.on(v) ? ' on' : ''}" data-ob="${k}" aria-label="${esc(lab)}" title="${esc(lab)}">${o.icon(v)}</button>`;
+    const dim = (k === 'tr' || k === 'bhashya') && !obCan[k];   // kept in place so the bar is the same on every page
+    const lab = k === 'tsize' ? `${Tp(o.en, o.sa)}: ${Math.round((prefs.tsize || 1) * 100)}%` : `${obLabel(o, v)}${dim ? ` — ${Tp(OB_HINT[k][0], OB_HINT[k][1])}` : ''}`;
+    return `<button type="button" class="ob-b${o.on(v) ? ' on' : ''}${dim ? ' dim' : ''}" data-ob="${k}" aria-label="${esc(lab)}" title="${esc(lab)}">${o.icon(v)}</button>`;
   };
-  bar.innerHTML = `<div class="ob-in">${OB_GLOBAL.map(btn).join('')}${obPage.length ? `<span class="ob-sep" aria-hidden="true"></span>${obPage.map(btn).join('')}` : ''}</div>
+  const barPage = obPage.filter((k) => !(typeof k === 'string' && OB_PANEL_ONLY.has(k)));
+  bar.innerHTML = `<div class="ob-in">${OB_GLOBAL.map(btn).join('')}${barPage.length ? `<span class="ob-sep" aria-hidden="true"></span>${barPage.map(btn).join('')}` : ''}</div>
     <button type="button" class="ob-b ob-more" data-more aria-label="${esc(Tp('All options', 'सर्वे विकल्पाः'))}" title="${esc(Tp('All options', 'सर्वे विकल्पाः'))}" aria-haspopup="dialog">${OB_ICON.more}</button>`;
   bar.querySelectorAll('[data-ob]').forEach((b) => b.addEventListener('click', () => {
     const k = b.dataset.ob;
     if (k === 'tsize') { openOptPanel('tsize'); return; }
+    if ((k === 'tr' || k === 'bhashya') && !obCan[k]) toast(esc(`${Tp(OB[k].en, OB[k].sa)}: ${Tp(OB_HINT[k][0], OB_HINT[k][1])}`), 2600);
     setPref(k, obNext(k));
   }));
   bar.querySelectorAll('[data-act]').forEach((b) => b.addEventListener('click', () => obPage.find((x) => x.id === b.dataset.act)?.act(b)));
@@ -2174,7 +2346,7 @@ function openOptPanel(only) {
       ${pageKeys.includes('tsize') ? sizeRow() : ''}
       ${acts.length ? `<div class="ob-acts">${acts.map((a) => `<button type="button" class="chip" data-pact="${a.id}"${a.on !== undefined ? ` aria-pressed="${String(!!a.on)}"` : ''}>${a.icon}<span>${esc(a.label)}</span></button>`).join('')}</div>` : ''}
       <div class="ob-h">${T('Reading', 'पठनम्')}</div>${row('svara')}${row('dfont')}
-      <a class="ob-all" href="#/settings">${T('All settings', 'सर्वे विन्यासाः')} ›</a>`;
+      <div class="ob-links"><a class="ob-all" href="#/settings?s=offline">${T('Offline downloads', 'अनुजालविना पठनम्')} ›</a><a class="ob-all" href="#/settings">${T('All settings', 'सर्वे विन्यासाः')} ›</a></div>`;
     panel.querySelectorAll('[data-k]').forEach((b) => b.addEventListener('click', () => {
       const k = b.dataset.k; const raw = b.dataset.v;
       setPref(k, raw === 'true' ? true : raw === 'false' ? false : raw);
@@ -2185,7 +2357,7 @@ function openOptPanel(only) {
       setPref('tsize', d === 0 ? 1 : TSIZES[Math.min(TSIZES.length - 1, Math.max(0, i + d))]); fill();
     }));
     panel.querySelectorAll('[data-pact]').forEach((b) => b.addEventListener('click', () => { const a = obPage.find((x) => x.id === b.dataset.pact); close(); a?.act(); }));
-    panel.querySelector('.ob-all')?.addEventListener('click', (e) => { e.preventDefault(); close(true); go('#/settings', { replace: true }); });
+    panel.querySelectorAll('.ob-all').forEach((l) => l.addEventListener('click', (e) => { e.preventDefault(); close(true); go(l.getAttribute('href'), { replace: true }); }));
   };
   const shut = () => { wrap.remove(); obPanel = null; document.removeEventListener('keydown', onKey); };
   const close = (leaving) => { shut(); overlayDone(leaving); };
@@ -2248,7 +2420,7 @@ function renderChrome(r, path) {
   if (parentHref) back.setAttribute('href', parentHref);
   $('#brand').classList.toggle('when-back', !!parentHref);
   // each tab remembers where you were in it
-  const tabNow = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 'about' ? 'settings' : page === 's' ? 'suktas' : page);
+  const tabNow = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 's' ? 'suktas' : page);
   if (tabNow === 'library' || tabNow === 'suktas' || tabNow === 'my') { tabLast[tabNow] = getHash(); try { sessionStorage.setItem('vedalokana.tabs', JSON.stringify(tabLast)); } catch { /* storage unavailable */ } }
   const named = { library: 'Library', suktas: 'Sūktas', s: 'Sūktas', search: 'Search', settings: 'Settings', about: 'About' }[page];
   const lastC = path[path.length - 1];
@@ -2454,7 +2626,7 @@ async function route() {
   closeSheet(true);
   main.ontouchstart = null; main.ontouchend = null;
   main.innerHTML = '<p class="loading">Loading…</p>';
-  obPage = [];
+  obPage = []; obCan = { tr: false, bhashya: false };
   if (keepScrollY === null) document.body.classList.remove('ob-hide');
   try {
     await renderRail(r);
@@ -2480,9 +2652,12 @@ async function route() {
   } catch (err) {
     const off = !navigator.onLine || / \(503\)$/.test(err.message);
     main.innerHTML = off
-      ? `<div class="col"><h1>Not downloaded yet</h1><p class="lede">You are offline, and this text hasn’t been stored on this device. Connect once to read it, or download the whole Veda in <a href="#/settings?s=offline">Settings → Offline</a>.</p></div>`
+      ? `<div class="col"><h1>Not downloaded yet</h1><p class="lede">You are offline, and this text hasn’t been stored on this device. Connect once to read it, or download the whole Veda in <a href="#/settings?s=offline">Settings → Offline</a>.</p><p><button type="button" class="off-btn" id="dlLater">Download when online</button></p></div>`
       : `<div class="col"><h1>Couldn’t load this page</h1><p class="lede">${esc(err.message)}. Check your connection and reload.</p></div>`;
   }
+  document.getElementById('dlLater')?.addEventListener('click', (e) => {
+    lsSet(PEND_KEY, getHash()); e.currentTarget.disabled = true; e.currentTarget.textContent = Tp('It will download when you are online', 'जाले सति सङ्गृह्यते');
+  });
   if (keepScrollY !== null) {
     const y = keepScrollY; const a = keepAnchor; keepScrollY = null; keepAnchor = null;
     // wait for the newly needed font so the layout is final before restoring
@@ -2515,6 +2690,7 @@ if (MEMORY) {
 setupSearch();
 document.querySelectorAll('#lipiToggle [data-lipi]').forEach((b) => b.addEventListener('click', () => setLipi(b.dataset.lipi)));
 route();
+setTimeout(maybeWelcome, 2500);
 
 // The svara fonts normally come from the stylesheet. Where a page embeds the app and
 // blocks stylesheet font URLs, the marks would fall back to a font without them and

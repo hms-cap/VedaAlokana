@@ -2,6 +2,12 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.17.0 — 2026-11-01
+- **One top bar.** Script, menus, theme, **Translation** and **Sāyaṇa bhāṣya** are always in the same place, then the page's own options (padapāṭha, ṛṣi·devatā·chandas, text size, star, chant). On pages with nothing to translate or explain (Library, My sūktas, Settings, the Yajurveda…) the two icons stay but are dimmed, and a tap says what they apply to. The svara-style (ई᳚/ई॑) and IAST switches are no longer in the bar; they remain in the ⋯ menu under *This page*. Defaults are unchanged (Dākṣiṇātya svara, IAST off).
+- **Translation and bhāṣya everywhere.** Sūkta pages show Griffith's translation and, for ṛks from the Ṛgveda, Sāyaṇa's bhāṣya folded under each ṛk; Śrī Sūkta-type pāṭha pages do the same for the ṛks they take from the Ṛgveda. On Home, Today's mantra gets *Translation* and *Sāyaṇa bhāṣya* cards when those are on and exist; the shared picture includes them. The chant view is unchanged.
+- **Bottom bar:** four tabs (Home, Library, Sūktas, My sūktas). Settings moved to ⋯ → *All settings*, which also offers *Offline downloads*.
+- **Inviting downloads.** A welcome sheet on the installed app's first launch (Ṛgveda, everything, or later; Wi-Fi and iPhone notes); a one-line offer at the top of the reader for a Veda opened on two different days (*Not now* mutes it for three weeks); a *Offline ready / Partly saved / Not saved* status on Home; *Download when online* on the "Not downloaded yet" page; starring a sūkta or mantra also fetches what it needs.
+
 ## 1.16.4 — 2026-11-01
 - Offline: the daily mantra cards (`data/daily`, 0.8 MB) are a pack of their own in Settings → Offline and part of **Download everything**; before, only the cards already seen were kept.
 
