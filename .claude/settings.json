@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); case \"$f\" in */scripts/suktas.mjs|*/scripts/build-suktas.mjs|*/scripts/build-search.mjs|*/scripts/search-aliases.json|*/scripts/texts.mjs|*/web/search-key.js|*/web/data/suktas.json|*/web/data/catalog.json) cd \"$CLAUDE_PROJECT_DIR\" && node scripts/check-search-fresh.mjs --fix ;; esac"
+          }
+        ]
+      }
+    ]
+  }
+}
