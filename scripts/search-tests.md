@@ -24,3 +24,18 @@ and `chandas=tristup&devata=indra` are the same).
 When the query is the opening words of a named mantra (tryambakam yajamahe, tat savitur
 vareṇyaṃ, gaṇānāṃ tvā), the **verse is the first result** and the named sūkta follows it.
 Queries that are a sūkta's name (agni suktam, purusha suktam) put the sūkta first.
+
+## Running them
+
+```
+node scripts/test-search.mjs                  # rates by script, phase and kind; fails if a phase-0 query fails
+node scripts/test-search.mjs --phase 1        # also require every phase-1 query to be top-1
+node scripts/test-search.mjs --verbose        # list every query that does not pass yet
+node scripts/test-search.mjs --check-baseline # fail if a query that passed in scripts/search-baseline.json now fails
+node scripts/test-search.mjs --write-baseline # record the current results (do this at the end of each step)
+node scripts/test-search.mjs --min-top1 0.85 --min-top5 0.95   # the release gate
+```
+
+Top-1 means the expected link is the first result. Top-5 means it is within the first five and every
+`in5` link is too. The runner calls `web/search.js` with the Ṛgveda open, as the app does on first load,
+and gives the same links as the running app (checked on 118 queries).

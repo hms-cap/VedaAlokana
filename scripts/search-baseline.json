@@ -1,0 +1,328 @@
+{
+ "note": "Pass/fail of every query in search-tests.json. Regenerate with: node scripts/test-search.mjs --write-baseline",
+ "veda": "rv",
+ "overall": {
+  "tests": 67,
+  "top1": 7,
+  "top5": 7
+ },
+ "byScript": {
+  "any": {
+   "tests": 8,
+   "top1": 6,
+   "top5": 6
+  },
+  "deva": {
+   "tests": 17,
+   "top1": 1,
+   "top5": 1
+  },
+  "en": {
+   "tests": 26,
+   "top1": 0,
+   "top5": 0
+  },
+  "kn": {
+   "tests": 16,
+   "top1": 0,
+   "top5": 0
+  }
+ },
+ "byPhase": {
+  "p0": {
+   "tests": 6,
+   "top1": 6,
+   "top5": 6
+  },
+  "p1": {
+   "tests": 40,
+   "top1": 1,
+   "top5": 1
+  },
+  "p2": {
+   "tests": 6,
+   "top1": 0,
+   "top5": 0
+  },
+  "p3": {
+   "tests": 13,
+   "top1": 0,
+   "top5": 0
+  },
+  "p4": {
+   "tests": 2,
+   "top1": 0,
+   "top5": 0
+  }
+ },
+ "results": {
+  "any|1.164.46": {
+   "top1": true,
+   "top5": true
+  },
+  "any|rv 10.90": {
+   "top1": true,
+   "top5": true
+  },
+  "any|av 7.1": {
+   "top1": true,
+   "top5": true
+  },
+  "any|ts 1.1": {
+   "top1": true,
+   "top5": true
+  },
+  "any|vs 31": {
+   "top1": true,
+   "top5": true
+  },
+  "any|chu 6.8.7": {
+   "top1": true,
+   "top5": true
+  },
+  "any|rv १.१.१": {
+   "top1": false,
+   "top5": false
+  },
+  "any|rv ೧.೧೬೪.೪೬": {
+   "top1": false,
+   "top5": false
+  },
+  "en|agni suktam": {
+   "top1": false,
+   "top5": false
+  },
+  "en|surya suktam": {
+   "top1": false,
+   "top5": false
+  },
+  "en|shri suktam": {
+   "top1": false,
+   "top5": false
+  },
+  "en|shree suktam": {
+   "top1": false,
+   "top5": false
+  },
+  "en|purusha suktam": {
+   "top1": false,
+   "top5": false
+  },
+  "en|rudram": {
+   "top1": false,
+   "top5": false
+  },
+  "en|chamakam": {
+   "top1": false,
+   "top5": false
+  },
+  "en|gayatri mantra": {
+   "top1": false,
+   "top5": false
+  },
+  "en|mrityunjaya mantra": {
+   "top1": false,
+   "top5": false
+  },
+  "en|nasadiya suktam": {
+   "top1": false,
+   "top5": false
+  },
+  "en|isha upanishad": {
+   "top1": false,
+   "top5": false
+  },
+  "en|chandogya upanishad": {
+   "top1": false,
+   "top5": false
+  },
+  "en|taitiriya samhita": {
+   "top1": false,
+   "top5": false
+  },
+  "en|gambler": {
+   "top1": false,
+   "top5": false
+  },
+  "en|vishvamitra": {
+   "top1": false,
+   "top5": false
+  },
+  "en|vasishta": {
+   "top1": false,
+   "top5": false
+  },
+  "en|vasishtha varuna": {
+   "top1": false,
+   "top5": false
+  },
+  "en|indra trishtup": {
+   "top1": false,
+   "top5": false
+  },
+  "en|hymn to dawn": {
+   "top1": false,
+   "top5": false
+  },
+  "en|agnimile": {
+   "top1": false,
+   "top5": false
+  },
+  "en|tryambakam yajamahe": {
+   "top1": false,
+   "top5": false
+  },
+  "en|ekam sad viprah bahudha": {
+   "top1": false,
+   "top5": false
+  },
+  "en|ekam sad viprah bahudha vadanti": {
+   "top1": false,
+   "top5": false
+  },
+  "en|asato ma sadgamaya": {
+   "top1": false,
+   "top5": false
+  },
+  "en|purnamadah purnamidam": {
+   "top1": false,
+   "top5": false
+  },
+  "en|dice": {
+   "top1": false,
+   "top5": false
+  },
+  "kn|ಅಗ್ನಿಸೂಕ್ತಮ್": {
+   "top1": false,
+   "top5": false
+  },
+  "kn|ಪುರುಷಸೂಕ್ತಮ್": {
+   "top1": false,
+   "top5": false
+  },
+  "kn|ಶ್ರೀಸೂಕ್ತಮ್": {
+   "top1": false,
+   "top5": false
+  },
+  "kn|ನಾಸದೀಯಸೂಕ್ತಮ್": {
+   "top1": false,
+   "top5": false
+  },
+  "kn|ಮನ್ತ್ರಪುಷ್ಪಮ್": {
+   "top1": false,
+   "top5": false
+  },
+  "kn|ಚಮಕಮ್": {
+   "top1": false,
+   "top5": false
+  },
+  "kn|ದುರ್ಗಾಸೂಕ್ತಮ್": {
+   "top1": false,
+   "top5": false
+  },
+  "kn|ಗಾಯತ್ರೀ ಮನ್ತ್ರಃ": {
+   "top1": false,
+   "top5": false
+  },
+  "kn|ಈಶಾವಾಸ್ಯಮ್": {
+   "top1": false,
+   "top5": false
+  },
+  "kn|ಕಠ ಉಪನಿಷದ್": {
+   "top1": false,
+   "top5": false
+  },
+  "kn|ಇನ್ದ್ರ": {
+   "top1": false,
+   "top5": false
+  },
+  "kn|ಗಾಥಿನೋ ವಿಶ್ವಾಮಿತ್ರ": {
+   "top1": false,
+   "top5": false
+  },
+  "kn|ಗಣಾನಾಂ ತ್ವಾ ಗಣಪತಿಂ": {
+   "top1": false,
+   "top5": false
+  },
+  "kn|ಅಗ್ನಿಮೀಳೇ": {
+   "top1": false,
+   "top5": false
+  },
+  "kn|ಏಕಂ ಸದ್ವಿಪ್ರಾ ಬಹುಧಾ ವದನ್ತ್ಯಗ್ನಿಂ ಯಮಂ": {
+   "top1": false,
+   "top5": false
+  },
+  "kn|ತ್ರ್ಯಮ್ಬಕಂ ಯಜಾಮಹೇ": {
+   "top1": false,
+   "top5": false
+  },
+  "deva|अग्निसूक्तम्": {
+   "top1": false,
+   "top5": false
+  },
+  "deva|पुरुषसूक्तम्": {
+   "top1": false,
+   "top5": false
+  },
+  "deva|श्रीसूक्तम्": {
+   "top1": false,
+   "top5": false
+  },
+  "deva|आपो हि ष्ठा": {
+   "top1": false,
+   "top5": false
+  },
+  "deva|इदं विष्णुः": {
+   "top1": false,
+   "top5": false
+  },
+  "deva|शं नो मित्रः": {
+   "top1": false,
+   "top5": false
+  },
+  "deva|भद्रं कर्णेभिः": {
+   "top1": false,
+   "top5": false
+  },
+  "deva|रुद्रम्": {
+   "top1": false,
+   "top5": false
+  },
+  "deva|इन्द्र": {
+   "top1": true,
+   "top5": true
+  },
+  "deva|इन्द्र त्रिष्टुप्": {
+   "top1": false,
+   "top5": false
+  },
+  "deva|सं गच्छध्वं": {
+   "top1": false,
+   "top5": false
+  },
+  "deva|सह नाववतु": {
+   "top1": false,
+   "top5": false
+  },
+  "deva|अग्निमीळे": {
+   "top1": false,
+   "top5": false
+  },
+  "deva|त्र्यम्बकं यजामहे": {
+   "top1": false,
+   "top5": false
+  },
+  "deva|तत्सवितुर्वरेण्यं": {
+   "top1": false,
+   "top5": false
+  },
+  "deva|हिरण्यवर्णां हरिणीं": {
+   "top1": false,
+   "top5": false
+  },
+  "deva|असतो मा सद्गमय": {
+   "top1": false,
+   "top5": false
+  }
+ }
+}
