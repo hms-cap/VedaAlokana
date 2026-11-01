@@ -1,0 +1,32 @@
+{
+  "_about": "Hand-edited words the search understands. Each word may be written in IAST, English, Devanagari or Kannada: the search folds them to one key (web/search-key.js), so listing one spelling is enough, the other scripts are here for the reader of this file. build-search.mjs checks this file and copies it to web/data/search-aliases.json.",
+  "kind": ["sūkta", "suktam", "सूक्तम्", "ಸೂಕ್ತ", "hymn", "hymns", "suktas", "सूक्तानि", "mantra", "mantras", "मन्त्र", "ಮಂತ್ರ", "ṛk", "rk", "ऋक्", "ಋಕ್", "praśna", "prasna", "प्रश्न", "ಪ್ರಶ್ನ", "anuvāka", "anuvaka", "अनुवाक", "ಅನುವಾಕ"],
+  "facet": {
+    "rishi": ["ṛṣi", "rishi", "seer", "ऋषि", "ಋಷಿ"],
+    "devata": ["devatā", "deity", "god", "देवता", "ದೇವತಾ", "ದೇವತೆ"],
+    "chandas": ["chandas", "metre", "meter", "छन्दः", "छन्दस्", "ಛಂದಸ್ಸು", "ಛಂದಸ್"]
+  },
+  "veda": {
+    "rv": ["ṛgveda", "rigveda", "rig", "rv", "ऋग्वेद", "ಋಗ್ವೇದ"],
+    "av": ["atharvaveda", "atharva", "av", "अथर्ववेद", "ಅಥರ್ವವೇದ"],
+    "sv": ["sāmaveda", "samaveda", "sama", "sv", "सामवेद", "ಸಾಮವೇದ"],
+    "yv": ["yajurveda", "yajur", "यजुर्वेद", "ಯಜುರ್ವೇದ"],
+    "kyv": ["kṛṣṇa", "krishna", "taittirīya", "taittiriya", "कृष्ण", "तैत्तिरीय", "ಕೃಷ್ಣ", "ತೈತ್ತಿರೀಯ"],
+    "syv": ["śukla", "shukla", "vājasaneyi", "vajasaneyi", "शुक्ल", "वाजसनेयि", "ಶುಕ್ಲ", "ವಾಜಸನೇಯಿ"]
+  },
+  "concept": {
+    "_about": "Everyday word → the devatā it points to (IAST names; both the sūkta spelling and the facet spelling where they differ).",
+    "fire": { "to": ["Agni"], "words": ["fire", "आग", "ಬೆಂಕಿ"] },
+    "sun": { "to": ["Sūrya", "Savitṛ"], "words": ["sun", "सूरज"] },
+    "dawn": { "to": ["Uṣas", "Uṣāḥ"], "words": ["dawn", "morning", "भोर", "ಮುಂಜಾನೆ"] },
+    "wind": { "to": ["Vāyu"], "words": ["wind", "हवा", "ಗಾಳಿ"] },
+    "rain": { "to": ["Parjanya"], "words": ["rain", "वर्षा", "ಮಳೆ"] },
+    "waters": { "to": ["Āpaḥ", "Āpa"], "words": ["water", "waters", "जल", "पानी", "ನೀರು"] },
+    "speech": { "to": ["Vāk"], "words": ["speech", "voice", "वाणी", "ಮಾತು"] },
+    "wealth": { "to": ["Śrī"], "words": ["wealth", "prosperity", "धन", "ಸಂಪತ್ತು"] },
+    "knowledge": { "to": ["Medhā", "Jñāna", "Sarasvatī"], "words": ["knowledge", "wisdom", "ज्ञान", "ಜ್ಞಾನ"] },
+    "death": { "to": ["Mṛtyu"], "words": ["death", "मृत्यु", "ಸಾವು"] },
+    "peace": { "to": ["Śānti"], "words": ["peace", "शान्ति", "ಶಾಂತಿ"] }
+  },
+  "stop": ["to", "of", "the", "for", "a", "in", "and", "on"]
+}

@@ -14,7 +14,9 @@ const packs = [];
 for (const v of cat.vedas) {
   const ids = Object.values(v.layers).flat();
   const all = ids.flatMap(filesOf);
-  const text = all.filter((f) => !/\/s\d+-\d+\.json$/.test(f));
+  // the mantra-word search index of this Veda (scripts/build-search.mjs), so searching inside it works offline too
+  const words = `data/search/text-${v.id}.tsv`;
+  const text = [...all.filter((f) => !/\/s\d+-\d+\.json$/.test(f)), ...(fs.existsSync(path.join(web, words)) ? [words] : [])];
   const bh = all.filter((f) => /\/s\d+-\d+\.json$/.test(f));
   packs.push({ id: v.id, name: v.name, deva: v.deva, files: text, bytes: text.reduce((n, f) => n + size(f), 0) });
   if (bh.length) {

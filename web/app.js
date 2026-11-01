@@ -4,20 +4,10 @@
 
 import { toKnda } from './lipi.js';
 import { dakshinatyaVerse, dakshinatyaNasals } from './dakshinatya.js';
+import { FACETS, FKEYS, LAYERS, cap, fmt, refOf, groupName, findHref } from './common.js';
+import { search, groupResults } from './search.js';
 
-const FACETS = {
-  rishi: { label: 'Ṛṣi', deva: 'ऋषि', plural: 'seers', one: 'seer' },
-  devata: { label: 'Devatā', deva: 'देवता', plural: 'deities', one: 'deity' },
-  chandas: { label: 'Chandas', deva: 'छन्दस्', plural: 'metres', one: 'metre' },
-};
-const FKEYS = Object.keys(FACETS);
 const COL = { d1: 0, d2: 1, v: 2, rishi: 3, devata: 4, chandas: 5 };
-const LAYERS = {
-  samhita: { label: 'Saṃhitā', deva: 'संहिता', plural: 'Saṃhitās' },
-  brahmana: { label: 'Brāhmaṇa', deva: 'ब्राह्मण', plural: 'Brāhmaṇas' },
-  aranyaka: { label: 'Āraṇyaka', deva: 'आरण्यक', plural: 'Āraṇyakas' },
-  upanishad: { label: 'Upaniṣad', deva: 'उपनिषद्', plural: 'Upaniṣads' },
-};
 const LEVEL_DEVA = {
   Maṇḍala: 'मण्डल', Kāṇḍa: 'काण्ड', Adhyāya: 'अध्याय', Ārcika: 'आर्चिक', Pañcikā: 'पञ्चिका', Āraṇyaka: 'आरण्यक',
   Prapāṭhaka: 'प्रपाठक', Bhāga: 'भाग', Vallī: 'वल्ली', Khaṇḍa: 'खण्ड', Praśna: 'प्रश्न', Brāhmaṇa: 'ब्राह्मण', Book: 'पुस्तक',
@@ -49,7 +39,7 @@ const MENU_SA = { home: 'गृहम्', library: 'ग्रन्थालय
 const $ = (s, el = document) => el.querySelector(s);
 const main = $('#main');
 const rail = $('#rail');
-const cache = { catalog: null, index: {}, text: {}, bhashya: {} };
+const cache = { catalog: null, index: {}, text: {}, bhashya: {}, names: null, aliases: null };
 
 // Routing: the URL hash by default; an in-memory route when embedded where
 // path-like hashes can't be used (set window.VEDA_MEMORY_ROUTER before loading).
@@ -295,6 +285,11 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.20.0', '2026-11-01', [
+    'Search understands names and words in English, Devanagari and Kannada: type agni suktam, ಪುರುಷ ಸೂಕ್ತ, श्रीसूक्तम्, rudram, hymn to dawn, or two names together such as indra trishtup.',
+    'The first words of a mantra, or any few of its words, find the mantra: tryambakam yajamahe, ಗಣಾನಾಂ ತ್ವಾ, अग्निमीळे, ekam sad viprah bahudha. The line is shown in your script with the matching words marked. This covers the Saṃhitās and the Upaniṣads.',
+    'Results come in groups (Mantras, Sūktas, Texts and parts, Ṛṣi · devatā · metre) with a Veda filter on the Search page; Devanagari and Kannada digits work in references.',
+    'Search works offline: names and opening words are saved with the app, and each Veda’s download now includes its word index.']],
   ['1.19.1', '2026-11-01', ['The offline icon in the title bar opens the downloads section, which now starts with a Download all button.']],
   ['1.19.0', '2026-11-01', [
     'Offline status and About are now small icons beside the title (green dot = everything saved, amber = partly, grey = nothing yet); the chip row on Home is gone.',
@@ -678,8 +673,6 @@ async function renderOffline(el) {
 
 // ---------- helpers ----------
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const fmt = (n) => Number(n).toLocaleString('en-US');
-const cap = (s) => String(s).replace(/(^|[\s-])(\S)/g, (m, a, b) => a + b.toUpperCase());
 
 async function json(url) {
   const r = await fetch(url);
@@ -695,6 +688,8 @@ async function catalog() {
   }
   return cache.catalog;
 }
+async function names() { return (cache.names ||= await json('data/search/names.json')); }
+async function aliases() { return (cache.aliases ||= await json('data/search-aliases.json')); }
 async function vedaMeta(id) { return (await catalog()).texts.find((v) => v.id === id); }
 async function vedaGroup(id) { return (await catalog()).vedas.find((v) => v.id === id); }
 async function index(id) {
@@ -730,31 +725,18 @@ function fillBhashya(root) {
 }
 const bhashyaHTML = (t) => esc(t).replace(/[“"]([^\s।॥,;:()'‘’“”"]+)”?/g, '<b>$1</b>');
 
-function refOf(meta, d1, d2, v, label) {
-  if (meta.refFmt === 'label' && label) return label;
-  const parts = meta.refFmt === 'v' ? [v] : meta.refFmt === 'd2.v' ? [d2, v] : [d1, d2, v];
-  return parts.filter((p) => p !== undefined && p !== null).join('.');
-}
 function containerRef(meta, d1, d2, title) {
   if (meta.refFmt === 'label') return title || `${d1}.${d2}`;
   if (meta.refFmt === 'v') return '';
   return meta.refFmt === 'd2.v' ? `${d2}` : `${d1}.${d2}`;
 }
 function containerTitle(x, d1, d2) { return x.groups.find((e) => e[0] === d1)?.[1].find((c) => c[0] === d2)?.[2] || null; }
-function groupName(meta, d1) {
-  if (meta.groupNames?.[d1]) return meta.groupNames[d1];
-  return `${meta.levels[0]} ${d1}`;
-}
 function facetName(e) { // e = [key, iast, deva, n, containers]
   return { iast: cap(e[1]), deva: e[2] };
 }
 function nameHTML(e, cls = '') {
   const { iast, deva } = facetName(e);
   return `${deva ? `<span class="dv ${cls}" lang="sa">${esc(deva)}</span> ` : ''}<span class="ia">${esc(iast)}</span>`;
-}
-function findHref(id, filters) {
-  const q = new URLSearchParams(Object.entries(filters).filter(([, v]) => v));
-  return `#/v/${id}/find?${q}`;
 }
 function setTitle(t) { document.title = t ? `${t} — Vedāvalokanam` : 'Vedāvalokanam — browse Veda mantras'; }
 
@@ -2066,54 +2048,40 @@ function notFound() {
 }
 
 // ---------- search ----------
-const REF_PREFIX = { rv: 'rv', ṛv: 'rv', av: 'av', avś: 'av', vs: 'yv', yv: 'yv', ts: 'ts', tb: 'tb', ab: 'ab', kb: 'kb', pb: 'pb', gb: 'gb', chu: 'chu', bu: 'bu' };
 let activeVeda = 'rv';
-async function suggestions(q) {
-  const out = [];
-  const m = q.trim().toLowerCase().match(/^(?:([a-zṛś]{2,3})\s*)?(\d+)(?:[.\s:/](\d+))?(?:[.\s:/](\d+))?$/);
-  const cat = await catalog();
-  if (m) {
-    const id = REF_PREFIX[m[1]] || activeVeda;
-    const meta = cat.texts.find((v) => v.id === id);
-    const x = await index(id);
-    const nums = [m[2], m[3], m[4]].filter(Boolean).map(Number);
-    let d1; let d2; let v;
-    if (meta.refFmt === 'v') { d1 = x.groups[0][0]; d2 = x.groups[0][1][0][0]; [v] = nums; }
-    else if (meta.refFmt === 'd2.v') { d1 = x.groups[0][0]; [d2, v] = nums; } else [d1, d2, v] = nums;
-    const g = x.groups.find((e) => e[0] === d1);
-    if (g && d2 === undefined) out.push({ href: x.groups.length > 1 ? `#/v/${id}/g/${d1}` : `#/v/${id}/c/${d1}/${d1}`, label: `${meta.name}, ${groupName(meta, d1)}`, hint: 'Open' });
-    else if (meta.refFmt !== 'label' && g && g[1].some((c) => c[0] === d2)) out.push({ href: `#/v/${id}/c/${d1}/${d2}${v ? `?v=${v}` : ''}`, label: `${meta.ref} ${refOf(meta, d1, d2, v)}`, hint: meta.name });
-  }
-  const ql = q.trim().toLowerCase();
-  if (ql.length >= 2 && !m) {
-    for (const t of cat.texts) {
-      if (t.name.toLowerCase().includes(ql) || t.deva.includes(q.trim())) out.push({ href: `#/v/${t.id}`, label: `${t.name} · ${t.deva}`, hint: LAYERS[t.layer].label });
-      if (out.length >= 4) break;
-    }
-  }
-  if (ql.length >= 2) {
-    const x = await index(activeVeda);
-    const hits = [];
-    for (const f of FKEYS) {
-      for (const e of x.facets[f]) {
-        const ia = e[1].toLowerCase();
-        const starts = ia.startsWith(ql) || e[0].startsWith(ql) || (e[2] && e[2].startsWith(q.trim()));
-        if (starts || ia.includes(ql) || e[0].includes(ql) || (e[2] && e[2].includes(q.trim()))) hits.push([Math.log(e[3] + 1) + (starts ? 2 : 0), e[3], f, e]);
-      }
-    }
-    hits.sort((a, b) => b[0] - a[0]);
-    for (const [, , f, e] of hits.slice(0, 9 - out.length)) {
-      out.push({ href: findHref(activeVeda, { [f]: e[0] }), label: `${cap(e[1])}${e[2] ? ` · ${e[2]}` : ''}`, hint: `${FACETS[f].label}, ${fmt(e[3])}` });
-    }
-  }
-  return out;
-}
+async function tsv(url) { const r = await fetch(url); if (!r.ok) throw new Error(`Could not load ${url} (${r.status})`); return (await r.text()).split('\n'); }
+const searchData = {
+  catalog, index, names, aliases,
+  pratika: () => (cache.pratika ||= tsv('data/search/pratika.tsv').then((ls) => ls.map((l) => { const [k, r] = l.split('\t'); return [k, r.split(' ')]; })).catch((e) => { cache.pratika = null; throw e; })),
+  mantraText: (v) => (cache[`mt-${v}`] ||= tsv(`data/search/text-${v}.tsv`).then((ls) => ls.map((l) => l.split('\t'))).catch((e) => { cache[`mt-${v}`] = null; throw e; })),
+  suktas: async () => (cache.suktas ||= await json('data/suktas.json')),
+  // a verse by its ref in the mantra indexes: "rv/1/164/46" or "s/sri-sukta/3"
+  verse: async (ref) => {
+    const [t, a, b, n] = ref.split('/');
+    if (t === 's') { const v = (await searchData.suktas()).find((x) => x.id === a)?.versions?.[0].verses.find((x) => String(x.n) === n); return v?.lines ? { lines: v.lines } : null; }
+    const v = ((await text(t, a))[b] || []).find((x) => String(x[0]) === n);
+    return v ? { lines: v[1].length ? v[1] : v[2], label: v[5] } : null;
+  },
+};
+const suggestions = (q, opts = {}) => search(q, searchData, { activeVeda, ...opts });
+// result groups with a title each: HTML for the top-bar box and the Search page
+const groupTitle = (g) => `<div class="grp" role="presentation">${T(g.en, g.sa)}</div>`;
+// one result: a name and its kind, or (a mantra) its reference, sūkta and the matching line with the matched words marked
+const snippetHTML = (sn) => sn.map((line) => line.map(([w, hit]) => (hit ? `<mark>${esc(w)}</mark>` : esc(w))).join(' ')).join('<br>');
+const rowHTML = (it, i, sel, page = false) => {
+  const attrs = page ? '' : ` role="option" aria-selected="${i === sel}"`;
+  if (it.snippet) return `<a class="mrow"${attrs} href="${it.href}"><span class="mh"><b>${esc(it.label)}</b><small>${esc(it.hint)}</small></span><span class="mline" lang="sa">${snippetHTML(it.snippet)}</span></a>`;
+  return `<a href="${it.href}"${attrs}><span>${esc(it.label)}</span><small>${esc(it.hint)}</small></a>`;
+};
 function setupSearch() {
   const input = $('#q'); const box = $('#suggest'); let items = []; let sel = -1; let token = 0;
   const close = () => { box.hidden = true; sel = -1; };
+  let shown = []; // [{ group, items }]: what the box lists, two per group
   const paint = () => {
-    box.innerHTML = items.map((it, i) => `<a role="option" href="${it.href}" aria-selected="${i === sel}"><span>${esc(it.label)}</span><small>${esc(it.hint)}</small></a>`).join('')
-      || '<div style="padding:10px;color:var(--muted)">Type a reference like 1.164.46, or part of a name.</div>';
+    let i = 0;
+    box.innerHTML = shown.map((g) => groupTitle(g.group) + g.items.map((it) => rowHTML(it, i++, sel)).join('')).join('')
+      + (items.length ? `<a role="option" class="all" href="${items.at(-1).href}" aria-selected="${items.length - 1 === sel}"><span>${T('See all results', 'सर्वाणि फलानि')}</span></a>` : '')
+      || '<div style="padding:10px;color:var(--muted)">Type a reference like 1.164.46, a name like agni suktam, or the first words of a mantra.</div>';
     box.hidden = false;
   };
   input.addEventListener('input', async () => {
@@ -2121,7 +2089,11 @@ function setupSearch() {
     if (!q.trim()) return close();
     const r = await suggestions(q);
     if (my !== token) return;
-    items = r; sel = r.length ? 0 : -1; paint();
+    shown = groupResults(r, 2);
+    items = shown.flatMap((g) => g.items);
+    // the last row opens the Search page with every result of every group
+    if (items.length) items.push({ href: `#/search?q=${encodeURIComponent(q.trim())}` });
+    sel = items.length ? 0 : -1; paint();
   });
   input.addEventListener('keydown', (e) => {
     if (box.hidden) return;
@@ -2539,29 +2511,46 @@ async function viewMy(params) {
 
 async function viewSearch(params) {
   setTitle('Search');
+  const VEDAS = [['', 'All', 'सर्वम्'], ['rv', 'ṚV', 'ऋ'], ['kyv', 'KYV', 'कृ.य'], ['syv', 'ŚYV', 'शु.य'], ['av', 'AV', 'अ'], ['sv', 'SV', 'सा']];
+  let veda = VEDAS.some((v) => v[0] === params.get('veda')) ? params.get('veda') : '';
   main.innerHTML = `<div class="col">
     <h1 class="sr">Search</h1>
     <label class="big-search"><span class="sr">Search references, texts and names</span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
-      <input id="bq" autocomplete="off" placeholder="1.164.46, Kaṭha, Agni, अग्नि…"></label>
+      <input id="bq" autocomplete="off" placeholder="1.164.46, agni suktam, ಪುರುಷ ಸೂಕ್ತ, त्र्यम्बकं…"></label>
+    <div class="chips vchips" id="vchips" role="group" aria-label="Limit to one Veda"></div>
+    <p class="vnote" id="vnote" hidden>Ṛṣi, devatā and metre are recorded for the Ṛgveda, Atharvaveda and Sāmaveda only.</p>
     <div id="bres" class="search-results" aria-live="polite"></div>
     <div class="search-tips"><h2>Try</h2><div class="chips">
-      ${['1.164.46', 'rv 10.90', 'Kaṭha', 'Chāndogya', 'Agni', 'Vasiṣṭha', 'Gāyatrī'].map((t) => `<button class="chip" data-q="${esc(t)}">${esc(t)}</button>`).join('')}
-    </div><p class="lede">References jump to a mantra in the text you were last reading, or in the Ṛgveda. Prefix a text to change it, as in <b>av 7.1</b> or <b>ts 1.1</b>.</p></div>
+      ${['1.164.46', 'rv 10.90', 'agni suktam', 'ಪುರುಷ ಸೂಕ್ತ', 'त्र्यम्बकं', 'hymn to dawn', 'indra trishtup', 'Chāndogya'].map((t) => `<button class="chip" data-q="${esc(t)}">${esc(t)}</button>`).join('')}
+    </div><p class="lede">Type in English, Devanagari or Kannada: a reference, the name of a sūkta, a deity, seer or metre, or two of them together. References jump to a mantra in the text you were last reading, or in the Ṛgveda. Prefix a text to change it, as in <b>av 7.1</b> or <b>ts 1.1</b>.</p></div>
   </div>`;
   const input = $('#bq'); let token = 0;
+  const paintChips = () => {
+    $('#vchips').innerHTML = VEDAS.map(([id, en, sa]) => `<button class="chip" data-veda="${id}" aria-pressed="${String(veda === id)}">${id ? esc(en) : T(en, sa)}</button>`).join('');
+    $('#vnote').hidden = !(veda === 'kyv' || veda === 'syv');
+  };
+  paintChips();
   if (!params.get('q') && matchMedia('(max-width: 899px)').matches) setTimeout(() => input.focus({ preventScroll: true }), 50);
   const run = async () => {
     const my = ++token; const q = input.value;
     if (!q.trim()) { $('#bres').innerHTML = ''; return; }
-    const r = await suggestions(q);
+    const r = await suggestions(q, { veda: veda || null, limit: 60 });
     if (my !== token) return;
-    $('#bres').innerHTML = r.map((it) => `<a href="${it.href}"><span>${esc(it.label)}</span><small>${esc(it.hint)}</small></a>`).join('')
-      || '<p class="empty">No match. Try a reference like 1.1.1, or part of a name.</p>';
+    $('#bres').innerHTML = groupResults(r).map((g) => groupTitle(g.group) + g.items.map((it) => rowHTML(it, -1, -1, true)).join('')).join('')
+      || '<p class="empty">No match. Try a reference like 1.1.1, a name like agni suktam, or another Veda.</p>';
   };
-  // the query is kept in the address, so back from a result returns to the same results
-  const keepQ = () => { if (!MEMORY) history.replaceState(history.state, '', `#/search${input.value.trim() ? `?q=${encodeURIComponent(input.value)}` : ''}`); };
+  // the query and the Veda are kept in the address, so back from a result returns to the same results
+  const keepQ = () => {
+    if (MEMORY) return;
+    const u = new URLSearchParams(); if (input.value.trim()) u.set('q', input.value); if (veda) u.set('veda', veda);
+    history.replaceState(history.state, '', `#/search${u.toString() ? `?${u}` : ''}`);
+  };
   input.addEventListener('input', () => { run(); keepQ(); });
+  $('#vchips').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-veda]'); if (!b) return;
+    veda = b.dataset.veda; paintChips(); run(); keepQ();
+  });
   main.querySelectorAll('[data-q]').forEach((b) => b.addEventListener('click', () => { input.value = b.dataset.q; run(); keepQ(); input.focus(); }));
   if (params?.get('q')) { input.value = params.get('q'); await run(); } else if (matchMedia('(hover: hover)').matches) input.focus();
 }

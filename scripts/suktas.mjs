@@ -23,7 +23,7 @@ const S = (veda, rows) => rows.map(([name, deva, devata, devataDeva, kind, label
   veda, name, deva, devata, devataDeva, kind: kind || 'sūkta', label, parts,
 }));
 
-export const SUKTAS = [
+const ENTRIES = [
   ...S('rv', [
     ['Gaṇapati Prārthanā (gaṇānāṃ tvā)', 'गणपतिप्रार्थना', 'Brahmaṇaspati', 'ब्रह्मणस्पतिः', 'mantra', '', 'rv 2.23.1'],
     ['Gaṇapati Sūkta', 'गणपतिसूक्तम्', 'Indra (Gaṇapati)', 'इन्द्रः (गणपतिः)', '', '', 'rv 8.81.1-9', 'rv 10.112.9-10'],
@@ -174,3 +174,23 @@ export const SUKTAS = [
     ['Śānti Mantra (bhadraṃ karṇebhiḥ)', 'शान्तिमन्त्रः', 'Śānti', 'शान्तिः', 'śānti', 'Muṇḍaka Up.', { t: 'mu', from: 'भद्रं कर्णेभिः शृणुयाम', to: 'बृहस्पतिर्दधातु' }],
   ]),
 ];
+
+// Other names people use for an entry, [IAST, Devanagari]; keyed by the entry's name above.
+// Spellings that only differ in script, spacing or the final -m (Puruṣa Sūktam, Mantra Puṣpam,
+// Chamakam) need no alias: the search key already folds them (web/search-key.js).
+// The build stops when a key does not match an entry, so a renamed entry cannot lose its aliases.
+// "Rudram" means the Taittirīya Namakam first; the Vājasaneyi Rudrādhyāya is found by its own name and by prefix.
+const ALIASES = {
+  'Śrī Rudram (Namakam)': [['Rudram', 'रुद्रम्'], ['Śrī Rudram', 'श्रीरुद्रम्'], ['Namakam', 'नमकम्']],
+  'Īśāvāsya': [['Īśa Upaniṣad', 'ईशोपनिषत्'], ['Īśāvāsyopaniṣad', 'ईशावास्योपनिषत्']],
+  'Camakam': [['Śrī Camakam', 'श्रीचमकम्']],
+  'Śrī Sūkta': [['Lakṣmī Sūkta', 'लक्ष्मीसूक्तम्']],
+  'Durgā Sūkta': [['Jātavedase', 'जातवेदसे']],
+  'Mahāmṛtyuñjaya Mantra': [['Mṛtyuñjaya Mantra', 'मृत्युञ्जयमन्त्रः'], ['Tryambaka Mantra', 'त्र्यम्बकमन्त्रः']],
+  'Mahāmṛtyuñjaya Mantra (Vājasaneyi)': [['Mṛtyuñjaya Mantra', 'मृत्युञ्जयमन्त्रः'], ['Tryambaka Mantra', 'त्र्यम्बकमन्त्रः']],
+};
+const SHANTI = ['Śānti Pāṭha', 'शान्तिपाठः'];
+for (const e of ENTRIES) if (e.kind === 'śānti') (ALIASES[e.name] ||= []).push(SHANTI);
+for (const k of Object.keys(ALIASES)) if (!ENTRIES.some((e) => e.name === k)) throw new Error(`aliases: no entry named "${k}"`);
+
+export const SUKTAS = ENTRIES.map((e) => ({ ...e, aliases: ALIASES[e.name] || [] }));
