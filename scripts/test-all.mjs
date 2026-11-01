@@ -3,6 +3,7 @@
 import { spawnSync } from 'node:child_process';
 
 const runs = [
+  ['check-search-fresh.mjs'], // first: later tests read the same data
   ['test-lipi.mjs'], ['test-dakshinatya.mjs'], ['test-search-key.mjs'], ['test-names.mjs'],
   ['test-query.mjs'], ['test-mantra-index.mjs'], ['test-pada.mjs'],
   // release gate for search: phase 0 must pass, no query that passed before may fail, and overall top-1 / top-5

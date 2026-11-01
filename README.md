@@ -117,8 +117,11 @@ node scripts/test-names.mjs          # names index: seed names in four spellings
 node scripts/test-query.mjs          # query parser, result groups, highlighting
 node scripts/test-mantra-index.mjs   # every verse indexed, openings and middles found
 node scripts/test-search.mjs --check-baseline --min-top1 0.85 --min-top5 0.95   # 73 queries through the real search
+node scripts/check-search-fresh.mjs # committed search indexes match a fresh build (add --fix to rebuild them)
 node scripts/test-all.mjs            # all of the above
 ```
+
+**Keeping the search indexes current.** `web/data/search/` and `search-aliases.json` are generated. The check above fails if they are stale, and it runs in three places: the `Checks` workflow (every pull request and push to `main`), the deploy workflow (a stale index blocks the deploy), and a local pre-commit hook that rebuilds and stages them when a commit touches their inputs. Enable the hook once per clone with `git config core.hooksPath .githooks`. Claude Code sessions in this repo rebuild them after edits to the inputs (`.claude/settings.json`).
 
 ## Layout
 

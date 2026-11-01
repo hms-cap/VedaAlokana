@@ -1,0 +1,7 @@
+#!/bin/sh
+# Rebuilds the search indexes when a commit touches their inputs, and stages the result.
+# Enable once per clone:  git config core.hooksPath .githooks
+INPUTS='^(scripts/(suktas|build-suktas|build-search|texts|translit|search-aliases)\.(mjs|json)|web/(search-key|common)\.js|web/data/)'
+git diff --cached --name-only | grep -Eq "$INPUTS" || exit 0
+out=$(node scripts/check-search-fresh.mjs --fix) || { echo "$out"; exit 1; }
+case "$out" in rebuilt:*) echo "pre-commit: $out"; git add web/data/search web/data/search-aliases.json ;; esac
