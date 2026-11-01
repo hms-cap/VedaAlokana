@@ -14,7 +14,7 @@ const ids = (q) => entries.filter((e) => e[6].includes(looseKey(q))).map((e) => 
 
 // [typed in IAST, Devanagari, plain English] → ids that must be among the hits
 const seeds = [
-  [['Rudram', 'रुद्रम्', 'rudram'], ['a:sri-rudram-namakam', 'a:rudradhyaya-satarudriya']],
+  [['Rudram', 'रुद्रम्', 'rudram'], ['a:sri-rudram-namakam']],
   [['Śrī Rudram (Namakam)', 'श्रीरुद्रम् (नमकम्)', 'sri rudram namakam'], ['s:sri-rudram-namakam']],
   [['Namakam', 'नमकम्', 'namakam'], ['a:sri-rudram-namakam']],
   [['Camakam', 'चमकम्', 'chamakam'], ['s:camakam']],

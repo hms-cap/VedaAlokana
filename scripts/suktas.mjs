@@ -179,10 +179,9 @@ const ENTRIES = [
 // Spellings that only differ in script, spacing or the final -m (Puruṣa Sūktam, Mantra Puṣpam,
 // Chamakam) need no alias: the search key already folds them (web/search-key.js).
 // The build stops when a key does not match an entry, so a renamed entry cannot lose its aliases.
-const RUDRAM = ['Rudram', 'रुद्रम्'];
+// "Rudram" means the Taittirīya Namakam first; the Vājasaneyi Rudrādhyāya is found by its own name and by prefix.
 const ALIASES = {
-  'Śrī Rudram (Namakam)': [RUDRAM, ['Śrī Rudram', 'श्रीरुद्रम्'], ['Namakam', 'नमकम्']],
-  'Rudrādhyāya (Śatarudrīya)': [RUDRAM],
+  'Śrī Rudram (Namakam)': [['Rudram', 'रुद्रम्'], ['Śrī Rudram', 'श्रीरुद्रम्'], ['Namakam', 'नमकम्']],
   'Camakam': [['Śrī Camakam', 'श्रीचमकम्']],
   'Śrī Sūkta': [['Lakṣmī Sūkta', 'लक्ष्मीसूक्तम्']],
   'Durgā Sūkta': [['Jātavedase', 'जातवेदसे']],
