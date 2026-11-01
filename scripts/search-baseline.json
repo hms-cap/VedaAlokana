@@ -2,9 +2,9 @@
  "note": "Pass/fail of every query in search-tests.json. Regenerate with: node scripts/test-search.mjs --write-baseline",
  "veda": "rv",
  "overall": {
-  "tests": 67,
-  "top1": 46,
-  "top5": 44
+  "tests": 73,
+  "top1": 57,
+  "top5": 56
  },
  "byScript": {
   "any": {
@@ -13,19 +13,19 @@
    "top5": 8
   },
   "deva": {
-   "tests": 17,
-   "top1": 11,
-   "top5": 11
-  },
-  "en": {
-   "tests": 26,
-   "top1": 15,
+   "tests": 18,
+   "top1": 13,
    "top5": 13
   },
+  "en": {
+   "tests": 30,
+   "top1": 23,
+   "top5": 22
+  },
   "kn": {
-   "tests": 16,
-   "top1": 12,
-   "top5": 12
+   "tests": 17,
+   "top1": 13,
+   "top5": 13
   }
  },
  "byPhase": {
@@ -36,13 +36,13 @@
   },
   "p1": {
    "tests": 39,
-   "top1": 38,
-   "top5": 37
+   "top1": 39,
+   "top5": 38
   },
   "p2": {
-   "tests": 6,
-   "top1": 2,
-   "top5": 1
+   "tests": 12,
+   "top1": 12,
+   "top5": 12
   },
   "p3": {
    "tests": 14,
@@ -90,7 +90,7 @@
   },
   "en|agni suktam": {
    "top1": true,
-   "top5": false
+   "top5": true
   },
   "en|surya suktam": {
    "top1": true,
@@ -149,20 +149,20 @@
    "top5": true
   },
   "en|vasishta": {
-   "top1": false,
-   "top5": false
+   "top1": true,
+   "top5": true
   },
   "en|vasishtha varuna": {
-   "top1": false,
-   "top5": false
+   "top1": true,
+   "top5": true
   },
   "en|indra trishtup": {
-   "top1": false,
-   "top5": false
+   "top1": true,
+   "top5": true
   },
   "en|hymn to dawn": {
-   "top1": false,
-   "top5": false
+   "top1": true,
+   "top5": true
   },
   "en|agnimile": {
    "top1": false,
@@ -293,8 +293,8 @@
    "top5": true
   },
   "deva|इन्द्र त्रिष्टुप्": {
-   "top1": false,
-   "top5": false
+   "top1": true,
+   "top5": true
   },
   "deva|सं गच्छध्वं": {
    "top1": true,
@@ -323,6 +323,30 @@
   "deva|असतो मा सद्गमय": {
    "top1": false,
    "top5": false
+  },
+  "kn|ಅಗ್ನಿ ಸೂಕ್ತ": {
+   "top1": true,
+   "top5": true
+  },
+  "deva|सूर्य सूक्तम्": {
+   "top1": true,
+   "top5": true
+  },
+  "en|devata agni": {
+   "top1": true,
+   "top5": true
+  },
+  "en|dawn": {
+   "top1": true,
+   "top5": true
+  },
+  "en|krishna yajurveda rudram": {
+   "top1": true,
+   "top5": true
+  },
+  "en|atharva medha suktam": {
+   "top1": true,
+   "top5": true
   }
  }
 }

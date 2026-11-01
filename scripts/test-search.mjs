@@ -26,7 +26,7 @@ const baselineFile = path.join(here, 'search-baseline.json');
 // ---- data, loaded the way the app loads it (the search only reads texts, groups and facets) ----
 const cache = {};
 const read = (rel) => (cache[rel] ||= JSON.parse(fs.readFileSync(path.join(dataDir, rel), 'utf8')));
-const data = { catalog: async () => read('catalog.json'), index: async (id) => read(`${id}/index.json`), names: async () => read('search/names.json') };
+const data = { catalog: async () => read('catalog.json'), index: async (id) => read(`${id}/index.json`), names: async () => read('search/names.json'), aliases: async () => read('search-aliases.json') };
 
 // ---- matching: ignore the order of ?parameters; a trailing * accepts anything that starts with it ----
 const norm = (h) => {

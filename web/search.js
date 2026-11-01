@@ -1,13 +1,14 @@
 // Search: turns what someone typed into a list of links. No DOM and no module state, so the build
 // scripts and tests can run it too. The app passes in how to load data and which Veda is open:
 //
-//   search(query, { catalog: () => Promise<catalog>, index: (id) => Promise<index>, names: () => Promise<names> }, { activeVeda })
+//   search(query, { catalog: () => Promise<catalog>, index: (id) => Promise<index>, names: () => Promise<names>, aliases?: () => Promise<aliases> }, { activeVeda })
 //     → [{ group, score, href, label, hint }]
 //
 // The app reads href, label and hint; group ('ref' | 'sukta' | 'text' | 'facet') and score are for ranking.
 
-import { FACETS, LAYERS, cap, fmt, refOf, groupName } from './common.js';
+import { FACETS, LAYERS, cap, fmt, refOf, groupName, findHref } from './common.js';
 import { looseKey } from './search-key.js';
+import { parseQuery, vocabulary } from './query.js';
 
 export const REF_PREFIX = { rv: 'rv', ṛv: 'rv', av: 'av', avś: 'av', vs: 'yv', yv: 'yv', ts: 'ts', tb: 'tb', ab: 'ab', kb: 'kb', pb: 'pb', gb: 'gb', chu: 'chu', bu: 'bu' };
 
@@ -39,28 +40,89 @@ export async function search(q, data, { activeVeda = 'rv' } = {}) {
   if (qk.length >= 2) {
     const { entries } = await data.names();
     const sukta = new Map(entries.filter((e) => e[0] === 's').map((e) => [e[1], e]));
-    const best = new Map(); // href → hit, one row per target
-    for (const e of entries) {
-      const [type, id, label, deva, href, , keys, extra] = e;
-      if (type === 'f' && extra[1] !== activeVeda) continue;
-      let hit = 0;
-      for (const k of keys) hit = Math.max(hit, k === qk ? 3 : k.startsWith(qk) ? 2 : qk.length >= 3 && k.includes(qk) ? 1 : 0);
-      if (!hit) continue;
-      let row;
-      if (type === 's' || type === 'a') {
-        const home = sukta.get(id);
-        row = { group: 'sukta', score: hit * 1000 + 300 - (type === 'a' ? 1 : 0), href, label: `${type === 'a' ? `${label} → ${home[2]}` : label} · ${deva}`, hint: `Sūkta, ${extra[1]}` };
-      } else if (type === 't') row = { group: 'text', score: hit * 1000 + 200, href, label: `${label} · ${deva}`, hint: LAYERS[extra].label };
-      else if (type === 'g') row = { group: 'text', score: hit * 1000 + 200, href, label: `${label}`, hint: 'Part of a text' };
-      else {
-        const [f, , count] = extra;
-        row = { group: 'facet', score: hit * 1000 + 100 + Math.log(count + 1), href, label: `${cap(label)}${deva ? ` · ${deva}` : ''}`, hint: `${FACETS[f].label}, ${fmt(count)}` };
+    const parsed = data.aliases ? parseQuery(q, vocabulary(await data.aliases())) : null;
+    const facetText = parsed?.vedas && ['rv', 'av', 'sv'].find((v) => parsed.vedas.has(v)) || activeVeda;
+    const best = new Map(); // href → row, one row per target
+    const keep = (row) => { const old = best.get(row.href); if (!old || old.score < row.score) best.set(row.href, row); };
+    const hitOf = (keys, k) => keys.reduce((h, x) => Math.max(h, x === k ? 3 : x.startsWith(k) ? 2 : k.length >= 4 && x.includes(k) ? 1 : 0), 0);
+
+    // rows for one key; minHit 3 = exact matches only
+    const rowsFor = (k, minHit = 1) => {
+      for (const e of entries) {
+        const [type, id, label, deva, href, , keys, extra] = e;
+        if (type === 'f' && extra[1] !== facetText) continue;
+        const hit = hitOf(keys, k);
+        if (hit < minHit) continue;
+        let row;
+        if (type === 's' || type === 'a') {
+          const home = sukta.get(id);
+          row = { group: 'sukta', score: hit * 1000 + 300 - (type === 'a' ? 1 : 0), href, label: `${type === 'a' ? `${label} → ${home[2]}` : label} · ${deva}`, hint: `Sūkta, ${extra[1]}`, veda: extra[0] };
+        } else if (type === 't') row = { group: 'text', score: hit * 1000 + 200, href, label: `${label} · ${deva}`, hint: LAYERS[extra].label };
+        else if (type === 'g') row = { group: 'text', score: hit * 1000 + 200, href, label: `${label}`, hint: 'Part of a text' };
+        else {
+          const [f, , count] = extra;
+          row = { group: 'facet', score: hit * 1000 + 100 + Math.log(count + 1), href, label: `${cap(label)}${deva ? ` · ${deva}` : ''}`, hint: `${FACETS[f].label}, ${fmt(count)}`, facet: f };
+        }
+        keep(row);
       }
-      const old = best.get(href);
-      if (!old || old.score < row.score) best.set(href, row);
+    };
+    rowsFor(qk);
+    const exactName = [...best.values()].some((r) => r.score >= 3000); // the whole query is a name: no combining
+
+    if (parsed?.tagged) {
+      // the kind, Veda, facet and stop words are not part of the name: "agni suktam" also looks for agni
+      const rest = parsed.words.join('');
+      if (rest.length >= 2 && rest !== qk) rowsFor(looseKey(rest));
+      // everyday words point to devatās: "dawn" → Uṣas
+      for (const c of parsed.concepts) for (const t of c.to) rowsFor(t, 3);
+      // sūktas of a devatā: "agni suktam", "hymn to dawn" → the sūktas whose devatā is Agni, Uṣas
+      const wanted = new Set([...parsed.words, ...parsed.concepts.flatMap((c) => c.to)].filter((k) => k.length >= 2));
+      for (const e of entries) {
+        if (e[0] !== 's' || !wanted.size) continue;
+        const [, , label, deva, href, , , extra] = e;
+        const dev = [extra[2], extra[3]].filter(Boolean).flatMap((d) => [d, d.replace(/\s*\([^)]*\)/g, '')]).map(looseKey);
+        if (dev.some((k) => wanted.has(k))) keep({ group: 'sukta', score: parsed.kind ? 3050 : 2200, href, label: `${label} · ${deva}`, hint: `Sūkta, ${extra[1]}`, veda: extra[0] });
+      }
+      // a Veda word restricts sūktas; a facet word restricts the kind of ṛṣi / devatā / metre
+      if (parsed.vedas && (parsed.words.length || parsed.concepts.length)) for (const [h, r] of best) if (r.veda && !parsed.vedas.has(r.veda)) best.delete(h);
+      if (parsed.facets.size && (parsed.words.length || parsed.concepts.length)) for (const [h, r] of best) if (r.facet && !parsed.facets.has(r.facet)) best.delete(h);
+      // a kind word asks for sūktas: ṛṣi / devatā / metre rows come after them
+      if (parsed.kind) for (const r of best.values()) if (r.group === 'facet') r.score -= 1500;
+    }
+    // two or three facet values: "vasishtha varuna", "indra trishtup" → one list with all the filters
+    if (parsed && !exactName && parsed.words.length >= 2 && parsed.words.length <= 3) {
+      facetCombos(entries, facetText, parsed.words, parsed.facets).forEach((c, i) => keep({ group: 'facet', score: 5000 - i * 10, href: findHref(facetText, c.filters), label: c.label, hint: 'Filter' }));
     }
     const hits = [...best.values()].sort((a, b) => b.score - a.score);
     for (const row of hits.slice(0, 9 - out.length)) out.push(row);
   }
   return out;
+}
+
+// Every word must name a different kind of facet (ṛṣi, devatā, chandas). For each word and kind the best
+// reading is the one that matches the word most closely and has the most verses behind it; the three best
+// ways of pairing words with kinds are returned as { filters: { rishi: id, … }, label }.
+function facetCombos(entries, text, words, only) {
+  const pick = words.map((w) => {
+    const per = {}; // facet → best entry for this word
+    for (const [type, id, label, , , , keys, extra] of entries) {
+      if (type !== 'f' || extra[1] !== text || (only.size && !only.has(extra[0]))) continue;
+      const hit = keys.reduce((h, k) => Math.max(h, k === w ? 3 : k.startsWith(w) ? 2 : w.length >= 4 && k.includes(w) ? 1 : 0), 0);
+      if (!hit) continue;
+      const value = hit * 1.5 + Math.log(extra[2] + 1);
+      if (!per[extra[0]] || per[extra[0]].value < value) per[extra[0]] = { f: extra[0], id, label, value };
+    }
+    return Object.values(per);
+  });
+  if (pick.some((p) => !p.length)) return [];
+  const found = [];
+  const walk = (i, used, chosen, sum) => {
+    if (i === pick.length) { found.push({ sum, chosen }); return; }
+    for (const c of pick[i]) if (!used.has(c.f)) walk(i + 1, new Set([...used, c.f]), [...chosen, c], sum + c.value);
+  };
+  walk(0, new Set(), [], 0);
+  return found.sort((a, b) => b.sum - a.sum).slice(0, 3).map(({ chosen }) => ({
+    filters: Object.fromEntries(chosen.map((c) => [c.f, c.id])),
+    label: chosen.map((c) => `${FACETS[c.f].label} ${cap(c.label)}`).join(' + '),
+  }));
 }

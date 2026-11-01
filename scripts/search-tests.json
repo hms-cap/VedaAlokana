@@ -22,7 +22,7 @@
   {"q": "taitiriya samhita", "script": "en", "phase": 1, "kind": "spelling", "top": "#/v/ts", "note": "single t for tt: needs doubled-consonant fold"},
   {"q": "gambler", "script": "en", "phase": 1, "kind": "name", "top": "#/s/aksa-sukta-the-gambler", "note": "word is in the sūkta name"},
   {"q": "vishvamitra", "script": "en", "phase": 1, "kind": "facet", "top": "#/v/rv/find?rishi=gathino-visvamitra"},
-  {"q": "vasishta", "script": "en", "phase": 1, "kind": "facet", "top": "#/v/rv/find?rishi=maitravarunirvasistha", "unsure": true, "note": "Many Vasiṣṭha rows; top by verse count assumed"},
+  {"q": "vasishta", "script": "en", "phase": 1, "kind": "facet", "top": "#/v/rv/find?rishi=vasistha-sakti", "in5": ["#/v/rv/find?devata=vasistha", "#/v/rv/find?rishi=vasistha-indrapramati"], "note": "Every Vasiṣṭha ṛṣi is listed, the big Maitrāvaruṇi one among them; order is not important (Hemanth)"},
   {"q": "vasishtha varuna", "script": "en", "phase": 2, "kind": "facet2", "top": "#/v/rv/find?rishi=maitravarunirvasistha&devata=varuna", "unsure": true},
   {"q": "indra trishtup", "script": "en", "phase": 2, "kind": "facet2", "top": "#/v/rv/find?devata=indra&chandas=tristup"},
   {"q": "hymn to dawn", "script": "en", "phase": 2, "kind": "concept", "top": "#/s/usas-sukta"},
@@ -65,5 +65,11 @@
   {"q": "त्र्यम्बकं यजामहे", "script": "deva", "phase": 3, "kind": "opening", "top": "#/v/rv/c/7/59?v=12", "in5": ["#/s/mahamrtyunjaya-mantra", "#/s/mahamrtyunjaya-mantra-vajasaneyi"], "note": "Opening words of a named mantra: verse first, then the named sūkta"},
   {"q": "तत्सवितुर्वरेण्यं", "script": "deva", "phase": 3, "kind": "opening", "top": "#/v/rv/c/3/62?v=10", "in5": ["#/s/gayatri-mantra"], "note": "Opening words of a named mantra: verse first, then the named sūkta"},
   {"q": "हिरण्यवर्णां हरिणीं", "script": "deva", "phase": 3, "kind": "opening", "top": "#/s/sri-sukta", "note": "Text lives in suktas.json versions, not in the Veda files"},
-  {"q": "असतो मा सद्गमय", "script": "deva", "phase": 3, "kind": "midtext", "top": "#/v/bu/c/1/3?v=28"}
+  {"q": "असतो मा सद्गमय", "script": "deva", "phase": 3, "kind": "midtext", "top": "#/v/bu/c/1/3?v=28"},
+  {"q": "ಅಗ್ನಿ ಸೂಕ್ತ", "script": "kn", "phase": 2, "kind": "name+kind", "top": "#/s/agni-sukta", "in5": ["#/v/rv/find?devata=agni"]},
+  {"q": "सूर्य सूक्तम्", "script": "deva", "phase": 2, "kind": "name+kind", "top": "#/s/surya-sukta-ud-u-tyam", "in5": ["#/s/surya-sukta-citram-devanam"]},
+  {"q": "devata agni", "script": "en", "phase": 2, "kind": "facet", "top": "#/v/rv/find?devata=agni"},
+  {"q": "dawn", "script": "en", "phase": 2, "kind": "concept", "top": "#/v/rv/find?devata=usa", "in5": ["#/s/usas-sukta"]},
+  {"q": "krishna yajurveda rudram", "script": "en", "phase": 2, "kind": "alias", "top": "#/s/sri-rudram-namakam"},
+  {"q": "atharva medha suktam", "script": "en", "phase": 2, "kind": "name+kind", "top": "#/s/medha-sukta-atharva", "in5": ["#/s/medhajanana-sukta"]}
 ]
