@@ -4,20 +4,10 @@
 
 import { toKnda } from './lipi.js';
 import { dakshinatyaVerse, dakshinatyaNasals } from './dakshinatya.js';
+import { FACETS, FKEYS, LAYERS, cap, fmt, refOf, groupName, findHref } from './common.js';
+import { search } from './search.js';
 
-const FACETS = {
-  rishi: { label: 'Ṛṣi', deva: 'ऋषि', plural: 'seers', one: 'seer' },
-  devata: { label: 'Devatā', deva: 'देवता', plural: 'deities', one: 'deity' },
-  chandas: { label: 'Chandas', deva: 'छन्दस्', plural: 'metres', one: 'metre' },
-};
-const FKEYS = Object.keys(FACETS);
 const COL = { d1: 0, d2: 1, v: 2, rishi: 3, devata: 4, chandas: 5 };
-const LAYERS = {
-  samhita: { label: 'Saṃhitā', deva: 'संहिता', plural: 'Saṃhitās' },
-  brahmana: { label: 'Brāhmaṇa', deva: 'ब्राह्मण', plural: 'Brāhmaṇas' },
-  aranyaka: { label: 'Āraṇyaka', deva: 'आरण्यक', plural: 'Āraṇyakas' },
-  upanishad: { label: 'Upaniṣad', deva: 'उपनिषद्', plural: 'Upaniṣads' },
-};
 const LEVEL_DEVA = {
   Maṇḍala: 'मण्डल', Kāṇḍa: 'काण्ड', Adhyāya: 'अध्याय', Ārcika: 'आर्चिक', Pañcikā: 'पञ्चिका', Āraṇyaka: 'आरण्यक',
   Prapāṭhaka: 'प्रपाठक', Bhāga: 'भाग', Vallī: 'वल्ली', Khaṇḍa: 'खण्ड', Praśna: 'प्रश्न', Brāhmaṇa: 'ब्राह्मण', Book: 'पुस्तक',
@@ -678,8 +668,6 @@ async function renderOffline(el) {
 
 // ---------- helpers ----------
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const fmt = (n) => Number(n).toLocaleString('en-US');
-const cap = (s) => String(s).replace(/(^|[\s-])(\S)/g, (m, a, b) => a + b.toUpperCase());
 
 async function json(url) {
   const r = await fetch(url);
@@ -730,31 +718,18 @@ function fillBhashya(root) {
 }
 const bhashyaHTML = (t) => esc(t).replace(/[“"]([^\s।॥,;:()'‘’“”"]+)”?/g, '<b>$1</b>');
 
-function refOf(meta, d1, d2, v, label) {
-  if (meta.refFmt === 'label' && label) return label;
-  const parts = meta.refFmt === 'v' ? [v] : meta.refFmt === 'd2.v' ? [d2, v] : [d1, d2, v];
-  return parts.filter((p) => p !== undefined && p !== null).join('.');
-}
 function containerRef(meta, d1, d2, title) {
   if (meta.refFmt === 'label') return title || `${d1}.${d2}`;
   if (meta.refFmt === 'v') return '';
   return meta.refFmt === 'd2.v' ? `${d2}` : `${d1}.${d2}`;
 }
 function containerTitle(x, d1, d2) { return x.groups.find((e) => e[0] === d1)?.[1].find((c) => c[0] === d2)?.[2] || null; }
-function groupName(meta, d1) {
-  if (meta.groupNames?.[d1]) return meta.groupNames[d1];
-  return `${meta.levels[0]} ${d1}`;
-}
 function facetName(e) { // e = [key, iast, deva, n, containers]
   return { iast: cap(e[1]), deva: e[2] };
 }
 function nameHTML(e, cls = '') {
   const { iast, deva } = facetName(e);
   return `${deva ? `<span class="dv ${cls}" lang="sa">${esc(deva)}</span> ` : ''}<span class="ia">${esc(iast)}</span>`;
-}
-function findHref(id, filters) {
-  const q = new URLSearchParams(Object.entries(filters).filter(([, v]) => v));
-  return `#/v/${id}/find?${q}`;
 }
 function setTitle(t) { document.title = t ? `${t} — Vedāvalokanam` : 'Vedāvalokanam — browse Veda mantras'; }
 
@@ -2066,48 +2041,8 @@ function notFound() {
 }
 
 // ---------- search ----------
-const REF_PREFIX = { rv: 'rv', ṛv: 'rv', av: 'av', avś: 'av', vs: 'yv', yv: 'yv', ts: 'ts', tb: 'tb', ab: 'ab', kb: 'kb', pb: 'pb', gb: 'gb', chu: 'chu', bu: 'bu' };
 let activeVeda = 'rv';
-async function suggestions(q) {
-  const out = [];
-  const m = q.trim().toLowerCase().match(/^(?:([a-zṛś]{2,3})\s*)?(\d+)(?:[.\s:/](\d+))?(?:[.\s:/](\d+))?$/);
-  const cat = await catalog();
-  if (m) {
-    const id = REF_PREFIX[m[1]] || activeVeda;
-    const meta = cat.texts.find((v) => v.id === id);
-    const x = await index(id);
-    const nums = [m[2], m[3], m[4]].filter(Boolean).map(Number);
-    let d1; let d2; let v;
-    if (meta.refFmt === 'v') { d1 = x.groups[0][0]; d2 = x.groups[0][1][0][0]; [v] = nums; }
-    else if (meta.refFmt === 'd2.v') { d1 = x.groups[0][0]; [d2, v] = nums; } else [d1, d2, v] = nums;
-    const g = x.groups.find((e) => e[0] === d1);
-    if (g && d2 === undefined) out.push({ href: x.groups.length > 1 ? `#/v/${id}/g/${d1}` : `#/v/${id}/c/${d1}/${d1}`, label: `${meta.name}, ${groupName(meta, d1)}`, hint: 'Open' });
-    else if (meta.refFmt !== 'label' && g && g[1].some((c) => c[0] === d2)) out.push({ href: `#/v/${id}/c/${d1}/${d2}${v ? `?v=${v}` : ''}`, label: `${meta.ref} ${refOf(meta, d1, d2, v)}`, hint: meta.name });
-  }
-  const ql = q.trim().toLowerCase();
-  if (ql.length >= 2 && !m) {
-    for (const t of cat.texts) {
-      if (t.name.toLowerCase().includes(ql) || t.deva.includes(q.trim())) out.push({ href: `#/v/${t.id}`, label: `${t.name} · ${t.deva}`, hint: LAYERS[t.layer].label });
-      if (out.length >= 4) break;
-    }
-  }
-  if (ql.length >= 2) {
-    const x = await index(activeVeda);
-    const hits = [];
-    for (const f of FKEYS) {
-      for (const e of x.facets[f]) {
-        const ia = e[1].toLowerCase();
-        const starts = ia.startsWith(ql) || e[0].startsWith(ql) || (e[2] && e[2].startsWith(q.trim()));
-        if (starts || ia.includes(ql) || e[0].includes(ql) || (e[2] && e[2].includes(q.trim()))) hits.push([Math.log(e[3] + 1) + (starts ? 2 : 0), e[3], f, e]);
-      }
-    }
-    hits.sort((a, b) => b[0] - a[0]);
-    for (const [, , f, e] of hits.slice(0, 9 - out.length)) {
-      out.push({ href: findHref(activeVeda, { [f]: e[0] }), label: `${cap(e[1])}${e[2] ? ` · ${e[2]}` : ''}`, hint: `${FACETS[f].label}, ${fmt(e[3])}` });
-    }
-  }
-  return out;
-}
+const suggestions = (q) => search(q, { catalog, index }, { activeVeda });
 function setupSearch() {
   const input = $('#q'); const box = $('#suggest'); let items = []; let sel = -1; let token = 0;
   const close = () => { box.hidden = true; sel = -1; };
