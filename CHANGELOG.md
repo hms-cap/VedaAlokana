@@ -2,6 +2,9 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.19.1 — 2026-11-01
+- Offline icon opens the downloads section; a prominent Download all button now leads the list.
+
 ## 1.19.0 — 2026-11-01
 - Offline status and About became small icons beside the title; the Home chip row was removed.
 - Search returned to the bottom bar (Home · Library · Search · My sūktas), with a highlighted current tab, a saved-count badge on My sūktas, and hide-on-scroll-down.

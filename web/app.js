@@ -295,6 +295,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.19.1', '2026-11-01', ['The offline icon in the title bar opens the downloads section, which now starts with a Download all button.']],
   ['1.19.0', '2026-11-01', [
     'Offline status and About are now small icons beside the title (green dot = everything saved, amber = partly, grey = nothing yet); the chip row on Home is gone.',
     'Search is back on the bottom bar: Home · Library · Search · My sūktas. The current tab has a soft highlight, My sūktas shows how many you have saved, and the bar slides away while you scroll down.',
@@ -626,9 +627,10 @@ async function renderOffline(el) {
   };
   const total = idx.packs.reduce((a, p) => a + p.bytes, 0);
   const allDone = idx.packs.every((p) => p.files.every((f) => have.has(abs(f))));
-  el.innerHTML = `${idx.packs.map(row).join('')}
-    <div class="off-foot"><span>${est?.usage ? `Using ${fmtMB(est.usage)} on this device` : ''}</span>
-    ${allDone ? '' : `<button type="button" class="off-btn ghost" data-act="all">Download everything · ${fmtMB(total)}</button>`}</div>
+  el.innerHTML = `${allDone ? '<p class="off-all-ok">All texts are saved on this device.</p>'
+      : `<button type="button" class="off-btn off-all" data-act="all">Download all · ${fmtMB(total)}</button>`}
+    ${idx.packs.map(row).join('')}
+    <div class="off-foot"><span>${est?.usage ? `Using ${fmtMB(est.usage)} on this device` : ''}</span></div>
     ${navigator.onLine ? '' : '<p class="off-note">You are offline: downloads will start when you reconnect.</p>'}`;
   const run = async (pack, rowEl) => {
     const bar = rowEl.querySelector('.off-bar'); const fill = bar.querySelector('i'); const st = rowEl.querySelector('.off-s');
@@ -2602,8 +2604,8 @@ async function viewSettings() {
     <section class="set"><h2>About</h2><a class="about-link" href="#/about"><img src="icons/icon.svg" alt="" width="40" height="40"><span><b>Vedāvalokanam</b><small>Version ${esc(APP.version)} · sources, licences, what’s new</small></span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a></section>
   </div>`;
-  renderOffline(document.getElementById('offList'));
-  if (parse().params.get('s') === 'offline') document.getElementById('offline')?.scrollIntoView();
+  const goOff = () => { if (parse().params.get('s') === 'offline') document.getElementById('offline')?.scrollIntoView(); };
+  renderOffline(document.getElementById('offList')).then(goOff, goOff); goOff();
   // My sūktas
   const myMsg = (t) => { const m = $('#myMsg'); if (m) m.textContent = t; };
   main.querySelectorAll('[data-keep]').forEach((b) => b.addEventListener('click', () => {

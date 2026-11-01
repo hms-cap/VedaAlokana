@@ -1026,3 +1026,6 @@ mark.pv { background: color-mix(in srgb, var(--fire, #D9822B) 22%, transparent);
   body.reading .tabbar.away { transform: none; }
   @media (prefers-reduced-motion: reduce) { .tabbar { transition: none; } }
 }
+.off-all { width: 100%; min-height: 46px; margin-bottom: 10px; font-size: 15px; justify-content: center; }
+.off-all-ok { margin: 0 0 10px; color: #1F9D6B; font-weight: 500; }
+#offline { scroll-margin-top: 72px; }
