@@ -8,14 +8,14 @@ const VERSION = self.VEDALOKANA.version;
 const SHELL = `vedalokana-shell-${VERSION}`;
 const DATA = 'vedalokana-data';
 const SHELL_FILES = [
-  './', 'index.html', 'app.js', 'common.js', 'search.js', 'lipi.js', 'panchanga.js', 'dakshinatya.js', 'styles.css', 'version.js', 'manifest.webmanifest',
+  './', 'index.html', 'app.js', 'common.js', 'search.js', 'search-key.js', 'translit.js', 'lipi.js', 'panchanga.js', 'dakshinatya.js', 'styles.css', 'version.js', 'manifest.webmanifest',
   'fonts/IBMPlexSans-Var.woff', 'fonts/GentiumBookPlus-Regular.woff', 'fonts/GentiumBookPlus-Italic.woff', 'fonts/GentiumBookPlus-Bold.woff',
   'fonts/NotoSerifDevanagari-Vedic.woff', 'fonts/NotoSerifKannada-Vedic.woff',
   'fonts/NotoSerifDevanagari-Std.woff', 'fonts/NotoSerifKannada-Std.woff',
   'fonts/Shobhika-Vedic.woff', 'fonts/Shobhika-Std.woff',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/apple-touch-icon.png',
 ];
-const DATA_CORE = ['data/catalog.json', 'data/suktas.json', 'data/offline.json'];
+const DATA_CORE = ['data/catalog.json', 'data/suktas.json', 'data/offline.json', 'data/search/names.json'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil((async () => {

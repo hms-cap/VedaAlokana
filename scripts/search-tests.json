@@ -45,7 +45,7 @@
   {"q": "ಕಠ ಉಪನಿಷದ್", "script": "kn", "phase": 1, "kind": "name", "top": "#/v/kathu"},
   {"q": "ಇನ್ದ್ರ", "script": "kn", "phase": 1, "kind": "facet", "top": "#/v/rv/find?devata=indra"},
   {"q": "ಗಾಥಿನೋ ವಿಶ್ವಾಮಿತ್ರ", "script": "kn", "phase": 1, "kind": "facet", "top": "#/v/rv/find?rishi=gathino-visvamitra"},
-  {"q": "ಗಣಾನಾಂ ತ್ವಾ ಗಣಪತಿಂ", "script": "kn", "phase": 1, "kind": "name", "top": "#/s/ganapati-prarthana-gananam-tva", "in5": ["#/v/rv/c/2/23?v=1", "#/s/ganapati-mantra-gananam-tva"], "unsure": true, "note": "Name contains \"gaṇānāṃ tvā\"; other hits are the verse and the Vājasaneyi mantra"},
+  {"q": "ಗಣಾನಾಂ ತ್ವಾ ಗಣಪತಿಂ", "script": "kn", "phase": 3, "kind": "opening", "top": "#/v/rv/c/2/23?v=1", "in5": ["#/s/ganapati-prarthana-gananam-tva", "#/s/ganapati-mantra-gananam-tva"], "note": "opening words of a named mantra: the verse first, the sūktas next (Hemanth)"},
   {"q": "ಅಗ್ನಿಮೀಳೇ", "script": "kn", "phase": 3, "kind": "opening", "top": "#/v/rv/c/1/1?v=1", "in5": ["#/s/agni-sukta"]},
   {"q": "ಏಕಂ ಸದ್ವಿಪ್ರಾ ಬಹುಧಾ ವದನ್ತ್ಯಗ್ನಿಂ ಯಮಂ", "script": "kn", "phase": 3, "kind": "midtext", "top": "#/v/rv/c/1/164?v=46"},
   {"q": "ತ್ರ್ಯಮ್ಬಕಂ ಯಜಾಮಹೇ", "script": "kn", "phase": 3, "kind": "opening", "top": "#/v/rv/c/7/59?v=12", "in5": ["#/s/mahamrtyunjaya-mantra", "#/s/mahamrtyunjaya-mantra-vajasaneyi"], "note": "Opening words of a named mantra: verse first, then the named sūkta"},

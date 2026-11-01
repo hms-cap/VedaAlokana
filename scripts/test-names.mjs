@@ -48,7 +48,8 @@ console.log(`seed names: ${checked} lookups`);
 let bad = 0;
 const core = (l) => l.replace(/\s*\([^)]*\)/g, '').trim() || l;
 for (const e of entries) {
-  const want = [...new Set([looseKey(core(e[2])), looseKey(e[2]), looseKey(e[3])].filter(Boolean))];
+  const words = e[0] === 'f' ? e[2].split(/\s+/).filter((w) => w.length > 1).map(looseKey).filter((k) => k.length >= 3) : [];
+  const want = [...new Set([looseKey(core(e[2])), looseKey(e[2]), looseKey(e[3]), ...words].filter(Boolean))];
   if (e[5] !== (strictKey(core(e[2])) || strictKey(e[3])) || JSON.stringify(e[6]) !== JSON.stringify(want)) bad++;
   if (e[3] && !e[6].includes(looseKey(e[3]))) fail(`${e[0]}:${e[1]} Devanagari "${e[3]}" is not a key`);
 }

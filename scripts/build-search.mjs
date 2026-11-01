@@ -6,8 +6,8 @@
 // named parts of a text (Pūrvārcika …), and every ṛṣi / devatā / chandas of every Veda.
 //   { v: 1, built, entries: [[type, id, label, deva, href, strictKey, [looseKey, …], extra]] }
 //   strictKey and the first looseKey are of the name without its bracket; further loose keys are of the
-//   full label and of the Devanagari name when it sounds different.
-//   type 's' sūkta (id = sūkta id, extra = veda)    'a' alias of a sūkta (same id and href)
+//   full label, of the Devanagari name when it sounds different, and of each word of a facet name.
+//   type 's' sūkta (id = sūkta id, extra = [veda, reference])    'a' alias of a sūkta (same id, href, extra)
 //        't' text (id = text id, extra = layer)     'g' named part (id = text id, extra = d1)
 //        'f' facet (id = facet id, extra = [facet, text, verse count])
 // The Kannada spelling is not stored: the keys fold Kannada, Devanagari and IAST to the same
@@ -29,13 +29,15 @@ export function buildNames(dataDir) {
   const core = (l) => l.replace(/\s*\([^)]*\)/g, '').trim() || l;
   const add = (type, id, label, deva, href, extra) => {
     const c = core(label);
-    const lks = [...new Set([looseKey(c), looseKey(label), looseKey(deva || '')].filter(Boolean))];
+    // a ṛṣi or devatā named by several words (gāthino viśvāmitraḥ) is also found by any one of them
+    const words = type === 'f' ? label.split(/\s+/).filter((w) => w.length > 1).map(looseKey).filter((k) => k.length >= 3) : [];
+    const lks = [...new Set([looseKey(c), looseKey(label), looseKey(deva || ''), ...words].filter(Boolean))];
     if (!lks.length) return;
     entries.push([type, id, label, deva || '', href, strictKey(c) || strictKey(deva || ''), lks, extra ?? null]);
   };
   for (const s of suktas) {
-    add('s', s.id, s.name, s.deva, s.href, s.veda);
-    for (const [en, deva] of s.aliases || []) add('a', s.id, en, deva, s.href, s.veda);
+    add('s', s.id, s.name, s.deva, s.href, [s.veda, s.ref]);
+    for (const [en, deva] of s.aliases || []) add('a', s.id, en, deva, s.href, [s.veda, s.ref]);
   }
   for (const t of catalog.texts) {
     add('t', t.id, t.name, t.deva, `#/v/${t.id}`, t.layer);

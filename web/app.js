@@ -39,7 +39,7 @@ const MENU_SA = { home: 'गृहम्', library: 'ग्रन्थालय
 const $ = (s, el = document) => el.querySelector(s);
 const main = $('#main');
 const rail = $('#rail');
-const cache = { catalog: null, index: {}, text: {}, bhashya: {} };
+const cache = { catalog: null, index: {}, text: {}, bhashya: {}, names: null };
 
 // Routing: the URL hash by default; an in-memory route when embedded where
 // path-like hashes can't be used (set window.VEDA_MEMORY_ROUTER before loading).
@@ -683,6 +683,7 @@ async function catalog() {
   }
   return cache.catalog;
 }
+async function names() { return (cache.names ||= await json('data/search/names.json')); }
 async function vedaMeta(id) { return (await catalog()).texts.find((v) => v.id === id); }
 async function vedaGroup(id) { return (await catalog()).vedas.find((v) => v.id === id); }
 async function index(id) {
@@ -2042,7 +2043,7 @@ function notFound() {
 
 // ---------- search ----------
 let activeVeda = 'rv';
-const suggestions = (q) => search(q, { catalog, index }, { activeVeda });
+const suggestions = (q) => search(q, { catalog, index, names }, { activeVeda });
 function setupSearch() {
   const input = $('#q'); const box = $('#suggest'); let items = []; let sel = -1; let token = 0;
   const close = () => { box.hidden = true; sel = -1; };
