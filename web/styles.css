@@ -1080,3 +1080,4 @@ a.mrow { display: block; }
 .sk-group h2 .sk-chant-g { width: 32px; height: 32px; margin-left: 8px; }
 .sk-group h2 .sk-chant-g svg { width: 14px; height: 14px; }
 .sk-acts { display: flex; gap: 8px; margin: 10px 0; }
+.dv-acts { display: inline-flex; align-items: center; gap: 10px; }

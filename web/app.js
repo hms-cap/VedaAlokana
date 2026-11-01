@@ -286,6 +286,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.21.3', '2026-11-01', ['Each card in Ṛgveda by devatā has a round ▶ that chants that devatā’s hymns from the first. A key-hymn chip opens its hymn inside the same set. In a set, the previous / next arrows, swipes, arrow keys and chant view all stay within that devatā’s hymns.']],
   ['1.21.2', '2026-11-01', ['Chant buttons on every sūkta list: a Chant view button at the top of the Sūktas page and of each devatā list, one on each group heading, and a round ▶ on each row. Chant view opens from the first verse and moves on through the list you were looking at (as filtered), with a list bar showing the place in it.']],
   ['1.21.1', '2026-11-01', ['Tapping a devatā in Ṛgveda by devatā now opens a list of that devatā’s sūktas, each a tappable row (reference, ṛṣi, opening line, chandas), with maṇḍala chips, a find box and links to shared devatās (Indra → Indra–Agni …).']],
   ['1.21.0', '2026-11-01', [
@@ -1996,6 +1997,14 @@ async function viewContainer(id, d1, d2, params) {
   });
   const sec = (meta.levels[1] || 'section').toLowerCase();
   const pn = params?.get('play') ? playNeighbours(`#/v/${id}/c/${d1}/${d2}`) : {};
+  if (pn.pos !== undefined) {   // inside a list: the bar steps through the list, not the whole text
+    const [b0, b1] = rb.querySelectorAll('.rb-step');
+    const AR = ['M15 5l-7 7 7 7', 'M9 5l7 7-7 7'];
+    [[b0, pn.prev, 'Previous in the list', 0], [b1, pn.next, 'Next in the list', 1]].forEach(([el, t, lab, k]) => {
+      if (t) { const a = document.createElement('a'); a.className = 'rb-step'; a.dataset.r = ''; a.href = t.href; a.setAttribute('aria-label', lab); a.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${AR[k]}"/></svg>`; el.replaceWith(a); }
+      else if (el.tagName === 'A') { const sp = document.createElement('span'); sp.className = 'rb-step'; sp.setAttribute('aria-hidden', 'true'); el.replaceWith(sp); }
+    });
+  }
   readerNav = pn.pos !== undefined ? { prev: pn.prev, next: pn.next, sec: 'sūkta' } : {
     prev: prev && { href: `#/v/${id}/c/${prev[0]}/${prev[1]}`, label: refText(meta, containerRef(meta, prev[0], prev[1], prev[2])) },
     next: next && { href: `#/v/${id}/c/${next[0]}/${next[1]}`, label: refText(meta, containerRef(meta, next[0], next[1], next[2])) },
@@ -2557,7 +2566,10 @@ async function viewSuktas(params) {
 async function viewDevatas() {
   setTitle('Ṛgveda by devatā');
   const d = (cache.devata ||= await json('data/devata.json'));
-  const hy = (h) => `<a class="dv-h" href="#/v/rv/c/${h.replace('.', '/')}">${esc(SA() ? dg(h) : h)}</a>`;
+  const rvx = await index('rv');
+  // each card's set: the devatā's hymns (as in its list), or the hymns the table names when there is no devatā filter
+  const sets = d.items.map((x) => (x.key ? devataSet(rvx, x.key) : x.hymns.map((h) => { const [m, s] = h.split('.').map(Number); return { m, s }; })));
+  const hy = (h) => `<a class="dv-h" href="#/v/rv/c/${h.replace('.', '/')}" data-h="${h}">${esc(SA() ? dg(h) : h)}</a>`;
   main.innerHTML = `<div class="col">
     <h1>${T('Ṛgveda by devatā', 'ऋग्वेदः देवतानुसारम्')}${SA() ? '' : '<span class="h1-deva" lang="sa">देवतानुसारम्</span>'}</h1>
     <p class="lede">The deities of the Ṛgveda, grouped by cosmic sphere. Open all of a devatā’s hymns, or go straight to the hymns the reference table names.</p>
@@ -2565,12 +2577,30 @@ async function viewDevatas() {
       const items = d.items.filter((x) => x.sphere === k); if (!items.length) return '';
       return `<section class="sk-group"><h2>${T(en, sa)}<small>${F(items.length)}</small></h2><div class="dv-list">${items.map((x) => `<article class="dv-card">
         <div class="dv-top"><span class="dv-n"><span class="dv" lang="sa">${esc(x.deva)}</span><b>${esc(x.name)}</b></span>
-          ${x.key ? `<a class="dv-all" href="#/devatas/${esc(x.key)}">${T('All', 'सर्वाणि')} ${F(x.n)} ${T('hymns', 'सूक्तानि')} ›</a>` : ''}</div>
+          <span class="dv-acts">${x.key ? `<a class="dv-all" href="#/devatas/${esc(x.key)}">${T('All', 'सर्वाणि')} ${F(x.n)} ${T('hymns', 'सूक्तानि')} ›</a>` : ''}
+          <button type="button" class="sk-chant" data-chantd="${d.items.indexOf(x)}" aria-label="${SA() ? 'पारायणम्' : `Chant ${esc(x.name)}`}">${playIcon}</button></span></div>
         <p class="dv-w">${esc(x.where)}</p>
         <div class="dv-hs" aria-label="${esc(x.name)} key hymns">${x.hymns.map(hy).join('')}</div></article>`).join('')}</div></section>`;
     }).join('')}
   </div>`;
+  const play = (i, at) => { const x = d.items[i]; startChant(x.name, x.deva, '#/devatas', hymnItems(sets[i]), at); };
+  main.querySelectorAll('[data-chantd]').forEach((b) => b.addEventListener('click', () => play(Number(b.dataset.chantd), 0)));
+  // a key-hymn chip chants the card's set from that hymn, when it is in the set
+  main.querySelectorAll('.dv-card').forEach((card) => { const i = Number(card.querySelector('[data-chantd]').dataset.chantd); card.querySelectorAll('[data-h]').forEach((a) => a.addEventListener('click', (ev) => {
+    const [m, s] = a.dataset.h.split('.').map(Number); const at = sets[i].findIndex((h) => h.m === m && h.s === s);
+    if (at < 0 || ev.metaKey || ev.ctrlKey) return;
+    ev.preventDefault(); setPlay(d.items[i].name, d.items[i].deva, '#/devatas', hymnItems(sets[i])); go(withPlay(`#/v/rv/c/${m}/${s}`));
+  })); });
 }
+
+// the hymns of one devatā in order: [{m, s, n (verses to the devatā), rishi, chandas}]
+function devataSet(x, key) {
+  const di = x.keyIndex.devata.get(key); if (di === undefined) return [];
+  const hy = new Map();
+  for (const r of x.rows) if (r[COL.devata] === di) { const k = `${r[0]}.${r[1]}`; if (!hy.has(k)) hy.set(k, { m: r[0], s: r[1], n: 0, rishi: r[COL.rishi], chandas: r[COL.chandas] }); hy.get(k).n++; }
+  return [...hy.values()].sort((a, b) => a.m - b.m || a.s - b.s);
+}
+const hymnItems = (l) => l.map((h) => ({ href: `#/v/rv/c/${h.m}/${h.s}`, label: SA() ? `ऋ. ${dg(`${h.m}.${h.s}`)}` : `RV ${h.m}.${h.s}` }));
 // the sūktas of one devatā: one tappable row each, ordered by maṇḍala and sūkta
 async function viewDevataList(key) {
   const x = await index('rv'); const di = x.keyIndex.devata.get(key);
@@ -2578,9 +2608,7 @@ async function viewDevataList(key) {
   const e = x.facets.devata[di]; const d = (cache.devata ||= await json('data/devata.json'));
   const card = d.items.find((i) => i.key === key);
   setTitle(`${cap(e[1])} — Ṛgveda hymns`);
-  const hy = new Map();
-  for (const r of x.rows) if (r[COL.devata] === di) { const k = `${r[0]}.${r[1]}`; if (!hy.has(k)) hy.set(k, { m: r[0], s: r[1], n: 0, rishi: r[COL.rishi], chandas: r[COL.chandas] }); hy.get(k).n++; }
-  const all = [...hy.values()].sort((a, b) => a.m - b.m || a.s - b.s);
+  const all = devataSet(x, key);
   const mandalas = [...new Set(all.map((h) => h.m))];
   const also = x.facets.devata.map((f, i) => [f, i]).filter(([f, i]) => i !== di && key.length >= 4 && f[0].includes(key) && f[4] >= 2).sort((a, b) => b[0][4] - a[0][4]).slice(0, 8);
   const tot = new Map(); for (const [m, cs] of x.groups) for (const c of cs) tot.set(`${m}.${c[0]}`, c[1]);
@@ -2619,7 +2647,7 @@ async function viewDevataList(key) {
     const more = $('#dvm'); more.hidden = list.length <= shown; more.innerHTML = `${T('Show more', 'अधिकम्')} (${F(list.length - shown)})`;
   };
   $('#dvm').addEventListener('click', () => { shown += 60; paint(); });
-  const items = () => cur.map((h) => ({ href: `#/v/rv/c/${h.m}/${h.s}`, label: SA() ? `ऋ. ${dg(`${h.m}.${h.s}`)}` : `RV ${h.m}.${h.s}` }));
+  const items = () => hymnItems(cur);
   const nm = card?.name || cap(e[1]); const back = `#/devatas/${key}`;
   $('#dvChant')?.addEventListener('click', () => startChant(nm, e[2], back, items()));
   $('#dvl').addEventListener('click', (ev) => { const b = ev.target.closest('[data-chant]'); if (b) startChant(nm, e[2], back, items(), Number(b.dataset.chant)); });

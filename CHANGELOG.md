@@ -2,6 +2,9 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.21.3 — 2026-11-01
+- Ṛgveda by devatā: chant button on every card; key-hymn chips and the reader's previous/next bar, swipes and chant view stay within the devatā's set (`?play=1`).
+
 ## 1.21.2 — 2026-11-01
 - Chant buttons on sūkta lists (Sūktas page, group headings, devatā lists, rows, My list): opens chant view from the first verse and continues through the list as filtered (`?play=1`, playlist kept for the visit).
 
