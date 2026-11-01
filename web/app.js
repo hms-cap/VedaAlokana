@@ -6,6 +6,7 @@ import { toKnda } from './lipi.js';
 import { dakshinatyaVerse, dakshinatyaNasals } from './dakshinatya.js';
 import { FACETS, FKEYS, LAYERS, cap, fmt, refOf, groupName, findHref } from './common.js';
 import { search, groupResults } from './search.js';
+import { padaDeva, cleanPada } from './pada.js';
 
 const COL = { d1: 0, d2: 1, v: 2, rishi: 3, devata: 4, chandas: 5 };
 const LEVEL_DEVA = {
@@ -285,6 +286,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.20.1', '2026-11-01', ['The Ṛgveda padapāṭha follows the reading script: Devanagari, Kannada or IAST, with compound breaks marked ऽ as in the printed books. It has no svara marks yet, and a note says so.']],
   ['1.20.0', '2026-11-01', [
     'Search understands names and words in English, Devanagari and Kannada: type agni suktam, ಪುರುಷ ಸೂಕ್ತ, श्रीसूक्तम्, rudram, hymn to dawn, or two names together such as indra trishtup.',
     'The first words of a mantra, or any few of its words, find the mantra: tryambakam yajamahe, ಗಣಾನಾಂ ತ್ವಾ, अग्निमीळे, ekam sad viprah bahudha. The line is shown in your script with the matching words marked. This covers the Saṃhitās and the Upaniṣads.',
@@ -1857,7 +1859,8 @@ async function viewContainer(id, d1, d2, params) {
     // the one before it, so a long sūkta is not interrupted by the same chips under every verse.
     const shown = Object.fromEntries(summary.map(([f, e]) => [f, e[0]]));
     $('#sumTags')?.toggleAttribute('hidden', !prefs.tags);
-    $('#verses').innerHTML = verses.map(([v, deva, roman, pd, tr, label]) => {
+    const padaNote = pada && prefs.script !== 'roman' ? `<p class="pada-note">${T('The padapāṭha is shown without svara marks.', 'पदपाठे स्वरचिह्नानि न दर्श्यन्ते।')}</p>` : '';
+    $('#verses').innerHTML = padaNote + verses.map(([v, deva, roman, pd, tr, label]) => {
       const r = rowOf.get(v);
       const tags = r ? FKEYS.filter((f) => {
         if (!prefs.tags || r[COL[f]] < 0 || meta.tagLevel !== 'verse') return false;
@@ -1871,7 +1874,10 @@ async function viewContainer(id, d1, d2, params) {
       const ref = refOf(meta, d1, d2, v, label);
       let body = '';
       if (pada) {
-        body += `<div class="pada" lang="sa-Latn">${pd.map((w) => `<span>${esc(w)}</span>`).join('<span aria-hidden="true">|</span>')}</div>`;
+        // the reading script decides: Devanagari (Kannada with the Kannada switch) or IAST, both when both are on
+        const bar = '<span aria-hidden="true">|</span>';
+        if (showDeva) body += `<div class="pada pada-deva" lang="sa">${padaDeva(pd).map((w) => `<span>${esc(w)}</span>`).join(bar)}</div>`;
+        if (showRoman || !showDeva) body += `<div class="pada" lang="sa-Latn">${cleanPada(pd).map((w) => `<span>${esc(w)}</span>`).join(bar)}</div>`;
       } else {
         if (showDeva) body += `<div class="deva" lang="sa">${svaraLines(id, deva, pd).map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
         if (showRoman) body += `<div class="roman" lang="sa-Latn">${roman.map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
