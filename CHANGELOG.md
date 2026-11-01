@@ -2,6 +2,10 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.21.0 — 2026-11-01
+- Ṛgveda by devatā: 29 entry points (`#/devatas`, data in `scripts/devata-index.mjs`) from the devatā table of the classification reference, each opening that devatā's hymns and naming its key hymns.
+- 25 more Ṛgveda sūktas (devatās named in the table) and, for the Kṛṣṇa Yajurveda, Nīlā, Bhāgya and Pavamāna Sūktas (Taittirīya), the Mahānārāyaṇa Upaniṣad and the principal sections of Udaka Śānti.
+
 ## 1.19.1 — 2026-11-01
 - Offline icon opens the downloads section; a prominent Download all button now leads the list.
 

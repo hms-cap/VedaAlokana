@@ -403,6 +403,8 @@ fs.writeFileSync(path.join(OUT, 'catalog.json'), JSON.stringify({ built: new Dat
 
 // ---- sūktas: resolve each entry against the data (scripts/build-suktas.mjs)
 const suktas = buildSuktas(OUT);
+// ---- Ṛgveda devatā entry points (scripts/devata-index.mjs)
+execFileSync(process.execPath, [new URL('./build-devata.mjs', import.meta.url).pathname, OUT], { stdio: 'inherit' });
 console.log(`suktas: ${suktas.length} found in the text`);
 // ---- search indexes (scripts/build-search.mjs)
 (await import('./build-search.mjs')).buildSearch(OUT);

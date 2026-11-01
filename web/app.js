@@ -286,6 +286,10 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.21.0', '2026-11-01', [
+    'New: Ṛgveda by devatā. A page of 29 devatā entry points (Indra, Agni, Soma, Aśvins, Maruts …) grouped by sphere, each opening all of that devatā’s hymns and listing the key hymns by number. Reach it from the Sūktas page or the first Ṛgveda chip on Home.',
+    'Twenty-five more Ṛgveda sūktas for the devatās the table names (Vāyu, Ṛbhus, Marut, Mitra, Pūṣan, Aśvin, Savitṛ, Yama–Yamī, Dakṣiṇā and others).',
+    'Kṛṣṇa Yajurveda: Nīlā Sūkta, Bhāgya Sūkta and Pavamāna Sūkta (Taittirīya), the Mahānārāyaṇa Upaniṣad, and the principal sections of Udaka Śānti.']],
   ['1.20.1', '2026-11-01', ['The Ṛgveda padapāṭha follows the reading script: Devanagari, Kannada or IAST, with compound breaks marked ऽ as in the printed books. It has no svara marks yet, and a note says so.']],
   ['1.20.0', '2026-11-01', [
     'Search understands names and words in English, Devanagari and Kannada: type agni suktam, ಪುರುಷ ಸೂಕ್ತ, श्रीसूक्तम्, rudram, hymn to dawn, or two names together such as indra trishtup.',
@@ -1141,8 +1145,9 @@ function homeMy(suk) {
 // ---------- sūktas: the Veda buttons and chips shared by Home and the Sūktas tab ----------
 let homeSkOpen = null;   // the Veda whose sūkta chips are open on Home (this visit only)
 const sukRef = (e) => (SA() && e.refs?.length ? `<span lang="sa">${esc(e.refs.map(([t, r]) => (r ? `${REF_SA[t] || ''} ${dg(r)}` : (cache.catalog?.texts.find((x) => x.id === t)?.deva || dg(e.ref)))).join('; ').trim())}</span>` : SA() ? `<span lang="sa">${esc(dg(e.ref))}</span>` : esc(e.ref));
+const devataEntry = () => `<a class="dv-entry" href="#/devatas"><span class="dv-e-t"><b>${T('Ṛgveda by devatā', 'ऋग्वेदः देवतानुसारम्')}</b><small>${T('Indra, Agni, Soma, Aśvins, Maruts … with each one’s key hymns', 'इन्द्रः अग्निः सोमः अश्विनौ मरुतः …')}</small></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>`;
 function sukChips(suk, veda) {
-  return suk.filter((e) => e.veda === veda).map((e) => `<a class="schip" data-sk href="${esc(e.href)}"><span lang="sa">${esc(e.deva)}</span><small>${sukRef(e)}</small></a>`).join('');
+  return (veda === 'rv' ? `<a class="schip dv-chip" href="#/devatas"><span lang="sa">देवतानुसारम्</span><small>${T('By devatā', 'देवताः')}</small></a>` : '') + suk.filter((e) => e.veda === veda).map((e) => `<a class="schip" data-sk href="${esc(e.href)}"><span lang="sa">${esc(e.deva)}</span><small>${sukRef(e)}</small></a>`).join('');
 }
 // as buttons (Home: switch the chips in place) or as links (Sūktas tab: filter the list)
 function sukVedaButtons(cat, suk, cur, as, href) {
@@ -2418,7 +2423,7 @@ function renderChrome(r, path) {
   // back: the previous view; on the first view of a visit, the parent page
   const page = r.parts[0] || '';
   const topLevel = ['', 'library', 'suktas', 'my', 'search', 'settings'].includes(page);
-  const parentHref = topLevel ? null : path.length >= 2 ? path[path.length - 2].href : page === 'about' ? '#/settings' : page === 's' ? (r.params.get('from') === 'my' ? '#/my' : '#/suktas') : '#/library';
+  const parentHref = topLevel ? null : path.length >= 2 ? path[path.length - 2].href : page === 'about' ? '#/settings' : page === 'devatas' ? '#/suktas?veda=rv' : page === 's' ? (r.params.get('from') === 'my' ? '#/my' : '#/suktas') : '#/library';
   const back = $('#backBtn');
   back.hidden = !parentHref;
   if (parentHref) back.setAttribute('href', parentHref);
@@ -2426,7 +2431,7 @@ function renderChrome(r, path) {
   // each tab remembers where you were in it
   const tabNow = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 's' ? 'suktas' : page);
   if (tabNow === 'library' || tabNow === 'suktas' || tabNow === 'my') { tabLast[tabNow] = getHash(); try { sessionStorage.setItem('vedalokana.tabs', JSON.stringify(tabLast)); } catch { /* storage unavailable */ } }
-  const named = { library: 'Library', suktas: 'Sūktas', s: 'Sūktas', search: 'Search', settings: 'Settings', about: 'About' }[page];
+  const named = { library: 'Library', suktas: 'Sūktas', s: 'Sūktas', search: 'Search', settings: 'Settings', about: 'About', devatas: 'By devatā' }[page];
   const lastC = path[path.length - 1];
   $('#topTitle').textContent = lastC ? Tp(lastC.label, lastC.deva) : (named ? Tp(named, MENU_SA[page === 's' ? 'suktas' : page]) : '');
   // tabs
@@ -2488,6 +2493,7 @@ async function viewSuktas(params) {
     <h1>${T('Sūktas', 'सूक्तानि')}${SA() ? '' : '<span class="h1-deva" lang="sa">सूक्तानि</span>'}</h1>
     <p class="lede">The sūktas, mantras and śānti pāṭhas of recitation books such as the Sasvara Vedamantrāḥ, from every Veda. Each opens as one piece, even when it is gathered from several places.</p>
     ${sukVedaButtons(cat, all, vedaF, 'link', (k) => href({ veda: vedaF === k ? '' : k }))}
+    ${!vedaF || vedaF === 'rv' ? devataEntry() : ''}
     <div class="seg sk-sort" role="group" aria-label="List by">
       ${[['veda', 'By Veda'], ['devata', 'By devatā'], ['az', 'A–Z']].map(([k, l]) => `<a data-r href="${href({ by: k })}" data-by="${k}" aria-pressed="${by === k}">${l}</a>`).join('')}
     </div>
@@ -2495,6 +2501,24 @@ async function viewSuktas(params) {
       <div class="sk-list">${g.items.map(row).join('')}</div></section>`).join('')}
   </div>`;
   main.querySelectorAll('[data-by]').forEach((a) => a.addEventListener('click', () => { prefs.suktaBy = a.dataset.by; savePrefs(); }));
+}
+// ---------- Ṛgveda by devatā: entry points from the devatā table, each opening that devatā's hymns ----------
+async function viewDevatas() {
+  setTitle('Ṛgveda by devatā');
+  const d = (cache.devata ||= await json('data/devata.json'));
+  const hy = (h) => `<a class="dv-h" href="#/v/rv/c/${h.replace('.', '/')}">${esc(SA() ? dg(h) : h)}</a>`;
+  main.innerHTML = `<div class="col">
+    <h1>${T('Ṛgveda by devatā', 'ऋग्वेदः देवतानुसारम्')}${SA() ? '' : '<span class="h1-deva" lang="sa">देवतानुसारम्</span>'}</h1>
+    <p class="lede">The deities of the Ṛgveda, grouped by cosmic sphere. Open all of a devatā’s hymns, or go straight to the hymns the reference table names.</p>
+    ${d.spheres.map(([k, en, sa]) => {
+      const items = d.items.filter((x) => x.sphere === k); if (!items.length) return '';
+      return `<section class="sk-group"><h2>${T(en, sa)}<small>${F(items.length)}</small></h2><div class="dv-list">${items.map((x) => `<article class="dv-card">
+        <div class="dv-top"><span class="dv-n"><span class="dv" lang="sa">${esc(x.deva)}</span><b>${esc(x.name)}</b></span>
+          ${x.key ? `<a class="dv-all" href="${findHref('rv', { devata: x.key })}">${T('All', 'सर्वाणि')} ${F(x.n)} ${T('hymns', 'सूक्तानि')} ›</a>` : ''}</div>
+        <p class="dv-w">${esc(x.where)}</p>
+        <div class="dv-hs" aria-label="${esc(x.name)} key hymns">${x.hymns.map(hy).join('')}</div></article>`).join('')}</div></section>`;
+    }).join('')}
+  </div>`;
 }
 // one row of a sūkta list
 const sukRow = (by, listK) => (e) => `<a class="sk-row" data-sk href="${listK === 'saved' ? fromMy(e.href) : e.href}">
@@ -2657,6 +2681,7 @@ async function route() {
     else if (a === 'about') await viewAbout();
     else if (a === 'library') await viewLibrary();
     else if (a === 'suktas') await viewSuktas(r.params);
+    else if (a === 'devatas') await viewDevatas();
     else if (a === 'my') await viewMy(r.params);
     else if (a === 's') await viewSukta(id, r.params);
     else if (a === 'search') await viewSearch(r.params);

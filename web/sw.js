@@ -17,7 +17,7 @@ const SHELL_FILES = [
   'fonts/Shobhika-Vedic.woff', 'fonts/Shobhika-Std.woff',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/apple-touch-icon.png',
 ];
-const DATA_CORE = ['data/catalog.json', 'data/suktas.json', 'data/offline.json', 'data/search/names.json', 'data/search-aliases.json', 'data/search/pratika.tsv'];
+const DATA_CORE = ['data/catalog.json', 'data/suktas.json', 'data/devata.json', 'data/offline.json', 'data/search/names.json', 'data/search-aliases.json', 'data/search/pratika.tsv'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil((async () => {
