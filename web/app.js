@@ -294,6 +294,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.16.4', '2026-11-01', ['Offline: the daily mantra cards are now a download of their own and part of Download everything, so Home’s mantra cards also work without a connection.']],
   ['1.16.3', '2026-10-31', ['The Chant view button is back on every sūkta page and at the head of the reader. Since 1.13.0 it was only an icon at the far end of the options bar, off screen on phones.']],
   ['1.16.2', '2026-10-31', ['The shared picture opens with today’s brief pañcāṅga: date, place, māsa · pakṣa · tithi, saṃvatsara · ṛtu · ayana · vāra, nakṣatra and yoga.']],
   ['1.16.1', '2026-10-31', ['The shared picture is one card: all sections on one left edge, ivory on deep indigo with gold rules.']],

@@ -11,7 +11,7 @@
   --fire: #C2410C;
   --cta: #C2410C; /* button fill that carries white text */
   /* one colour per Veda, used on Home tiles, the Veda page wheel and chant view */
-  --v-rv: #2B3990; --v-syv: #B43C0B; --v-kyv: #8A4B0F; --v-sv: #0F6B5C; --v-av: #6D2E6B;
+  --v-rv: #2B3990; --v-daily: #C2410C; --v-syv: #B43C0B; --v-kyv: #8A4B0F; --v-sv: #0F6B5C; --v-av: #6D2E6B;
   --hero: #2B3990; --hero-ink: #FFFFFF; --hero-soft: #C9CEF2; --sun: #C2410C; --sun-ring: #E8793F;
   --deva: 'Vedalokana Devanagari', 'Noto Serif Devanagari', serif;
   --deva-lh: 2.15;

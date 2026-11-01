@@ -2,6 +2,9 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.16.4 — 2026-11-01
+- Offline: the daily mantra cards (`data/daily`, 0.8 MB) are a pack of their own in Settings → Offline and part of **Download everything**; before, only the cards already seen were kept.
+
 ## 1.16.3 — 2026-10-31
 - Fixed: the **Chant view** button went missing in 1.13.0, when page actions moved into the options bar — there it was the last icon, scrolled off screen on phones. The labelled button is back on every sūkta page and at the head of the reader; the bar icon stays too.
 
