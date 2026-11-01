@@ -223,7 +223,7 @@ export function buildSuktas(OUT) {
       const { versions } = e.parts[0].aithal ? aithal(e.parts[0].aithal) : EXTRA[e.parts[0].versions]();
       const v0 = versions[0].verses;
       return {
-        id, veda: e.veda, name: e.name, deva: e.deva, devata: e.devata, devataDeva: e.devataDeva, kind: e.kind,
+        id, veda: e.veda, name: e.name, deva: e.deva, devata: e.devata, devataDeva: e.devataDeva, kind: e.kind, aliases: e.aliases,
         ref: e.label, refs: [], text: 'rv', segs: [], versions, count: v0.length,
         line: (v0[0].lines ? v0[0].lines[0] : file(...v0[0].src.slice(0, 2))[v0[0].src[2]].find((x) => x[0] === v0[0].src[3])[1][0]).replace(/\s*[।॥]\s*$/, ''),
         roman: '', href: `#/s/${id}`, reader: '',
@@ -256,7 +256,7 @@ export function buildSuktas(OUT) {
     const ref = e.label || refs.map(([t, r]) => `${meta[t].ref} ${r}`).join('; ');
     const single = segs.length === 1 && !s0.a && !s0.b;
     return {
-      id, veda: e.veda, name: e.name, deva: e.deva, devata: e.devata, devataDeva: e.devataDeva, kind: e.kind,
+      id, veda: e.veda, name: e.name, deva: e.deva, devata: e.devata, devataDeva: e.devataDeva, kind: e.kind, aliases: e.aliases,
       ref, refs, text: s0.t, segs, count: verses.length, line: line.trim(), roman: (!s0.a && v0[2] && v0[2][0]) || '',
       href: `#/s/${id}`, reader: single ? `#/v/${s0.t}/c/${s0.d1}/${s0.d2}${s0.v[0] !== file(s0.t, s0.d1)[s0.d2][0][0] ? `?v=${s0.v[0]}` : ''}` : '',
     };
