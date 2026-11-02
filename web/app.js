@@ -287,6 +287,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.23.1', '2026-11-02', ['Print and PDF of the chant view now come out in the script you chose: with Kannada selected they were printed in Devanagari.']],
   ['1.23.0', '2026-11-02', ['Export PDF on every page: a button in the options bar (and in ⋯) saves the page you are reading as an A4 PDF in the font and script you are using; no print dialog. The chant view has its own PDF button for the whole text. Print moved into the ⋯ menus. The PDF is made on your device, works offline, and holds page images, so its text can’t be selected.']],
   ['1.22.2', '2026-11-02', ['Printed / PDF text now uses the same font as the screen (the app’s svara-aware Devanagari or Kannada, Shobhika if chosen), instead of a fallback.']],
   ['1.22.1', '2026-11-02', ['Chant view has a Print / save as PDF button: it prints the whole text as a clean page (invocation, title, headings, mantras with numbers) in the chosen script; choose “Save as PDF” in the print dialog to export.']],
@@ -3191,16 +3192,17 @@ function openChant(model, start = 0) {
   // the whole text as a clean page, for printing or the PDF
   function chantDoc() {
     const doc = document.createElement('div');
-    doc.className = 'pdf-doc'; doc.lang = 'sa';
+    doc.className = 'pdf-doc'; doc.lang = prefs.lipi === 'knda' ? 'sa-Knda' : 'sa';
+    const L = (x) => esc(inLipi(x));   // in the chosen script here, not left to the page's converter (the PDF is made off-page)
     const parts = model.parts.map((p) => {
       const paras = [];
       p.verses.forEach((v, j) => {
         if (j % (p.group || 1) === 0) paras.push([]);
-        paras[paras.length - 1].push(esc(bookVerse(v.lines, v.n)));
+        paras[paras.length - 1].push(L(bookVerse(v.lines, v.n)));
       });
-      return `${p.title ? `<h2>${esc(p.title)}</h2>` : ''}${p.src ? `<p class="pd-src">${esc(p.src)}</p>` : ''}${p.anu ? `<p class="pd-src">${esc(p.anu)}</p>` : ''}${paras.map((ps) => `<p>${ps.join(' ')}</p>`).join('')}`;
+      return `${p.title ? `<h2>${L(p.title)}</h2>` : ''}${p.src ? `<p class="pd-src">${L(p.src)}</p>` : ''}${p.anu ? `<p class="pd-src">${L(p.anu)}</p>` : ''}${paras.map((ps) => `<p>${ps.join(' ')}</p>`).join('')}`;
     }).join('');
-    doc.innerHTML = `<p class="pd-inv">${INVOCATION}</p><h1>${esc(model.title)}</h1>${parts}`;
+    doc.innerHTML = `<p class="pd-inv">${L(INVOCATION)}</p><h1>${L(model.title)}</h1>${parts}`;
     return doc;
   }
   function printChant() {
@@ -3215,7 +3217,7 @@ function openChant(model, start = 0) {
     const prevTitle = document.title; document.title = model.title;
     setTimeout(() => { try { window.print(); } finally { document.title = prevTitle; } }, 60);
   }
-  const pdfChant = (btn) => savePdf(chantDoc(), model.title, btn);
+  const pdfChant = (btn) => savePdf(chantDoc(), inLipi(model.title), btn);
   // ⋯: the less used things, Print
   function chantMore(btn) {
     const old = el.querySelector('.ch-menu'); if (old) { old.remove(); return; }
