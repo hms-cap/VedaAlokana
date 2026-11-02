@@ -287,6 +287,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.23.2', '2026-11-02', ['On a phone, Export PDF opens the share sheet with the PDF file alone (named after the text), instead of a download with a link and a “blob” entry. Computers still download it.']],
   ['1.23.1', '2026-11-02', ['Print and PDF of the chant view now come out in the script you chose: with Kannada selected they were printed in Devanagari.']],
   ['1.23.0', '2026-11-02', ['Export PDF on every page: a button in the options bar (and in ⋯) saves the page you are reading as an A4 PDF in the font and script you are using; no print dialog. The chant view has its own PDF button for the whole text. Print moved into the ⋯ menus. The PDF is made on your device, works offline, and holds page images, so its text can’t be selected.']],
   ['1.22.2', '2026-11-02', ['Printed / PDF text now uses the same font as the screen (the app’s svara-aware Devanagari or Kannada, Shobhika if chosen), instead of a fallback.']],
@@ -3056,22 +3057,43 @@ let pdfBusy = false;
 async function savePdf(stage, title, btn) {
   if (pdfBusy) return;
   pdfBusy = true; btn?.setAttribute('aria-busy', 'true');
+  let keepToast = false;
   const t = toast(esc(SA() ? 'PDF सज्जीक्रियते…' : 'Preparing PDF…'), 0);
   try {
     const { exportPdf } = await import('./pdf.js');
     const blob = await exportPdf(stage, { title, progress: (i, n) => { t.textContent = SA() ? `PDF ${i} / ${n}` : `Preparing PDF · page ${i} of ${n}`; } });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `${title.normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^\w\u0900-\u097F\u0C80-\u0CFF]+/g, '-').replace(/^-|-$/g, '') || 'vedavalokanam'}.pdf`;
-    document.body.append(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 20000);
+    const name = `${title.normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^\w\u0900-\u097F\u0C80-\u0CFF]+/g, '-').replace(/^-|-$/g, '') || 'vedavalokanam'}.pdf`;
+    const file = new File([blob], name, { type: 'application/pdf' });
+    const save = () => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(file); a.download = name;
+      document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 20000);
+    };
+    // on a phone the PDF goes to the share sheet as a file and nothing else (no link, no text); elsewhere it downloads
+    const canShare = matchMedia('(pointer: coarse)').matches && navigator.canShare?.({ files: [file] });
+    if (!canShare) save();
+    else {
+      try { await navigator.share({ files: [file] }); }
+      catch (e) {
+        if (e?.name === 'NotAllowedError') {
+          // the tap that started the export is too old for the share sheet: offer a fresh one
+          t.innerHTML = `<button type="button" class="chip" id="pdfShare">${esc(SA() ? 'PDF प्रेषय' : 'Share PDF')}</button> <button type="button" class="chip" id="pdfSave">${esc(SA() ? 'रक्ष' : 'Save')}</button>`;
+          t.querySelector('#pdfShare').addEventListener('click', () => navigator.share({ files: [file] }).catch(() => {}));
+          t.querySelector('#pdfSave').addEventListener('click', save);
+          setTimeout(() => t.classList.add('out'), 12000); setTimeout(() => t.remove(), 12500);
+          keepToast = true; return;
+        }
+        if (e?.name !== 'AbortError') save();
+      }
+    }
     t.textContent = SA() ? 'PDF सिद्धम्' : 'PDF saved';
   } catch (e) {
     console.error(e);
     t.textContent = SA() ? 'PDF न सिद्धम्' : 'Could not make the PDF — try Print and choose Save as PDF';
   } finally {
     pdfBusy = false; btn?.removeAttribute('aria-busy');
-    setTimeout(() => t.classList.add('out'), 2600); setTimeout(() => t.remove(), 3100);
+    if (!keepToast) { setTimeout(() => t.classList.add('out'), 2600); setTimeout(() => t.remove(), 3100); }
   }
 }
 // PDF of whatever page is open: its content, without the controls

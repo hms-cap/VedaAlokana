@@ -2,6 +2,9 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.23.2 — 2026-11-02
+- PDF export on touch devices shares a `File` only via `navigator.share` (with a Share / Save fallback when the gesture has expired); desktop downloads.
+
 ## 1.23.1 — 2026-11-02
 - Chant view print / PDF built in the chosen script (Kannada was exported as Devanagari because the page's converter does not see an off-page document).
 
