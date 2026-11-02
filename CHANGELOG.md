@@ -2,6 +2,9 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.23.0 — 2026-11-02
+- Export PDF everywhere: `web/pdf.js` lays the page out in a hidden A4-wide frame with the app's own CSS and fonts, draws each page through SVG foreignObject to a canvas and writes the JPEGs into a PDF (no library). Option-bar and ⋯ buttons for any page; chant view gets its own PDF button; Print moved into ⋯ (options panel; chant view ⋯). Generic print stylesheet hides the app chrome.
+
 ## 1.22.2 — 2026-11-02
 - Print / PDF uses the page's own `--deva` font stack (it was falling back to plain Noto Serif Devanagari).
 

@@ -1082,17 +1082,29 @@ a.mrow { display: block; }
 .sk-acts { display: flex; gap: 8px; margin: 10px 0; }
 .dv-acts { display: inline-flex; align-items: center; gap: 10px; }
 
-/* print / save as PDF from the chant view */
+/* print / PDF of a chant text (#printDoc for the print dialog, the same .pdf-doc for the PDF export) */
 #printDoc { display: none; }
+.pdf-doc { font-family: var(--deva); font-size: 15pt; line-height: calc(var(--deva-lh) * .9); font-weight: 400; color: #000; }
+.pdf-doc .pd-inv { text-align: center; font-weight: 600; font-size: 11pt; margin: 0 0 4pt; }
+.pdf-doc h1 { text-align: center; font-weight: 700; font-size: 20pt; margin: 0 0 14pt; letter-spacing: 0; }
+.pdf-doc h2 { text-align: center; font-weight: 700; font-size: 15pt; margin: 16pt 0 2pt; break-after: avoid; }
+.pdf-doc .pd-src { text-align: center; font-size: 10pt; margin: 0 0 6pt; }
+.pdf-doc p { margin: 0 0 8pt; text-align: justify; orphans: 3; widows: 3; }
+.pdf-doc .pd-foot { margin-top: 18pt; font-size: 9pt; text-align: center; color: #555; }
 @media print {
   body.printing > *:not(#printDoc) { display: none !important; }
   body.printing { background: #fff !important; color: #000 !important; overflow: visible !important; }
-  body.printing #printDoc { display: block; font-family: var(--deva); font-size: 15pt; line-height: calc(var(--deva-lh) * .9); font-weight: 400; color: #000; }
-  #printDoc .pd-inv { text-align: center; font-weight: 600; font-size: 11pt; margin: 0 0 4pt; }
-  #printDoc h1 { text-align: center; font-weight: 700; font-size: 20pt; margin: 0 0 14pt; }
-  #printDoc h2 { text-align: center; font-weight: 700; font-size: 15pt; margin: 16pt 0 2pt; break-after: avoid; }
-  #printDoc .pd-src { text-align: center; font-size: 10pt; margin: 0 0 6pt; }
-  #printDoc p { margin: 0 0 8pt; text-align: justify; orphans: 3; widows: 3; }
-  #printDoc .pd-foot { margin-top: 18pt; font-size: 9pt; text-align: center; color: #555; }
-  @page { margin: 18mm 16mm; }
+  body.printing #printDoc { display: block; }
+  /* any other page: just its content */
+  .topbar, #optbar, #pathbar, .rail, #tabbar, #readerbar, #sheetRoot, .skip, .app-toast { display: none !important; }
+  body { background: #fff !important; color: #000 !important; }
+  .shell { display: block !important; }
+  @page { margin: 16mm 14mm; }
 }
+
+.ch-prt { position: relative; }
+.ch-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 5; background: var(--paper); color: var(--paper-ink); border: 1px solid color-mix(in srgb, var(--paper-ink) 18%, transparent); border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,.18); padding: 4px; min-width: 120px; }
+.ch-menu button { display: block; width: 100%; text-align: start; height: 38px; padding: 0 12px; border: 0; background: transparent; border-radius: 8px; cursor: pointer; font-size: 15px; color: inherit; }
+.ch-menu button:hover { background: color-mix(in srgb, var(--paper-ink) 8%, transparent); }
+.ob-pdf { margin-inline-start: 2px; }
+[aria-busy="true"] { opacity: .5; pointer-events: none; }

@@ -287,6 +287,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.23.0', '2026-11-02', ['Export PDF on every page: a button in the options bar (and in ⋯) saves the page you are reading as an A4 PDF in the font and script you are using; no print dialog. The chant view has its own PDF button for the whole text. Print moved into the ⋯ menus. The PDF is made on your device, works offline, and holds page images, so its text can’t be selected.']],
   ['1.22.2', '2026-11-02', ['Printed / PDF text now uses the same font as the screen (the app’s svara-aware Devanagari or Kannada, Shobhika if chosen), instead of a fallback.']],
   ['1.22.1', '2026-11-02', ['Chant view has a Print / save as PDF button: it prints the whole text as a clean page (invocation, title, headings, mantras with numbers) in the chosen script; choose “Save as PDF” in the print dialog to export.']],
   ['1.22.0', '2026-11-01', [
@@ -2390,6 +2391,7 @@ function paintOptbar() {
   };
   const barPage = obPage.filter((k) => !(typeof k === 'string' && OB_PANEL_ONLY.has(k)));
   bar.innerHTML = `<div class="ob-in">${OB_GLOBAL.map(btn).join('')}${barPage.length ? `<span class="ob-sep" aria-hidden="true"></span>${barPage.map(btn).join('')}` : ''}</div>
+    <button type="button" class="ob-b ob-pdf" data-pdfpage aria-label="${esc(Tp('Export this page as PDF', 'पृष्ठं PDF रूपेण'))}" title="${esc(Tp('Export this page as PDF', 'पृष्ठं PDF रूपेण'))}">${PDF_ICON}</button>
     <button type="button" class="ob-b ob-more" data-more aria-label="${esc(Tp('All options', 'सर्वे विकल्पाः'))}" title="${esc(Tp('All options', 'सर्वे विकल्पाः'))}" aria-haspopup="dialog">${OB_ICON.more}</button>`;
   bar.querySelectorAll('[data-ob]').forEach((b) => b.addEventListener('click', () => {
     const k = b.dataset.ob;
@@ -2398,6 +2400,7 @@ function paintOptbar() {
     setPref(k, obNext(k));
   }));
   bar.querySelectorAll('[data-act]').forEach((b) => b.addEventListener('click', () => obPage.find((x) => x.id === b.dataset.act)?.act(b)));
+  bar.querySelector('[data-pdfpage]').addEventListener('click', (e) => pagePdf(e.currentTarget));
   bar.querySelector('[data-more]').addEventListener('click', () => openOptPanel());
   if (obPanel) obPanel.fill();
 }
@@ -2426,6 +2429,7 @@ function openOptPanel(only) {
       ${pageKeys.length ? `<div class="ob-h">${T('This page', 'अस्मिन् पृष्ठे')}</div>${pageKeys.filter((k) => k !== 'tsize').map(row).join('')}` : ''}
       ${pageKeys.includes('tsize') ? sizeRow() : ''}
       ${acts.length ? `<div class="ob-acts">${acts.map((a) => `<button type="button" class="chip" data-pact="${a.id}"${a.on !== undefined ? ` aria-pressed="${String(!!a.on)}"` : ''}>${a.icon}<span>${esc(a.label)}</span></button>`).join('')}</div>` : ''}
+      <div class="ob-acts"><button type="button" class="chip" data-pdfp>${PDF_ICON}<span>${T('Export PDF', 'PDF')}</span></button><button type="button" class="chip" data-printp><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="7" y="14" width="10" height="7" rx="1"/></svg><span>${T('Print', 'मुद्रणम्')}</span></button></div>
       <div class="ob-h">${T('Reading', 'पठनम्')}</div>${row('svara')}${row('dfont')}${row('openIn')}
       <div class="ob-links"><a class="ob-all" href="#/settings?s=offline">${T('Offline downloads', 'अनुजालविना पठनम्')} ›</a><a class="ob-all" href="#/settings">${T('All settings', 'सर्वे विन्यासाः')} ›</a></div>`;
     panel.querySelectorAll('[data-k]').forEach((b) => b.addEventListener('click', () => {
@@ -2437,6 +2441,8 @@ function openOptPanel(only) {
       const d = Number(b.dataset.tz); const i = Math.max(0, TSIZES.indexOf(prefs.tsize || 1));
       setPref('tsize', d === 0 ? 1 : TSIZES[Math.min(TSIZES.length - 1, Math.max(0, i + d))]); fill();
     }));
+    panel.querySelector('[data-pdfp]')?.addEventListener('click', () => { close(); pagePdf(); });
+    panel.querySelector('[data-printp]')?.addEventListener('click', () => { close(); setTimeout(printPage, 150); });
     panel.querySelectorAll('[data-pact]').forEach((b) => b.addEventListener('click', () => { const a = obPage.find((x) => x.id === b.dataset.pact); close(); a?.act(); }));
     panel.querySelectorAll('.ob-all').forEach((l) => l.addEventListener('click', (e) => { e.preventDefault(); close(true); go(l.getAttribute('href'), { replace: true }); }));
   };
@@ -3043,6 +3049,40 @@ function bookVerse(lines, n) {
   return `${clean.join('\u00a0। ')}\u00a0॥${dg(n)}॥`;
 }
 
+const PDF_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11v6M9.5 14.5 12 17l2.5-2.5"/></svg>';
+let pdfBusy = false;
+// make a PDF of `stage` (a detached element) and hand it to the person as a download
+async function savePdf(stage, title, btn) {
+  if (pdfBusy) return;
+  pdfBusy = true; btn?.setAttribute('aria-busy', 'true');
+  const t = toast(esc(SA() ? 'PDF सज्जीक्रियते…' : 'Preparing PDF…'), 0);
+  try {
+    const { exportPdf } = await import('./pdf.js');
+    const blob = await exportPdf(stage, { title, progress: (i, n) => { t.textContent = SA() ? `PDF ${i} / ${n}` : `Preparing PDF · page ${i} of ${n}`; } });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${title.normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^\w\u0900-\u097F\u0C80-\u0CFF]+/g, '-').replace(/^-|-$/g, '') || 'vedavalokanam'}.pdf`;
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 20000);
+    t.textContent = SA() ? 'PDF सिद्धम्' : 'PDF saved';
+  } catch (e) {
+    console.error(e);
+    t.textContent = SA() ? 'PDF न सिद्धम्' : 'Could not make the PDF — try Print and choose Save as PDF';
+  } finally {
+    pdfBusy = false; btn?.removeAttribute('aria-busy');
+    setTimeout(() => t.classList.add('out'), 2600); setTimeout(() => t.remove(), 3100);
+  }
+}
+// PDF of whatever page is open: its content, without the controls
+function pagePdf(btn) {
+  const art = main.firstElementChild; if (!art) return;
+  const c = art.cloneNode(true);
+  c.querySelectorAll('button, input, select, textarea, nav, script, audio, video, .sk-acts, .listbar, .list-bar, .rb-step, .ob-b, [data-nopdf]').forEach((x) => x.remove());
+  const title = (c.querySelector('h1')?.textContent || document.title).replace(/\s+/g, ' ').trim();
+  savePdf(c, title, btn);
+}
+function printPage() { window.print(); }
+
 function openChant(model, start = 0) {
   document.querySelector('.chant')?.remove();
   if (!chantKeep) chantOrigin = { hash: getHash(), h: navH };
@@ -3065,7 +3105,7 @@ function openChant(model, start = 0) {
         <div class="seg ch-lay" role="group" aria-label="Layout"><button type="button" data-lay="book" aria-pressed="${prefs.chantLayout !== 'one'}" title="Book page">${T('Page', 'पुटम्')}</button><button type="button" data-lay="one" aria-pressed="${prefs.chantLayout === 'one'}" title="One mantra at a time">${T('One', 'एकैकम्')}</button></div>
         <div class="seg ch-size" role="group" aria-label="Text size"><button type="button" data-z="-1" aria-label="Smaller text">A−</button><button type="button" data-z="1" aria-label="Larger text">A+</button></div>
         <div class="seg ch-lipi" role="group" aria-label="Script"><button type="button" data-l="deva" lang="sa-Deva" aria-pressed="${prefs.lipi === 'deva'}">अ</button><button type="button" data-l="knda" lang="sa-Knda" aria-pressed="${prefs.lipi === 'knda'}">ಅ</button></div>
-        <div class="seg ch-prt"><button type="button" data-print aria-label="Print or save as PDF" title="${SA() ? 'मुद्रणम् / PDF' : 'Print / save as PDF'}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="7" y="14" width="10" height="7" rx="1"/></svg></button></div>
+        <div class="seg ch-prt"><button type="button" data-pdf aria-label="Export PDF" title="${SA() ? 'PDF' : 'Export PDF'}">${PDF_ICON}</button><button type="button" data-chmore aria-label="More" aria-haspopup="menu" title="${SA() ? 'अधिकम्' : 'More'}"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
       </div></div>`;
   const nextHTML = () => (model.next
     ? `<a class="ch-next" href="${esc(model.next.href)}"><small>${T('Next', 'अग्रिमम्')}</small><b lang="sa">${esc(model.next.label)}</b></a>`
@@ -3143,15 +3183,15 @@ function openChant(model, start = 0) {
       if (b.dataset.l === prefs.lipi) return;
       setLipi(b.dataset.l); render();     // the page underneath is redrawn too; this view stays open
     }));
-    el.querySelector('[data-print]').addEventListener('click', printChant);
+    el.querySelector('[data-pdf]').addEventListener('click', (e) => pdfChant(e.currentTarget));
+    el.querySelector('[data-chmore]').addEventListener('click', (e) => { e.stopPropagation(); chantMore(e.currentTarget); });
     wireMove();
     el.querySelector('.ch-x').focus({ preventScroll: true });
   }
-  // print / save as PDF: the whole text as a clean page (the browser's print dialog offers "Save as PDF")
-  function printChant() {
-    document.getElementById('printDoc')?.remove();
+  // the whole text as a clean page, for printing or the PDF
+  function chantDoc() {
     const doc = document.createElement('div');
-    doc.id = 'printDoc'; doc.lang = 'sa';
+    doc.className = 'pdf-doc'; doc.lang = 'sa';
     const parts = model.parts.map((p) => {
       const paras = [];
       p.verses.forEach((v, j) => {
@@ -3160,13 +3200,31 @@ function openChant(model, start = 0) {
       });
       return `${p.title ? `<h2>${esc(p.title)}</h2>` : ''}${p.src ? `<p class="pd-src">${esc(p.src)}</p>` : ''}${p.anu ? `<p class="pd-src">${esc(p.anu)}</p>` : ''}${paras.map((ps) => `<p>${ps.join(' ')}</p>`).join('')}`;
     }).join('');
-    doc.innerHTML = `<p class="pd-inv">${INVOCATION}</p><h1>${esc(model.title)}</h1>${parts}<p class="pd-foot">${esc(inLipi('वेदावलोकनम्'))} · ${esc(location.href.split('#')[0])}</p>`;
+    doc.innerHTML = `<p class="pd-inv">${INVOCATION}</p><h1>${esc(model.title)}</h1>${parts}`;
+    return doc;
+  }
+  function printChant() {
+    document.getElementById('printDoc')?.remove();
+    const doc = chantDoc();
+    doc.id = 'printDoc';
+    doc.insertAdjacentHTML('beforeend', `<p class="pd-foot">${esc(inLipi('वेदावलोकनम्'))}</p>`);
     document.body.append(doc);
     document.body.classList.add('printing');
     const done = () => { document.body.classList.remove('printing'); doc.remove(); window.removeEventListener('afterprint', done); };
     window.addEventListener('afterprint', done);
     const prevTitle = document.title; document.title = model.title;
-    setTimeout(() => { try { window.print(); } finally { document.title = prevTitle; if (!window.matchMedia('print').matches && /Android|iPhone|iPad/.test(navigator.userAgent) === false) setTimeout(done, 1500); } }, 60);
+    setTimeout(() => { try { window.print(); } finally { document.title = prevTitle; } }, 60);
+  }
+  const pdfChant = (btn) => savePdf(chantDoc(), model.title, btn);
+  // ⋯: the less used things, Print
+  function chantMore(btn) {
+    const old = el.querySelector('.ch-menu'); if (old) { old.remove(); return; }
+    const m = document.createElement('div');
+    m.className = 'ch-menu';
+    m.innerHTML = `<button type="button" data-print>${T('Print', 'मुद्रणम्')}</button>`;
+    btn.parentElement.append(m);
+    m.querySelector('[data-print]').addEventListener('click', () => { m.remove(); printChant(); });
+    setTimeout(() => document.addEventListener('click', function off(e) { if (!m.contains(e.target)) { m.remove(); document.removeEventListener('click', off); } }), 0);
   }
   // sideways swipe: a mantra in the one-at-a-time layout, the next / previous sūkta on the page
   let sx = null; let sy = null;
