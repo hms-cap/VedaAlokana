@@ -287,6 +287,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.22.2', '2026-11-02', ['Printed / PDF text now uses the same font as the screen (the app’s svara-aware Devanagari or Kannada, Shobhika if chosen), instead of a fallback.']],
   ['1.22.1', '2026-11-02', ['Chant view has a Print / save as PDF button: it prints the whole text as a clean page (invocation, title, headings, mantras with numbers) in the chosen script; choose “Save as PDF” in the print dialog to export.']],
   ['1.22.0', '2026-11-01', [
     'Śrī Rudram and Camakam are rebuilt in their 11 anuvākas each, with an anuvāka heading and number (॥१॥ … ॥११॥) in the sūkta page and the chant view, instead of the source’s 50-word chunks numbered as mantras. Camakam now ends where it ends (it ran on through the following mantras).',

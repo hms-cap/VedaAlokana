@@ -2,6 +2,9 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.22.2 — 2026-11-02
+- Print / PDF uses the page's own `--deva` font stack (it was falling back to plain Noto Serif Devanagari).
+
 ## 1.22.1 — 2026-11-02
 - Chant view: print / save-as-PDF button (`#printDoc` built from the chant model, print-only CSS).
 
