@@ -2,6 +2,9 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.22.1 — 2026-11-02
+- Chant view: print / save-as-PDF button (`#printDoc` built from the chant model, print-only CSS).
+
 ## 1.22.0 — 2026-11-01
 - Kṛṣṇa Yajus review: Śrī Rudram and Camakam rebuilt as 11 anuvākas each (`merge` part option; headings and ॥n॥ numbers on the page and in chant view; Camakam cut to its own end).
 - Devatā Gāyatrīs: complete twelve from the Āndhra pāṭha (`scripts/sources/devata-gayatri.json`).

@@ -287,6 +287,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.22.1', '2026-11-02', ['Chant view has a Print / save as PDF button: it prints the whole text as a clean page (invocation, title, headings, mantras with numbers) in the chosen script; choose “Save as PDF” in the print dialog to export.']],
   ['1.22.0', '2026-11-01', [
     'Śrī Rudram and Camakam are rebuilt in their 11 anuvākas each, with an anuvāka heading and number (॥१॥ … ॥११॥) in the sūkta page and the chant view, instead of the source’s 50-word chunks numbered as mantras. Camakam now ends where it ends (it ran on through the following mantras).',
     'Devatā Gāyatrīs now has all twelve (Rudra ×2, Dantī, Nandī, Ṣaṇmukha, Garuḍa, Brahmā, Viṣṇu, Nārasiṃha, Āditya, Agni, Durgi), from the Āndhra pāṭha with svaras.',
@@ -3063,6 +3064,7 @@ function openChant(model, start = 0) {
         <div class="seg ch-lay" role="group" aria-label="Layout"><button type="button" data-lay="book" aria-pressed="${prefs.chantLayout !== 'one'}" title="Book page">${T('Page', 'पुटम्')}</button><button type="button" data-lay="one" aria-pressed="${prefs.chantLayout === 'one'}" title="One mantra at a time">${T('One', 'एकैकम्')}</button></div>
         <div class="seg ch-size" role="group" aria-label="Text size"><button type="button" data-z="-1" aria-label="Smaller text">A−</button><button type="button" data-z="1" aria-label="Larger text">A+</button></div>
         <div class="seg ch-lipi" role="group" aria-label="Script"><button type="button" data-l="deva" lang="sa-Deva" aria-pressed="${prefs.lipi === 'deva'}">अ</button><button type="button" data-l="knda" lang="sa-Knda" aria-pressed="${prefs.lipi === 'knda'}">ಅ</button></div>
+        <div class="seg ch-prt"><button type="button" data-print aria-label="Print or save as PDF" title="${SA() ? 'मुद्रणम् / PDF' : 'Print / save as PDF'}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="7" y="14" width="10" height="7" rx="1"/></svg></button></div>
       </div></div>`;
   const nextHTML = () => (model.next
     ? `<a class="ch-next" href="${esc(model.next.href)}"><small>${T('Next', 'अग्रिमम्')}</small><b lang="sa">${esc(model.next.label)}</b></a>`
@@ -3140,8 +3142,30 @@ function openChant(model, start = 0) {
       if (b.dataset.l === prefs.lipi) return;
       setLipi(b.dataset.l); render();     // the page underneath is redrawn too; this view stays open
     }));
+    el.querySelector('[data-print]').addEventListener('click', printChant);
     wireMove();
     el.querySelector('.ch-x').focus({ preventScroll: true });
+  }
+  // print / save as PDF: the whole text as a clean page (the browser's print dialog offers "Save as PDF")
+  function printChant() {
+    document.getElementById('printDoc')?.remove();
+    const doc = document.createElement('div');
+    doc.id = 'printDoc'; doc.lang = 'sa';
+    const parts = model.parts.map((p) => {
+      const paras = [];
+      p.verses.forEach((v, j) => {
+        if (j % (p.group || 1) === 0) paras.push([]);
+        paras[paras.length - 1].push(esc(bookVerse(v.lines, v.n)));
+      });
+      return `${p.title ? `<h2>${esc(p.title)}</h2>` : ''}${p.src ? `<p class="pd-src">${esc(p.src)}</p>` : ''}${p.anu ? `<p class="pd-src">${esc(p.anu)}</p>` : ''}${paras.map((ps) => `<p>${ps.join(' ')}</p>`).join('')}`;
+    }).join('');
+    doc.innerHTML = `<p class="pd-inv">${INVOCATION}</p><h1>${esc(model.title)}</h1>${parts}<p class="pd-foot">${esc(inLipi('वेदावलोकनम्'))} · ${esc(location.href.split('#')[0])}</p>`;
+    document.body.append(doc);
+    document.body.classList.add('printing');
+    const done = () => { document.body.classList.remove('printing'); doc.remove(); window.removeEventListener('afterprint', done); };
+    window.addEventListener('afterprint', done);
+    const prevTitle = document.title; document.title = model.title;
+    setTimeout(() => { try { window.print(); } finally { document.title = prevTitle; if (!window.matchMedia('print').matches && /Android|iPhone|iPad/.test(navigator.userAgent) === false) setTimeout(done, 1500); } }, 60);
   }
   // sideways swipe: a mantra in the one-at-a-time layout, the next / previous sūkta on the page
   let sx = null; let sy = null;
