@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import { parseBabylon } from './build-kosha.mjs';
 import { looseKey } from '../web/search-key.js';
-import { koshaRows, lookup, shardOf, matchKeys } from '../web/kosha.js';
+import { koshaRows, lookup, shardOf, matchKeys, neighbours } from '../web/kosha.js';
 
 const dir = new URL('../web/data/kosha/', import.meta.url).pathname;
 let bad = 0;
@@ -59,6 +59,20 @@ check(koshaRows(keys, 'a').length === 0, 'one letter: no rows');
 check(koshaRows(keys, 'ag').every((r) => r.score === 1100) , 'two letters: exact only');
 check(matchKeys(keys, 'agni', { prefixLimit: 3 }).prefix.length <= 3, 'prefix limit');
 check(koshaRows(keys, 'qqqqqq').length === 0, 'no match, no rows');
+
+// neighbours: inside a shard, across every shard boundary, and at both ends of the dictionary
+const walk = [];
+for (const [, file] of man.shards) for (const e of await data.shard(file)) walk.push(e[0]);
+for (let i = 1; i < man.shards.length; i++) {
+  const lastOfPrev = (await data.shard(man.shards[i - 1][1])).at(-1)[0];
+  const n = await neighbours(data, man.shards[i][0]);
+  check(n.prev === lastOfPrev, `previous word at the start of shard ${i}: ${n.prev} (want ${lastOfPrev})`);
+  const m2 = await neighbours(data, lastOfPrev);
+  check(m2.next === man.shards[i][0], `next word at the end of shard ${i - 1}: ${m2.next}`);
+}
+const mid = walk[Math.floor(walk.length / 2)];
+check((await neighbours(data, mid)).prev === walk[Math.floor(walk.length / 2) - 1] && (await neighbours(data, mid)).next === walk[Math.floor(walk.length / 2) + 1], 'neighbours inside a shard');
+check((await neighbours(data, walk[0])).prev === null && (await neighbours(data, walk.at(-1))).next === null, 'no neighbour past the ends');
 
 console.log(bad ? `${bad} check(s) failed` : 'all dictionary checks passed');
 process.exit(bad ? 1 : 0);

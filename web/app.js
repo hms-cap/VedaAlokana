@@ -9,7 +9,7 @@ import { search, groupResults } from './search.js';
 import { padaDeva, cleanPada } from './pada.js';
 import { joinForms } from './sandhi.js';
 import { devaToIast } from './translit.js';
-import { FIELDS, SOURCE, koshaHref, koshaRows, lookup as koshaLookup, shardAt } from './kosha.js';
+import { FIELDS, SOURCE, koshaHref, koshaRows, lookup as koshaLookup, neighbours as koshaNeighbours, shardAt } from './kosha.js';
 import { looseKey } from './search-key.js';
 
 const COL = { d1: 0, d2: 1, v: 2, rishi: 3, devata: 4, chandas: 5 };
@@ -295,6 +295,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.27.2', '2026-11-04', ['In the Dictionary, swipe left or right on a word to move to the next or previous word (the arrow keys do the same on a keyboard).']],
   ['1.27.1', '2026-11-04', ['The Dictionary has its own place in the bottom bar (and in the side list on wide screens). The five bar icons are slightly smaller to fit.']],
   ['1.27.0', '2026-11-04', ['New Dictionary (Library → Dictionary, or a word typed in search): the Śabdārtha Kaustubha, about 46,800 Sanskrit words with Kannada meanings, derivations and quotations. Browse by letter, look a word up in Devanagari, Kannada or Roman letters, and step to the neighbouring words.']],
   ['1.26.0', '2026-11-03', [
@@ -2595,7 +2596,7 @@ function renderChrome(r, path) {
   const tab = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 'about' ? 'settings' : page === 's' ? (r.params.get('from') === 'my' ? 'my' : '') : page === 'suktas' ? '' : page);
   $('#tabbar').querySelectorAll('[data-tab]').forEach((a) => (a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
   document.body.classList.toggle('reading', page === 'v' && r.parts[2] === 'c');
-  if (!(page === 'v' && r.parts[2] === 'c')) { $('#readerbar').hidden = true; readerNav = page === 's' ? sukNav : null; }
+  if (!(page === 'v' && r.parts[2] === 'c')) { $('#readerbar').hidden = true; readerNav = page === 's' ? sukNav : page === 'kosha' ? readerNav : null; }
   if (page !== 's') sukNav = null;
 }
 
@@ -2640,18 +2641,18 @@ async function viewKosha(head, params) {
   if (head) {
     const e = await koshaLookup(koshaData, head);
     if (!e) { main.innerHTML = `<div class="col">${bar}<h1>${esc(head)}</h1><p class="lede">${esc(Tp('That word is not in the dictionary.', 'अयं शब्दः कोशे नास्ति।'))} <a href="#/kosha">${esc(Tp('Browse the dictionary', 'कोशं पश्य'))}</a></p></div>`; wireKoshaFind(); return; }
-    const near = await shardAt(koshaData, head);
-    const at = near.entries.findIndex((x) => x[0] === head);
-    const prev = at > 0 ? near.entries[at - 1][0] : near.prev;
-    const next = at < near.entries.length - 1 ? near.entries[at + 1][0] : near.next;
-    main.innerHTML = `<div class="col k-entry">${bar}
+    const { prev, next } = await koshaNeighbours(koshaData, head);
+    // a sideways swipe (or the arrow keys) moves to the neighbouring word
+    readerNav = { prev: prev && { href: koshaHref(prev), label: devaToIast(prev) }, next: next && { href: koshaHref(next), label: devaToIast(next) }, sec: 'word' };
+    main.innerHTML = `<article class="col k-entry">${bar}
       <h1 class="k-head" lang="sa">${esc(e[0])}</h1>
       <p class="k-iast">${esc(devaToIast(e[0]))}${e[1].length ? ` · <span class="k-alt">${T('also', 'अपि')} <span lang="sa">${e[1].map(esc).join(', ')}</span></span>` : ''}</p>
       <ol class="k-senses">${koshaSenses(e[2])}</ol>
       <nav class="k-nav" aria-label="${esc(Tp('Neighbouring words', 'समीपशब्दाः'))}">${prev ? `<a href="${koshaHref(prev)}">← <span lang="sa">${esc(prev)}</span></a>` : '<span></span>'}<a href="#/kosha?at=${encodeURIComponent(head)}">${T('Around this word', 'समीपे')}</a>${next ? `<a href="${koshaHref(next)}"><span lang="sa">${esc(next)}</span> →</a>` : '<span></span>'}</nav>
-      ${credit}</div>`;
+      ${credit}</article>`;
     wireKoshaFind(); return;
   }
+  readerNav = null;
   // browse: the letters, and the page of headwords that holds `at`
   const at = params.get('at') || man.shards[0][0];
   const page = await shardAt(koshaData, at);
