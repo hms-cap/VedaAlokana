@@ -39,7 +39,7 @@ const FACET_SA = { rishi: 'ऋषिः', devata: 'देवता', chandas: '�
 const VEDA_SA = { rv: 'ऋग्वेदः', syv: 'शुक्लयजुर्वेदः', kyv: 'कृष्णयजुर्वेदः', sv: 'सामवेदः', av: 'अथर्ववेदः' };
 const VEDA_SA_SHORT = { rv: 'ऋक्', syv: 'शुक्लयजुः', kyv: 'कृष्णयजुः', sv: 'साम', av: 'अथर्व' };
 const LAYER_SA = { samhita: 'संहिता', brahmana: 'ब्राह्मणम्', aranyaka: 'आरण्यकम्', upanishad: 'उपनिषत्' };
-const MENU_SA = { home: 'गृहम्', library: 'ग्रन्थालयः', suktas: 'सूक्तानि', search: 'अन्वेषणम्', settings: 'विन्यासः', about: 'परिचयः', my: 'मम सूक्तानि' };
+const MENU_SA = { home: 'गृहम्', library: 'ग्रन्थालयः', suktas: 'सूक्तानि', search: 'अन्वेषणम्', settings: 'विन्यासः', about: 'परिचयः', my: 'मम सूक्तानि', kosha: 'कोशः' };
 
 const $ = (s, el = document) => el.querySelector(s);
 const main = $('#main');
@@ -203,7 +203,7 @@ function setMenu(m) {
 function applyMenu() {
   document.querySelectorAll('#tabbar [data-tab]').forEach((a) => {
     const k = a.dataset.tab; const span = a.querySelector('span');
-    const en = { home: 'Home', library: 'Library', suktas: 'Sūktas', my: 'My sūktas', search: 'Search', settings: 'Settings' }[k];
+    const en = { home: 'Home', library: 'Library', suktas: 'Sūktas', my: 'My sūktas', kosha: 'Dictionary', search: 'Search', settings: 'Settings' }[k];
     span.innerHTML = T(en, MENU_SA[k]);
   });
   $('#brand span').innerHTML = T('Vedāvalokanam', 'वेदावलोकनम्');
@@ -295,6 +295,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.27.1', '2026-11-04', ['The Dictionary has its own place in the bottom bar (and in the side list on wide screens). The five bar icons are slightly smaller to fit.']],
   ['1.27.0', '2026-11-04', ['New Dictionary (Library → Dictionary, or a word typed in search): the Śabdārtha Kaustubha, about 46,800 Sanskrit words with Kannada meanings, derivations and quotations. Browse by letter, look a word up in Devanagari, Kannada or Roman letters, and step to the neighbouring words.']],
   ['1.26.0', '2026-11-03', [
     'Padapāṭha in the sūkta view: choose Text → Padapāṭha on a sūkta from the Ṛgveda or the Taittirīya Saṃhitā (Taittirīya with svara marks). Other pieces stay as the saṃhitā.']],
@@ -839,6 +840,7 @@ async function renderRail(rt) {
   let h = `<div class="lipi" role="group" aria-label="Script for Sanskrit text"><span>Script</span>
     <button data-lipi="deva" aria-pressed="${prefs.lipi === 'deva'}">देवनागरी</button><button data-lipi="knda" aria-pressed="${prefs.lipi === 'knda'}">ಕನ್ನಡ</button></div>`;
   h += `<a href="#/suktas"${rt.parts[0] === 'suktas' ? ' aria-current="page"' : ''}><span>Sūktas</span><span class="dv" lang="sa">सूक्तानि</span></a>`;
+  h += `<a href="#/kosha"${rt.parts[0] === 'kosha' ? ' aria-current="page"' : ''}><span>Dictionary</span><span class="dv" lang="sa">कोशः</span></a>`;
   h += `<h2>Vedas</h2>`;
   for (const v of cat.vedas) {
     h += `<a href="#/veda/${v.id}"${v.id === vid && !id ? ' aria-current="page"' : ''}><span>${esc(v.name)}</span><span class="dv" lang="sa">${esc(v.deva)}</span></a>`;
@@ -2577,7 +2579,7 @@ function renderChrome(r, path) {
   bar.scrollLeft = bar.scrollWidth;
   // back: the previous view; on the first view of a visit, the parent page
   const page = r.parts[0] || '';
-  const topLevel = ['', 'library', 'suktas', 'my', 'search', 'settings'].includes(page);
+  const topLevel = ['', 'library', 'suktas', 'my', 'search', 'settings'].includes(page) || (page === 'kosha' && !r.parts[1]);
   const parentHref = topLevel ? null : path.length >= 2 ? path[path.length - 2].href : page === 'about' ? '#/settings' : page === 'devatas' ? (r.parts[1] ? '#/devatas' : '#/suktas?veda=rv') : page === 's' ? (r.params.get('from') === 'my' ? '#/my' : '#/suktas') : page === 'kosha' && r.parts[1] ? '#/kosha' : '#/library';
   const back = $('#backBtn');
   back.hidden = !parentHref;
@@ -2585,12 +2587,12 @@ function renderChrome(r, path) {
   $('#brand').classList.toggle('when-back', !!parentHref);
   // each tab remembers where you were in it
   const tabNow = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 's' ? 'suktas' : page);
-  if (tabNow === 'library' || tabNow === 'suktas' || tabNow === 'my') { tabLast[tabNow] = getHash(); try { sessionStorage.setItem('vedalokana.tabs', JSON.stringify(tabLast)); } catch { /* storage unavailable */ } }
+  if (tabNow === 'library' || tabNow === 'suktas' || tabNow === 'my' || tabNow === 'kosha') { tabLast[tabNow] = getHash(); try { sessionStorage.setItem('vedalokana.tabs', JSON.stringify(tabLast)); } catch { /* storage unavailable */ } }
   const named = { library: 'Library', kosha: 'Dictionary', suktas: 'Sūktas', s: 'Sūktas', search: 'Search', settings: 'Settings', about: 'About', devatas: 'By devatā' }[page];
   const lastC = path[path.length - 1];
   $('#topTitle').textContent = lastC ? Tp(lastC.label, lastC.deva) : (named ? Tp(named, MENU_SA[page === 's' ? 'suktas' : page]) : '');
   // tabs
-  const tab = !page ? 'home' : (page === 'veda' || page === 'v' || page === 'kosha' ? 'library' : page === 'about' ? 'settings' : page === 's' ? (r.params.get('from') === 'my' ? 'my' : '') : page === 'suktas' ? '' : page);
+  const tab = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 'about' ? 'settings' : page === 's' ? (r.params.get('from') === 'my' ? 'my' : '') : page === 'suktas' ? '' : page);
   $('#tabbar').querySelectorAll('[data-tab]').forEach((a) => (a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
   document.body.classList.toggle('reading', page === 'v' && r.parts[2] === 'c');
   if (!(page === 'v' && r.parts[2] === 'c')) { $('#readerbar').hidden = true; readerNav = page === 's' ? sukNav : null; }
