@@ -293,6 +293,8 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.26.0', '2026-11-03', [
+    'Padapāṭha in the sūkta view: choose Text → Padapāṭha on a sūkta from the Ṛgveda or the Taittirīya Saṃhitā (Taittirīya with svara marks). Other pieces stay as the saṃhitā.']],
   ['1.25.0', '2026-11-03', [
     'Padapāṭha for the Taittirīya Saṃhitā: choose Text → Padapāṭha on any kāṇḍa page. Words are shown as the printed book has them, with svara marks, in Devanagari or Kannada (or IAST); analysed words (after iti) and compound breaks are kept as printed.']],
   ['1.24.0', '2026-11-03', [
@@ -764,6 +766,10 @@ async function sepText(id, d1, t) {
 // The Taittirīya Saṃhitā's padapāṭha, per kāṇḍa: { prapāṭhaka: [ [word, …] per pañcāśat ] } from
 // scripts/build-ts-pada.mjs (web/data/gpl/, GPL-3.0: hvram1/krishnayajurveda). Missing (offline, not stored): no padapāṭha view.
 const PADA_GPL = new Set(['ts']);
+// the same for the pieces a sūkta takes from it: { sūktaId: { segIndex: [ [word, …] per unit ] } }
+async function gplSuktaPada(sid) {
+  try { return (await (cache.gpada.sukta ||= json('data/gpl/ts/sukta.json')))[sid] || null; } catch { delete cache.gpada.sukta; return null; }
+}
 async function gplPada(id, d1) {
   if (!PADA_GPL.has(id)) return null;
   try { return await (cache.gpada[`${id}/${d1}`] ||= json(`data/gpl/${id}/p${d1}.json`)); } catch { delete cache.gpada[`${id}/${d1}`]; return null; }
@@ -1447,7 +1453,8 @@ async function viewSukta(sid, params) {
   const cat = await catalog();
   const metaOf = (t) => cat.texts.find((x) => x.id === t);
   const blocks = [];
-  for (const g of s.segs) {
+  const tsPada = s.segs.some((g) => PADA_GPL.has(g.t)) ? await gplSuktaPada(s.id) : null;   // padapāṭha of the Taittirīya Saṃhitā pieces
+  for (const [gi, g] of s.segs.entries()) {
     const meta = metaOf(g.t);
     const vs = ((await text(g.t, g.d1))[g.d2] || []).filter((v) => v[0] >= g.v[0] && v[0] <= g.v[1]);
     vs.forEach((v, i) => {
@@ -1459,7 +1466,9 @@ async function viewSukta(sid, params) {
       }).filter((l) => l.trim());
       // the source's own count at the end of a unit, "(6)", is not part of the mantra
       const clean = lines.map((l) => l.replace(/\s*\(\d+\)(\s*-\s*।\s*\d+\s*।)?\s*$/, '')).filter((l) => l.trim());
-      blocks.push({ g, meta, v, lines: clean, cut: !!(a || b) });
+      // padapāṭha words of this piece: the Ṛgveda's own (whole ṛks), or the Taittirīya Saṃhitā's (cuts included)
+      const pada = g.t === 'rv' && !a && !b && v[3]?.length ? padaDeva(v[3]).map((w) => w) : (tsPada?.[gi]?.[i]?.length ? tsPada[gi][i] : null);
+      blocks.push({ g, meta, v, lines: clean, cut: !!(a || b), pada, padaTs: g.t !== 'rv' });
     });
   }
   // an anuvāka is its chunks run together under one number (the source's 50-word units mean nothing to a reader)
@@ -1468,6 +1477,7 @@ async function viewSukta(sid, params) {
     let j = i + 1;
     while (j < blocks.length && blocks[j].g === blocks[i].g) { blocks[i].lines = blocks[i].lines.concat(blocks[j].lines); j++; }
     blocks[i].cut = true;
+    if (blocks.slice(i, j).every((x) => x.pada)) blocks[i].pada = blocks.slice(i, j).flatMap((x) => x.pada); else blocks[i].pada = null;
     blocks.splice(i + 1, j - i - 1);
   }
   const showRoman = (b) => !b.cut && b.v[2]?.length && (prefs.script !== 'deva' || !b.lines.length);
@@ -1480,20 +1490,32 @@ async function viewSukta(sid, params) {
     lastSeg = b.g;
     const ref = refOf(b.meta, b.g.d1, b.g.d2, b.v[0], b.v[5]);
     let html = '';
-    if (b.lines.length && prefs.script !== 'roman') html += `<div class="deva" lang="sa">${svaraLines(b.g.t, b.lines, b.cut ? null : b.v[3]).map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
-    if (showRoman(b)) html += `<div class="roman" lang="sa-Latn">${b.v[2].map((l) => `<div>${esc(l.replace(/\s*\(\d+\)\s*$/, ''))}</div>`).join('')}</div>`;
+    const padaOn = prefs.mode === 'pada' && b.pada;
+    if (padaOn) {
+      const bar = '<span aria-hidden="true">|</span>';
+      const ws = b.pada.map((w) => (b.padaTs && prefs.patha === 'std' ? w.replace(/᳚/g, '॑') : w));
+      html += `<div class="pada pada-deva" lang="sa">${ws.map((w) => `<span>${esc(w)}</span>`).join(bar)}</div>`;
+    } else if (b.lines.length && prefs.script !== 'roman') html += `<div class="deva" lang="sa">${svaraLines(b.g.t, b.lines, b.cut ? null : b.v[3]).map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
+    if (!padaOn && showRoman(b)) html += `<div class="roman" lang="sa-Latn">${b.v[2].map((l) => `<div>${esc(l.replace(/\s*\(\d+\)\s*$/, ''))}</div>`).join('')}</div>`;
     if (!b.cut && b.v[4] && prefs.tr) html += `<p class="tr" lang="en">${esc(b.v[4])}</p>`;
     if (!b.cut && b.g.t === 'rv' && prefs.bhashya) html += bhBox('rv', b.g.d1, b.g.d2, b.v[0]);
     return `${head}<section class="verse" id="sv${n}" aria-label="${esc(b.meta.ref)} ${esc(ref)}">
       <div class="vnum"><a href="#/v/${b.g.t}/c/${b.g.d1}/${b.g.d2}?v=${b.v[0]}" title="${esc(`${b.meta.ref} ${ref}`)}">${N(String(n))}</a></div><div>${html}</div></section>`;
   }).join('');
+  // a note when the padapāṭha is shown: its source, and which pieces have none
+  const onPada = prefs.mode === 'pada' && blocks.some((x) => x.pada);
+  const padaNote = !onPada ? '' : `<p class="pada-note">${[
+    blocks.some((x) => x.pada && x.padaTs) ? T('Taittirīya padapāṭha with svara marks (source: hvram1/krishnayajurveda, GPL-3.0).', 'तैत्तिरीयपदपाठः स्वरचिह्नैः सह।') : '',
+    blocks.some((x) => x.pada && !x.padaTs) ? T('The Ṛgveda padapāṭha is shown without svara marks.', 'ऋग्वेदपदपाठे स्वरचिह्नानि न दर्श्यन्ते।') : '',
+    blocks.some((x) => !x.pada && x.lines.length) ? T('Pieces with no padapāṭha are shown as the saṃhitā.', 'पदपाठरहिताः भागाः संहितायां दर्श्यन्ते।') : '',
+  ].filter(Boolean).join(' ')}</p>`;
   const k = KIND[s.kind] || KIND.sūkta;
   main.innerHTML = `<article class="col sk-page" style="--vc: var(--v-${s.veda})">
     ${listBar(s, all, params)}
     <h1>${SA() ? `<span lang="sa">${esc(s.deva)}</span>` : `${esc(s.name)}<span class="h1-deva" lang="sa">${esc(s.deva)}</span>`}</h1>
     <p class="sk-info">${T(vedaName?.name || '', VEDA_SA[s.veda])} · ${sukRef(s)} · ${T(k[0], k[1])} · ${SA() ? `<span lang="sa">${esc(s.devataDeva)}</span>` : `<em>Devatā</em> ${esc(s.devata)}`}${s.count > 1 ? ` · ${F(s.count)} ${T('verses', 'मन्त्राः')}` : ''}</p>
     <div class="sk-acts">${chantBtn()}${s.reader ? `<a class="chip" href="${s.reader}">${T('Open in the reader', 'मूलग्रन्थे पठ')}</a>` : ''}<button type="button" class="chip" id="skCopy">${T('Copy', 'प्रतिलिपिः')}</button></div>
-    <div class="verses">${body}</div>
+    <div class="verses">${padaNote}${body}</div>
   </article>`;
   fillBhashya(main);
   obCan.tr = blocks.some((b) => !b.cut && b.v[4]); obCan.bhashya = blocks.some((b) => !b.cut && b.g.t === 'rv');
@@ -1511,7 +1533,7 @@ async function viewSukta(sid, params) {
       verses: bs.map((b) => ({ n: ++cn, lines: svaraLines(b.g.t, b.lines, b.cut ? null : b.v[3]), label: b.g.merge ? `${b.meta.ref} ${b.g.ref}` : refText(b.meta, refOf(b.meta, b.g.d1, b.g.d2, b.v[0], b.v[5])) })),
     };
   });
-  obAdd(s.segs.some((g) => PATHA_TEXTS.has(g.t)) && 'patha', blocks.some((b) => !b.cut && b.v[2]?.length && b.lines.length) && 'script');
+  obAdd(s.segs.some((g) => PATHA_TEXTS.has(g.t)) && 'patha', blocks.some((b) => b.pada) && 'mode', blocks.some((b) => !b.cut && b.v[2]?.length && b.lines.length) && 'script');
   suktaExtras(s, all, params, cparts);
   $('#skCopy')?.addEventListener('click', async (e) => {
     const txt = [s.deva, ...blocks.flatMap((b) => svaraLines(b.g.t, b.lines, b.cut ? null : b.v[3]).map((l) => (prefs.lipi === 'knda' ? toKnda(l) : l))), `— ${s.ref}`].join('\n');

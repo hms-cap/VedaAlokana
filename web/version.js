@@ -1,3 +1,3 @@
 // The one place the app version lives. Loaded by index.html and by the service worker (sw.js),
 // so bumping it here ships a new offline cache on the next visit. Use semantic versioning.
-self.VEDALOKANA = { version: '1.25.0', released: '2026-11-03' };
+self.VEDALOKANA = { version: '1.26.0', released: '2026-11-03' };

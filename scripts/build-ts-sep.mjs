@@ -24,7 +24,7 @@ const OUT = path.join(DATA, 'gpl', 'ts');
 const SKIP = /[॒॑᳚ँ\s।॥0-9०-९()\-.ऽ\u200c\u200d\u2005]/;
 const FOLD = { 'ꣳ': 'ं', 'ꣴ': 'ं', 'ꣵ': 'ं' };
 // letters of a string with the place of each in the string
-function letters(s) {
+export function letters(s) {
   const out = []; const at = [];
   [...s].forEach((c, i) => { if (!SKIP.test(c)) { out.push(FOLD[c] || c); at.push(i); } });
   return { out, at };
@@ -52,34 +52,30 @@ export function rawPadaUnits(k) {
   }
   return units;
 }
-function padaUnits(k) {
-  const units = [];
-  for (const { p, toks } of rawPadaUnits(k)) {
-    const segs = [];
-    for (let tok of toks) {
-      // "बा॒हुभ्या॒मिति॑ बा॒हु-भ्या॒म्": the analysed form after iti; "उ॒तो इति॑": the word before it
-      // "अ॒ग्रे॒पु॒व॒ इत्य॑ग्रे-पु॒वः॒": iti run into the analysis (iti + agre); the analysis is what follows it
-      // "अ॒श्विभ्या॒मित्य॒श्वि-भ्या॒म्": the same with no space at all
-      if (!/\s/.test(tok) && tok.includes('-')) {
-        const m = tok.slice(0, tok.indexOf('-')).match(/^(.*)(?:इ|ि)त(्[यव].*|ी.*)$/);
-        if (m) tok = `${m[1]}इति ${unIti(`इत${m[2]}`)}${tok.slice(tok.indexOf('-'))}`;
-      }
-      const sp = tok.split(/\s+/).flatMap((t, k) => (k > 0 && /^इत्[यव]|^इती/.test(t) ? ['इति', unIti(t)] : [t]));
-      const iti = sp.length > 1 ? sp.findIndex((t) => /ति[॒॑᳚]*$/.test(t)) : -1;
-      const rest = iti >= 0 ? sp.slice(iti + 1).join(' ') : '';
-      let words;
-      if (rest.includes('-')) words = rest.replace(/\s+/g, '').split('-').filter(Boolean);
-      else if (iti > 0) words = [sp.slice(0, iti).join('')];
-      else words = [sp.join('')];
-      words.forEach((w, j) => segs.push({ text: w, end: j === words.length - 1 ? 'word' : 'member' }));
-    }
-    units.push({ p, segs });
+// the aligned segments { text, end: 'word'|'member' } of one printed token
+export function tokSegs(tok) {
+  // "बा॒हुभ्या॒मिति॑ बा॒हु-भ्या॒म्": the analysed form after iti; "उ॒तो इति॑": the word before it
+  // "अ॒ग्रे॒पु॒व॒ इत्य॑ग्रे-पु॒वः॒": iti run into the analysis (iti + agre); the analysis is what follows it
+  // "अ॒श्विभ्या॒मित्य॒श्वि-भ्या॒म्": the same with no space at all
+  if (!/\s/.test(tok) && tok.includes('-')) {
+    const m = tok.slice(0, tok.indexOf('-')).match(/^(.*)(?:इ|ि)त(्[यव].*|ी.*)$/);
+    if (m) tok = `${m[1]}इति ${unIti(`इत${m[2]}`)}${tok.slice(tok.indexOf('-'))}`;
   }
-  return units;
+  const sp = tok.split(/\s+/).flatMap((t, k) => (k > 0 && /^इत्[यव]|^इती/.test(t) ? ['इति', unIti(t)] : [t]));
+  const iti = sp.length > 1 ? sp.findIndex((t) => /ति[॒॑᳚]*$/.test(t)) : -1;
+  const rest = iti >= 0 ? sp.slice(iti + 1).join(' ') : '';
+  let words;
+  if (rest.includes('-')) words = rest.replace(/\s+/g, '').split('-').filter(Boolean);
+  else if (iti > 0) words = [sp.slice(0, iti).join('')];
+  else words = [sp.join('')];
+  return words.map((w, j) => ({ text: w, end: j === words.length - 1 ? 'word' : 'member' }));
+}
+function padaUnits(k) {
+  return rawPadaUnits(k).map(({ p, toks }) => ({ p, segs: toks.flatMap(tokSegs) }));
 }
 
 // edit-distance alignment: for each letter of b, the index of the letter of a it falls on (or -1)
-function align(a, b) {
+export function align(a, b) {
   const n = a.length; const m = b.length; const W = m + 1;
   const D = new Uint16Array((n + 1) * W);
   for (let i = 0; i <= n; i++) D[i * W] = i;

@@ -65,6 +65,11 @@ for (let k = 1; k <= 7; k++) {
 const first = JSON.parse(fs.readFileSync(path.join(data, 'gpl', 'ts', 'p1.json'), 'utf8'))[1][0];
 eq(first.slice(0, 3).join(' | '), 'इ॒षे | त्वा॒ | ऊ॒र्जे', 'padapāṭha of TS 1.1.1');
 has(first.join(' '), 'उ॒पा॒यव॒ इत्यु॑प-आ॒यवः॑', 'padapāṭha iti form');
+// sūkta pieces: a cut inside a pañcāśat takes only the words of the cut
+const sp = JSON.parse(fs.readFileSync(path.join(data, 'gpl', 'ts', 'sukta.json'), 'utf8'));
+const vsk = sp['visnu-sukta-taittiriya'];
+eq(vsk[Object.keys(vsk)[0]][0].slice(0, 2).join(' | '), 'विष्णोः᳚ | नुक᳚म्', 'Viṣṇu Sūkta starts at its cut');
+eq(sp['sri-rudram-namakam'][0].flat().at(-1), 'तम्', 'Rudram anuvāka 1 ends at its last word');
 if (after > before * 0.02) { failed++; console.log(`FAIL doubled sibilants left: ${after} of ${before}`); }
 console.log(failed ? `${failed} check(s) failed` : `all sandhi checks passed (${J.length} joined forms; TS doubled sibilants ${before} → ${after}; padapāṭha ${pu} pañcāśats, ${pw} words)`);
 process.exit(failed ? 1 : 0);

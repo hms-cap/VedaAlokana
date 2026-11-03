@@ -2,6 +2,10 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.26.0 — 2026-11-03
+- Padapāṭha option in the sūkta view (Text → Padapāṭha): Ṛgveda sūktas (the Ṛgveda padapāṭha, no svara marks) and sūktas taken from the Taittirīya Saṃhitā (with svara marks, cuts inside a pañcāśat included; anuvākas run together). Pieces from texts with no padapāṭha stay as the saṃhitā, with a note.
+- `scripts/build-ts-pada.mjs` also writes `web/data/gpl/ts/sukta.json` (GPL-3.0): per sūkta piece the words whose letters fall in the cut, found by aligning the saṃhitā unit with its padapāṭha. `build-ts-sep.mjs` exports `tokSegs`, `letters`, `align`.
+
 ## 1.25.0 — 2026-11-03
 - Padapāṭha view for the Taittirīya Saṃhitā (Text → Padapāṭha on every kāṇḍa page), with svara marks, in Devanagari / Kannada (or IAST). `scripts/build-ts-pada.mjs` writes `web/data/gpl/ts/p<k>.json` (GPL-3.0, 2,198 pañcāśats, ~109,000 words) from the vendored hvram1/krishnayajurveda padapāṭha; loaded on demand and part of the Kṛṣṇa Yajurveda offline pack.
 
