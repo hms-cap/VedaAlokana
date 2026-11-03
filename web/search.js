@@ -3,14 +3,15 @@
 //
 //   search(query, { catalog: () => Promise<catalog>, index: (id) => Promise<index>, names: () => Promise<names>, aliases?: () => Promise<aliases>,
 //     pratika?: () => Promise<[[key, refs[]]]>, mantraText?: (veda) => Promise<[[ref, key]]>,
-//     verse?: (ref) => Promise<{ lines, label } | null>, suktas?: () => Promise<suktas> }, { activeVeda })
+//     verse?: (ref) => Promise<{ lines, label } | null>, suktas?: () => Promise<suktas>, kosha?: { keys: () => Promise<[[key, headword]]> } }, { activeVeda })
 //     → [{ group, score, href, label, hint }]
 //
-// The app reads href, label and hint; group ('ref' | 'sukta' | 'text' | 'facet') and score are for ranking.
+// The app reads href, label and hint; group ('ref' | 'mantra' | 'sukta' | 'text' | 'facet' | 'kosha') and score are for ranking.
 
 import { FACETS, LAYERS, cap, fmt, refOf, groupName, findHref } from './common.js';
 import { looseKey } from './search-key.js';
 import { parseQuery, vocabulary } from './query.js';
+import { koshaRows } from './kosha.js';
 
 export const REF_PREFIX = { rv: 'rv', ṛv: 'rv', av: 'av', avś: 'av', vs: 'yv', yv: 'yv', ts: 'ts', tb: 'tb', ab: 'ab', kb: 'kb', pb: 'pb', gb: 'gb', chu: 'chu', bu: 'bu' };
 
@@ -24,6 +25,7 @@ export const RESULT_GROUPS = [
   { id: 'sukta', en: 'Sūktas', sa: 'सूक्तानि' },
   { id: 'text', en: 'Texts and parts', sa: 'ग्रन्थाः' },
   { id: 'facet', en: 'Ṛṣi · devatā · metre', sa: 'ऋषिः · देवता · छन्दः' },
+  { id: 'kosha', en: 'Dictionary', sa: 'कोशः' },
 ];
 
 /** Sorted results → [{ group, items, more }]; the group with the best row first (RESULT_GROUPS order on a tie); at most perGroup items each. */
@@ -121,10 +123,17 @@ export async function search(q, data, { activeVeda = 'rv', veda = null, limit = 
       const mantras = await mantraRows(q, qk, entries, data, { vedas, activeVeda, cat, limit: Math.min(limit, 30), exactName });
       for (const row of mantras) keep(row);
     } catch { /* the mantra indexes are optional: not yet cached and offline */ }
+    // the dictionary: whole-word and prefix matches on headwords (not with a Veda chip, which asks for one Veda)
+    if (data.kosha && !veda && !parsed?.facets.size) try {
+      for (const row of koshaRows(await data.kosha.keys(), qk)) keep(row);
+    } catch { /* the dictionary is optional: not yet cached and offline */ }
     // a Veda chip (or Veda words next to a name) drops sūktas and texts of other Vedas
     if (vedas && (veda || parsed?.words.length || parsed?.concepts.length)) for (const [h, r] of best) if (r.veda && !vedas.has(r.veda)) best.delete(h);
     const hits = [...best.values()].sort((a, b) => b.score - a.score);
-    for (const row of hits.slice(0, limit - out.length)) out.push(row);
+    const top = hits.slice(0, limit - out.length);
+    // the dictionary ranks below names, so a short list would never reach it: it keeps its best rows besides the limit
+    if (!top.some((r) => r.group === 'kosha')) top.push(...hits.filter((r) => r.group === 'kosha').slice(0, 3));
+    for (const row of top) out.push(row);
   }
   return out;
 }

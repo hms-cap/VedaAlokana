@@ -9,6 +9,8 @@ import { search, groupResults } from './search.js';
 import { padaDeva, cleanPada } from './pada.js';
 import { joinForms } from './sandhi.js';
 import { devaToIast } from './translit.js';
+import { FIELDS, SOURCE, koshaHref, koshaRows, lookup as koshaLookup, shardAt } from './kosha.js';
+import { looseKey } from './search-key.js';
 
 const COL = { d1: 0, d2: 1, v: 2, rishi: 3, devata: 4, chandas: 5 };
 const LEVEL_DEVA = {
@@ -293,6 +295,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.27.0', '2026-11-04', ['New Dictionary (Library → Dictionary, or a word typed in search): the Śabdārtha Kaustubha, about 46,800 Sanskrit words with Kannada meanings, derivations and quotations. Browse by letter, look a word up in Devanagari, Kannada or Roman letters, and step to the neighbouring words.']],
   ['1.26.0', '2026-11-03', [
     'Padapāṭha in the sūkta view: choose Text → Padapāṭha on a sūkta from the Ṛgveda or the Taittirīya Saṃhitā (Taittirīya with svara marks). Other pieces stay as the saṃhitā.']],
   ['1.25.0', '2026-11-03', [
@@ -2211,6 +2214,7 @@ const searchData = {
   pratika: () => (cache.pratika ||= tsv('data/search/pratika.tsv').then((ls) => ls.map((l) => { const [k, r] = l.split('\t'); return [k, r.split(' ')]; })).catch((e) => { cache.pratika = null; throw e; })),
   mantraText: (v) => (cache[`mt-${v}`] ||= tsv(`data/search/text-${v}.tsv`).then((ls) => ls.map((l) => l.split('\t'))).catch((e) => { cache[`mt-${v}`] = null; throw e; })),
   suktas: async () => (cache.suktas ||= await json('data/suktas.json')),
+  kosha: { keys: () => koshaData.keys() },
   // a verse by its ref in the mantra indexes: "rv/1/164/46" or "s/sri-sukta/3"
   verse: async (ref) => {
     const [t, a, b, n] = ref.split('/');
@@ -2574,7 +2578,7 @@ function renderChrome(r, path) {
   // back: the previous view; on the first view of a visit, the parent page
   const page = r.parts[0] || '';
   const topLevel = ['', 'library', 'suktas', 'my', 'search', 'settings'].includes(page);
-  const parentHref = topLevel ? null : path.length >= 2 ? path[path.length - 2].href : page === 'about' ? '#/settings' : page === 'devatas' ? (r.parts[1] ? '#/devatas' : '#/suktas?veda=rv') : page === 's' ? (r.params.get('from') === 'my' ? '#/my' : '#/suktas') : '#/library';
+  const parentHref = topLevel ? null : path.length >= 2 ? path[path.length - 2].href : page === 'about' ? '#/settings' : page === 'devatas' ? (r.parts[1] ? '#/devatas' : '#/suktas?veda=rv') : page === 's' ? (r.params.get('from') === 'my' ? '#/my' : '#/suktas') : page === 'kosha' && r.parts[1] ? '#/kosha' : '#/library';
   const back = $('#backBtn');
   back.hidden = !parentHref;
   if (parentHref) back.setAttribute('href', parentHref);
@@ -2582,11 +2586,11 @@ function renderChrome(r, path) {
   // each tab remembers where you were in it
   const tabNow = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 's' ? 'suktas' : page);
   if (tabNow === 'library' || tabNow === 'suktas' || tabNow === 'my') { tabLast[tabNow] = getHash(); try { sessionStorage.setItem('vedalokana.tabs', JSON.stringify(tabLast)); } catch { /* storage unavailable */ } }
-  const named = { library: 'Library', suktas: 'Sūktas', s: 'Sūktas', search: 'Search', settings: 'Settings', about: 'About', devatas: 'By devatā' }[page];
+  const named = { library: 'Library', kosha: 'Dictionary', suktas: 'Sūktas', s: 'Sūktas', search: 'Search', settings: 'Settings', about: 'About', devatas: 'By devatā' }[page];
   const lastC = path[path.length - 1];
   $('#topTitle').textContent = lastC ? Tp(lastC.label, lastC.deva) : (named ? Tp(named, MENU_SA[page === 's' ? 'suktas' : page]) : '');
   // tabs
-  const tab = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 'about' ? 'settings' : page === 's' ? (r.params.get('from') === 'my' ? 'my' : '') : page === 'suktas' ? '' : page);
+  const tab = !page ? 'home' : (page === 'veda' || page === 'v' || page === 'kosha' ? 'library' : page === 'about' ? 'settings' : page === 's' ? (r.params.get('from') === 'my' ? 'my' : '') : page === 'suktas' ? '' : page);
   $('#tabbar').querySelectorAll('[data-tab]').forEach((a) => (a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
   document.body.classList.toggle('reading', page === 'v' && r.parts[2] === 'c');
   if (!(page === 'v' && r.parts[2] === 'c')) { $('#readerbar').hidden = true; readerNav = page === 's' ? sukNav : null; }
@@ -2606,7 +2610,71 @@ async function viewLibrary() {
       ${cat.layers.map((l) => `<div class="lib-layer"><a class="lib-l" href="#/veda/${v.id}/${l}">${LAYERS[l].label}</a>
         <div class="lib-texts">${v.layers[l].length ? v.layers[l].map((t) => `<a href="#/v/${t}"><span>${esc(byId[t].name)}</span><small>${fmt(byId[t].verses)}</small></a>`).join('') : `<span class="none">${esc(v.absent?.[l] ? 'None' : 'Not available yet')}</span>`}</div></div>`).join('')}
     </section>`).join('')}
+    <section class="lib-veda"><a class="lib-head" href="#/kosha"><span class="dv" lang="sa">शब्दार्थकौस्तुभः</span><span class="nm">Dictionary</span></a><p class="lib-note">Sanskrit words with Kannada meanings.</p></section>
   </div>`;
+}
+
+// ---------- dictionary: Śabdārtha Kaustubha, Sanskrit → Kannada ----------
+const koshaData = {
+  keys: () => (cache.kkeys ||= tsv('data/kosha/keys.tsv').then((ls) => ls.map((l) => l.split('\t'))).catch((e) => { cache.kkeys = null; throw e; })),
+  manifest: async () => (cache.kman ||= await json('data/kosha/shards.json')),
+  shard: async (f) => ((cache.kshard ||= new Map()).has(f) ? cache.kshard.get(f) : (cache.kshard.set(f, await json(`data/kosha/${f}.json`)), cache.kshard.get(f))),
+};
+// the letters of the browse bar: vowels, then consonants
+const KOSHA_LETTERS = [...'अआइईउऊऋएऐओऔकखगघङचछजझञटठडढणतथदधनपफबभमयरलवशषसह'];
+const kLine = (f, text, lang = 'sa') => (text ? `<div class="k-f"><small>${T(f[1], f[0])}</small><span lang="${lang}">${esc(text)}</span></div>` : '');
+function koshaSenses(senses) {
+  return senses.map((s) => {
+    const [pos, kn, ...rest] = s;
+    return `<li class="k-sense"><div class="k-top">${pos ? `<small class="k-pos" lang="sa">${esc(pos)}</small>` : ''}<span class="k-kn" lang="kn">${esc(kn || '')}</span></div>
+      ${rest.map((v, j) => kLine(FIELDS[j + 2], v)).join('')}</li>`;
+  }).join('');
+}
+async function viewKosha(head, params) {
+  setTitle(head ? `${devaToIast(head)} · Dictionary` : 'Dictionary');
+  const man = await koshaData.manifest();
+  const bar = `<form class="k-find" id="kFind" role="search"><input id="kq" type="search" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="${esc(Tp('Look up a word: agni, अग्नि, ಅಗ್ನಿ', 'शब्दं विचिनु'))}" aria-label="${esc(Tp('Look up a word', 'शब्दं विचिनु'))}"><div class="k-sug" id="kSug" hidden></div></form>`;
+  const credit = `<p class="k-credit">${esc(SOURCE)} · ${T('Sanskrit words with Kannada meanings', 'संस्कृतशब्दाः कन्नडार्थैः सह')}. <a href="#/about">${T('Sources', 'स्रोतांसि')}</a></p>`;
+  if (head) {
+    const e = await koshaLookup(koshaData, head);
+    if (!e) { main.innerHTML = `<div class="col">${bar}<h1>${esc(head)}</h1><p class="lede">${esc(Tp('That word is not in the dictionary.', 'अयं शब्दः कोशे नास्ति।'))} <a href="#/kosha">${esc(Tp('Browse the dictionary', 'कोशं पश्य'))}</a></p></div>`; wireKoshaFind(); return; }
+    const near = await shardAt(koshaData, head);
+    const at = near.entries.findIndex((x) => x[0] === head);
+    const prev = at > 0 ? near.entries[at - 1][0] : near.prev;
+    const next = at < near.entries.length - 1 ? near.entries[at + 1][0] : near.next;
+    main.innerHTML = `<div class="col k-entry">${bar}
+      <h1 class="k-head" lang="sa">${esc(e[0])}</h1>
+      <p class="k-iast">${esc(devaToIast(e[0]))}${e[1].length ? ` · <span class="k-alt">${T('also', 'अपि')} <span lang="sa">${e[1].map(esc).join(', ')}</span></span>` : ''}</p>
+      <ol class="k-senses">${koshaSenses(e[2])}</ol>
+      <nav class="k-nav" aria-label="${esc(Tp('Neighbouring words', 'समीपशब्दाः'))}">${prev ? `<a href="${koshaHref(prev)}">← <span lang="sa">${esc(prev)}</span></a>` : '<span></span>'}<a href="#/kosha?at=${encodeURIComponent(head)}">${T('Around this word', 'समीपे')}</a>${next ? `<a href="${koshaHref(next)}"><span lang="sa">${esc(next)}</span> →</a>` : '<span></span>'}</nav>
+      ${credit}</div>`;
+    wireKoshaFind(); return;
+  }
+  // browse: the letters, and the page of headwords that holds `at`
+  const at = params.get('at') || man.shards[0][0];
+  const page = await shardAt(koshaData, at);
+  const firstAt = page.entries.findIndex((x) => x[0] >= at);
+  main.innerHTML = `<div class="col k-browse">${bar}
+    <h1>${T('Dictionary', 'कोशः')}</h1>
+    <p class="lede">${esc(Tp('Śabdārtha Kaustubha: Sanskrit words and their Kannada meanings. Look a word up above, or pick a letter.', 'शब्दार्थकौस्तुभः'))}</p>
+    <div class="chips k-letters" role="group" aria-label="${esc(Tp('Letters', 'वर्णाः'))}">${KOSHA_LETTERS.map((l) => `<a class="chip" lang="sa" href="#/kosha?at=${l}">${l}</a>`).join('')}</div>
+    <div class="k-pager">${page.prev ? `<a href="#/kosha?at=${encodeURIComponent(page.prev)}">← ${esc(Tp('Earlier words', 'पूर्वशब्दाः'))}</a>` : '<span></span>'}<small>${fmt(page.entries.length)} ${esc(Tp('words', 'शब्दाः'))}</small>${page.next ? `<a href="#/kosha?at=${encodeURIComponent(page.next)}">${esc(Tp('Later words', 'उत्तरशब्दाः'))} →</a>` : '<span></span>'}</div>
+    <div class="k-list">${page.entries.map((x, i) => `<a${i === firstAt ? ' id="kfirst"' : ''} href="${koshaHref(x[0])}"><b lang="sa">${esc(x[0])}</b><span lang="kn">${esc((x[2][0]?.[1] || '').slice(0, 70))}</span></a>`).join('')}</div>
+    ${credit}</div>`;
+  wireKoshaFind();
+  if (params.get('at')) document.getElementById('kfirst')?.scrollIntoView({ block: 'start' });
+}
+// the look-up box on the dictionary pages: suggestions as you type, Enter opens the best match
+function wireKoshaFind() {
+  const input = $('#kq'); const box = $('#kSug'); if (!input) return;
+  let rows = [];
+  const find = async () => {
+    rows = koshaRows(await koshaData.keys(), looseKey(input.value), { prefixLimit: 8 });
+    box.innerHTML = rows.map((r) => `<a href="${r.href}">${esc(r.label)}</a>`).join('');
+    box.hidden = !rows.length;
+  };
+  input.addEventListener('input', () => { if (input.value.trim()) find().catch(() => { box.hidden = true; }); else box.hidden = true; });
+  $('#kFind').addEventListener('submit', (e) => { e.preventDefault(); if (rows[0]) go(rows[0].href); });
 }
 
 const VEDA_SHORT = { rv: 'Ṛgveda', syv: 'Śukla Yajurveda', kyv: 'Kṛṣṇa Yajurveda', sv: 'Sāmaveda', av: 'Atharvaveda' };
@@ -2917,6 +2985,7 @@ async function route() {
     if (!a) await viewHome();
     else if (a === 'about') await viewAbout();
     else if (a === 'library') await viewLibrary();
+    else if (a === 'kosha') await viewKosha(id ? decodeURIComponent(id) : null, r.params);
     else if (a === 'suktas') await viewSuktas(r.params);
     else if (a === 'devatas') await (id ? viewDevataList(id) : viewDevatas());
     else if (a === 'my') await viewMy(r.params);
