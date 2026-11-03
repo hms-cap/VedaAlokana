@@ -12,12 +12,15 @@ import { iastToDeva, devaToIast, isoToIast, stripRomanAccents, nameKey } from '.
 import { extraTexts } from './texts.mjs';
 import { buildSuktas } from './build-suktas.mjs';
 import { buildSayana } from './sayana.mjs';
+import { execFileSync } from 'node:child_process';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, all) => {
   if (a.startsWith('--')) acc.push([a.slice(2), all[i + 1]]);
   return acc;
 }, []));
-for (const k of ['vedaweb', 'anukramani', 'dharmic', 'raw', 'gretil']) {
+// --only ts,ta: rebuild just those extra texts against the catalogue already in --out (needs only --raw / --gretil)
+const ONLY = args.only ? new Set(args.only.split(',')) : null;
+for (const k of ONLY ? ['raw'] : ['vedaweb', 'anukramani', 'dharmic', 'raw', 'gretil']) {
   if (!args[k]) { console.error(`missing --${k}`); process.exit(1); }
 }
 const OUT = args.out || 'web/data';
@@ -385,14 +388,22 @@ VEDAS[1].absent = { aranyaka: 'Its Āraṇyaka is the Bṛhadāraṇyaka, listed
 const LAYERS = ['samhita', 'brahmana', 'aranyaka', 'upanishad'];
 
 fs.mkdirSync(OUT, { recursive: true });
-const texts = [buildRigveda(), buildYajurveda(), buildSamaveda(), buildAtharvaveda()];
+const texts = ONLY ? JSON.parse(fs.readFileSync(path.join(OUT, 'catalog.json'), 'utf8')).texts.filter((t) => !ONLY.has(t.id))
+  : [buildRigveda(), buildYajurveda(), buildSamaveda(), buildAtharvaveda()];
 // optional: --sayana <rigveda.vyview> adds Sāyaṇa's bhāṣya to the Ṛgveda (see scripts/sayana.mjs)
-if (args.sayana) {
+if (args.sayana && !ONLY) {
   await buildSayana(args.sayana, OUT);
   texts[0].has.bhashya = 'Sāyaṇa';
   texts[0].sources.push('wikisource');
 }
-for (const def of extraTexts({ raw: args.raw, gretil: args.gretil })) texts.push(buildExtra(def));
+for (const def of extraTexts({ raw: args.raw, gretil: args.gretil || '' })) {
+  if (!ONLY) texts.push(buildExtra(def));
+  else if (ONLY.has(def.id)) texts.push(buildExtra(def));
+}
+if (ONLY) {   // keep the catalogue's own order
+  const order = JSON.parse(fs.readFileSync(path.join(OUT, 'catalog.json'), 'utf8')).texts.map((t) => t.id);
+  texts.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+}
 // the Sanskrit Sāmaveda first, its translation after
 texts.sort((a, b) => (a.id === 'sv' && b.id === 'svs' ? 1 : a.id === 'svs' && b.id === 'sv' ? -1 : 0));
 const vedas = VEDAS.map((v) => ({
@@ -408,6 +419,8 @@ execFileSync(process.execPath, [new URL('./build-devata.mjs', import.meta.url).p
 console.log(`suktas: ${suktas.length} found in the text`);
 // ---- search indexes (scripts/build-search.mjs)
 (await import('./build-search.mjs')).buildSearch(OUT);
+// ---- the Taittirīya Saṃhitā's separate anusvāra / visarga forms, from its padapāṭha (GPL-3.0 data, web/data/gpl/)
+execFileSync(process.execPath, [new URL('./build-ts-sep.mjs', import.meta.url).pathname, OUT], { stdio: 'inherit' });
 // ---- daily mantra cards (scripts/build-daily.mjs reads scripts/daily/)
 (await import('node:child_process')).execFileSync(process.execPath, [path.join(path.dirname(new URL(import.meta.url).pathname), 'build-daily.mjs'), OUT], { stdio: 'inherit' });
 console.log('wrote', OUT);

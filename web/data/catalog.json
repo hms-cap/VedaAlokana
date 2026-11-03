@@ -1,5 +1,5 @@
 {
- "built": "2026-10-31",
+ "built": "2026-11-03",
  "layers": [
   "samhita",
   "brahmana",
@@ -562,7 +562,7 @@
    ],
    "id": "ts",
    "containers": 44,
-   "verses": 2064,
+   "verses": 2198,
    "facets": [],
    "facetCounts": {
     "rishi": 0,

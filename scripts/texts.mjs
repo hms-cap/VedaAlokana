@@ -122,8 +122,23 @@ function devaUnit(body) {
   return { deva, roman: deva.map(devaToIast), romanAuto: true };
 }
 
+// Repairs to the Taittirīya Saṃhitā source, checked against the padapāṭha (hvram1/krishnayajurveda):
+// in 1.4 the lines of pañcāśats 23–24 are out of order and the [23] mark is missing.
+const plainLine = (l) => l.replace(/[॒॑᳚]/g, '');
+const FIX_TS = {
+  '1/4.md': (t) => {
+    const a = t.indexOf('[22]'); const b = t.indexOf('[24]');
+    const lines = t.slice(a + 4, b).split('\n').filter((l) => l.trim());
+    const arv = lines.findIndex((l) => plainLine(l).trim().startsWith('अर्वाची'));
+    const kad = lines.findIndex((l) => plainLine(l).trim().startsWith('कदा चन'));
+    const vam = lines.findIndex((l) => plainLine(l).trim().startsWith('वाममद्य'));
+    if (arv < 0 || kad < 0 || vam < 0) throw new Error('TS 1.4 repair: lines not found');
+    return `${t.slice(0, a + 4)}\n${lines[kad].trimEnd()} ${lines[arv].trim()} [23]\n${lines[vam]}\n${t.slice(b)}`;
+  },
+};
+
 // Files laid out as <dir>/<d1>/<d2>.md, units numbered inside
-function rawDirs(dir, { d1Dirs = true } = {}) {
+function rawDirs(dir, { d1Dirs = true, paren = false } = {}) {
   const out = [];
   const d1s = d1Dirs ? fs.readdirSync(dir).filter((x) => /^\d+$/.test(x)).sort((a, b) => a - b) : [null];
   for (const name of d1s) {
@@ -132,7 +147,9 @@ function rawDirs(dir, { d1Dirs = true } = {}) {
     const files = fs.readdirSync(base).filter((f) => /^\d+\.md$/.test(f)).sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
     for (const f of files) {
       const d2 = parseInt(f, 10);
-      for (const { n, body } of splitNumbered(rawText(path.join(base, f)))) {
+      // paren: a few files number their units (n) instead of [n] (Taittirīya Saṃhitā 2.1, 2.2)
+      const txt = (paren && FIX_TS[`${name}/${f}`]) ? FIX_TS[`${name}/${f}`](rawText(path.join(base, f))) : rawText(path.join(base, f));
+      for (const { n, body } of splitNumbered(paren && !/\[\d+\]/.test(txt) ? txt.replace(/\((\d+)\)/g, '[$1]') : txt)) {
         const u = devaUnit(body);
         if (u.deva.length) out.push({ d1: d1 ?? 1, d2, v: n, ...u });
       }
@@ -268,7 +285,7 @@ export function extraTexts({ raw, gretil }) {
 
     // Kṛṣṇa Yajurveda (Taittirīya)
     { id: 'ts', veda: 'kyv', layer: 'samhita', name: 'Taittirīya Saṃhitā', deva: 'तैत्तिरीय संहिता', levels: ['Kāṇḍa', 'Prapāṭhaka', 'Pañcāśat'], src: rw, shakha: 'Taittirīya', svara: true,
-      units: () => rawDirs(R('vedaH/yajur/taittirIya/mUlam/saMhitA')) },
+      units: () => rawDirs(R('vedaH/yajur/taittirIya/mUlam/saMhitA'), { paren: true }) },
     { id: 'tb', veda: 'kyv', layer: 'brahmana', name: 'Taittirīya Brāhmaṇa', deva: 'तैत्तिरीय ब्राह्मण', levels: ['Kāṇḍa', 'Prapāṭhaka', 'Pañcāśat'], src: rw, svara: true,
       units: () => rawDirs(R('vedaH/yajur/taittirIya/mUlam/brAhmaNam')) },
     { id: 'ta', veda: 'kyv', layer: 'aranyaka', name: 'Taittirīya Āraṇyaka', deva: 'तैत्तिरीय आरण्यक', levels: ['', 'Prapāṭhaka', 'Section'], src: rw, svara: true,

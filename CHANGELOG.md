@@ -2,6 +2,13 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.24.0 — 2026-11-03
+- Setting `anv` (Anusvāra and visarga): *As in the text*, *Joined* (`web/sandhi.js`, applied in `svaraLines` and to versioned texts / daily cards), *Separate* (Taittirīya Saṃhitā: edits from `scripts/build-ts-sep.mjs` in `web/data/gpl/ts/`, applied when a TS file is loaded; joined words separated by U+2005 so sūkta cuts keep their word counts).
+- TS padapāṭha from hvram1/krishnayajurveda vendored under `scripts/sources/gpl/` (GPL-3.0, kept apart with its licence).
+- TS data: units numbered `(n)` (2.1, 2.2) now read; 1.4.23–24 repaired; 2,198 pañcāśats, matching the padapāṭha.
+- `build-data.mjs --only <ids>` rebuilds selected extra texts against the existing catalogue; missing `execFileSync` import fixed.
+- `scripts/test-sandhi.mjs` added to the test run.
+
 ## 1.23.2 — 2026-11-02
 - PDF export on touch devices shares a `File` only via `navigator.share` (with a Share / Save fallback when the gesture has expired); desktop downloads.
 

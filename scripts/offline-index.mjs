@@ -13,7 +13,9 @@ const filesOf = (id) => fs.readdirSync(path.join(web, 'data', id)).filter((f) =>
 const packs = [];
 for (const v of cat.vedas) {
   const ids = Object.values(v.layers).flat();
-  const all = ids.flatMap(filesOf);
+  // GPL data kept apart (web/data/gpl/<text>/): the Taittirīya Saṃhitā's separate forms go with its Veda
+  const gpl = ids.filter((id) => fs.existsSync(path.join(web, 'data', 'gpl', id))).flatMap((id) => filesOf(`gpl/${id}`));
+  const all = [...ids.flatMap(filesOf), ...gpl];
   // the mantra-word search index of this Veda (scripts/build-search.mjs), so searching inside it works offline too
   const words = `data/search/text-${v.id}.tsv`;
   const text = [...all.filter((f) => !/\/s\d+-\d+\.json$/.test(f)), ...(fs.existsSync(path.join(web, words)) ? [words] : [])];

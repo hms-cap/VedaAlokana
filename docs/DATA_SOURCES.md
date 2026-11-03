@@ -8,6 +8,7 @@
 | [WSC 2023 Anukramaṇī dataset](https://github.com/mahesh-ak/WSC2023), Krishna et al. | Ṛgveda ṛṣi, devatā and chandas for every ṛk | Apache-2.0 |
 | [DharmicData](https://github.com/bhavykhatri/DharmicData) | Atharvaveda (Śaunaka) and Vājasaneyi Mādhyandina text; Griffith's Sāmaveda | ODbL. Its AV and YV texts were taken from the [Vedic Heritage Portal](https://vedicheritage.gov.in/) (Ministry of Culture), which states no open licence |
 | [sanskrit/raw_etexts](https://github.com/sanskrit/raw_etexts) | Taittirīya Saṃhitā, Brāhmaṇa, Āraṇyaka and Upaniṣad; Aitareya Brāhmaṇa and Āraṇyaka; Sāmaveda Kauthuma Saṃhitā; Jaiminīya Upaniṣad Brāhmaṇa; Gopatha Brāhmaṇa; Kena and Muṇḍaka Upaniṣads | No licence stated; texts collected from public e-text sites (sanskritdocuments.org, eBharati Sampat and others) |
+| [hvram1/krishnayajurveda](https://github.com/hvram1/krishnayajurveda) | Taittirīya Saṃhitā padapāṭha (`scripts/sources/gpl/ts-padapatha/`), used to find the word ends of the saṃhitā and to repair TS 1.4 | **GPL-3.0.** Kept apart: the source files and what is derived from them (`web/data/gpl/`) are GPL-3.0, with a copy of the licence in each folder; the rest of the data is unaffected |
 | [Sanskrit Wikisource](https://sa.wikisource.org) via [Project Vyasa](https://github.com/project-vyasa/sa.wikisource.org) (`gh-pages`, `rigveda/rigveda.vyview`) | Sāyaṇa's Ṛgveda bhāṣya, per ṛk (10,545 of 10,552 ṛks) | CC BY-SA 4.0 — credit the Wikisource volunteers; the bhāṣya files (`web/data/rv/s*.json`) stay under CC BY-SA |
 | [GRETIL mirror](https://github.com/sanskrit/gretil-mirror) | Kauṣītaki, Śatapatha and Pañcaviṃśa Brāhmaṇas; Śāṅkhāyana Āraṇyaka; Aitareya, Īśa, Bṛhadāraṇyaka, Kaṭha, Śvetāśvatara, Chāndogya, Māṇḍūkya and Praśna Upaniṣads | "For reference purposes only; copyright as for source file" — research and teaching use |
 
@@ -47,7 +48,8 @@ GRETIL texts are romanised, so their Devanagari and Kannada are converted and ca
 ## Known gaps
 
 - Sāmaveda Kauthuma: the source's numbering skips in places, so a few verses appear merged; its digits inside verses are svara notation.
-- Taittirīya Saṃhitā and Brāhmaṇa are divided by pañcāśat (the source's numbering), not anuvāka. The Taittirīya Āraṇyaka follows the Drāviḍa pāṭha files as numbered in the source; prapāṭhakas 5–6 are missing.
+- Taittirīya Saṃhitā and Brāhmaṇa are divided by pañcāśat (the source's numbering), not anuvāka. The Saṃhitā's 2,198 pañcāśats match the padapāṭha one for one: 2.1 and 2.2, numbered `(n)` in the source, were read as 3 units until 1.24.0, and in 1.4 the source's lines for pañcāśats 23–24 are out of order and repaired by `scripts/texts.mjs`.
+- Anusvāra and visarga (Settings): *Joined* is made by rule (`web/sandhi.js`); *Separate* undoes the Taittirīya Saṃhitā's joined forms with edits found by aligning each pañcāśat with its padapāṭha (`scripts/build-ts-sep.mjs`, ~13,900 places). The Taittirīya Brāhmaṇa and Āraṇyaka have no padapāṭha and keep their joined forms. The Taittirīya Āraṇyaka follows the Drāviḍa pāṭha files as numbered in the source; prapāṭhakas 5–6 are missing.
 - Śatapatha Brāhmaṇa kāṇḍa 12 and Śāṅkhāyana Āraṇyaka adhyāyas 3–6 are missing from the GRETIL source.
 - Not found openly yet: Maitrāyaṇī and Kāṭhaka Brāhmaṇa/Āraṇyaka material in a parseable form, Kauṣītaki and Maitrī Upaniṣads.
 - Yajurveda ṛṣi/devatā/chandas: no open per-mantra index found.

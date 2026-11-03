@@ -7,6 +7,7 @@ import { dakshinatyaVerse, dakshinatyaNasals } from './dakshinatya.js';
 import { FACETS, FKEYS, LAYERS, cap, fmt, refOf, groupName, findHref } from './common.js';
 import { search, groupResults } from './search.js';
 import { padaDeva, cleanPada } from './pada.js';
+import { joinForms } from './sandhi.js';
 
 const COL = { d1: 0, d2: 1, v: 2, rishi: 3, devata: 4, chandas: 5 };
 const LEVEL_DEVA = {
@@ -116,7 +117,7 @@ const PREF_KEY = 'vedalokana.prefs';
 const prefs = (() => {
   // Default view is made for chanting: the text in script only, no romanisation or translation.
   // `v` is bumped when defaults change, so an earlier saved reading view moves to the new one once.
-  const d = { v: 3, script: 'deva', mode: 'samhita', tr: false, tags: true, bhashya: false, lipi: 'deva', svara: 'bold', suktaBy: 'veda', theme: 'system', menu: 'script', patha: 'dakshinatya', dfont: 'noto', openIn: 'reading' };
+  const d = { v: 3, script: 'deva', mode: 'samhita', tr: false, tags: true, bhashya: false, lipi: 'deva', svara: 'bold', suktaBy: 'veda', theme: 'system', menu: 'script', patha: 'dakshinatya', dfont: 'noto', openIn: 'reading', anv: 'text' };
   try {
     const saved = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
     if ((saved.v || 1) < 2) { delete saved.script; delete saved.tr; delete saved.mode; }
@@ -168,9 +169,13 @@ const PATHA = { dakshinatya: ['Dākṣiṇātya pāṭha', 'दाक्षि�
 // the Taittirīya pāṭha, with its own nasals and avagrahas, so they are left as they are.
 const PATHA_TEXTS = new Set(['rv', 'av', 'yv']);
 const svaraLines = (textId, lines, pada) => {
-  if (prefs.patha !== 'dakshinatya' || !PATHA_TEXTS.has(textId)) return lines;
-  return textId === 'rv' ? dakshinatyaVerse(lines, pada) : dakshinatyaNasals(lines);
+  const out = prefs.patha !== 'dakshinatya' || !PATHA_TEXTS.has(textId) ? lines
+    : textId === 'rv' ? dakshinatyaVerse(lines, pada) : dakshinatyaNasals(lines);
+  return anvLines(out);
 };
+// Anusvāra and visarga (Settings): as the text prints them, joined to the next consonant (by rule, any
+// text), or separate (the Taittirīya Saṃhitā's joined forms undone with its padapāṭha, when it is loaded).
+const anvLines = (lines) => (prefs.anv === 'join' ? lines.map(joinForms) : lines);
 
 // ---------- menus in the reading script, or English ----------
 const SA = () => prefs.menu !== 'en';
@@ -287,6 +292,10 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.24.0', '2026-11-03', [
+    'New setting, Anusvāra and visarga (⋯ menu and Settings), in Kannada and Devanagari. Joined writes an anusvāra inside a word as the nasal of the next letter (ಸಙ್ಕಲ್ಪ for ಸಂಕಲ್ಪ) and a visarga before ś, ṣ, s as that letter (ನಮಶ್ಶಿವಾಯ), as many Kannada books print them. Separate undoes the Taittirīya Saṃhitā’s joined forms (ನಮಃ ಶರ್ವಾಯ, ಚಿತ್ತಂ ಚ), word by word from its padapāṭha.',
+    'Taittirīya Saṃhitā 2.1 and 2.2 are complete (they showed 3 of their 136 pañcāśats), and 1.4.23–24 are in the right order.',
+  ]],
   ['1.23.2', '2026-11-02', ['On a phone, Export PDF opens the share sheet with the PDF file alone (named after the text), instead of a download with a link and a “blob” entry. Computers still download it.']],
   ['1.23.1', '2026-11-02', ['Print and PDF of the chant view now come out in the script you chose: with Kannada selected they were printed in Devanagari.']],
   ['1.23.0', '2026-11-02', ['Export PDF on every page: a button in the options bar (and in ⋯) saves the page you are reading as an A4 PDF in the font and script you are using; no print dialog. The chant view has its own PDF button for the whole text. Print moved into the ⋯ menus. The PDF is made on your device, works offline, and holds page images, so its text can’t be selected.']],
@@ -725,7 +734,28 @@ async function index(id) {
 }
 async function text(id, d1) {
   const k = `${id}/${d1}`;
-  return (cache.text[k] ||= await json(`data/${id}/t${d1}.json`));
+  const t = (cache.text[k] ||= await json(`data/${id}/t${d1}.json`));
+  if (prefs.anv !== 'sep' || !SEP_TEXTS.has(id)) return t;
+  return (cache.text[`${k}/sep`] ||= await sepText(id, d1, t));
+}
+// The separate forms of the Taittirīya Saṃhitā: per pañcāśat the edits [line, at, delete, insert] from
+// scripts/build-ts-sep.mjs (web/data/gpl/, GPL-3.0: derived from the padapāṭha of hvram1/krishnayajurveda).
+// Without them (offline, not stored yet) the text shows as printed.
+const SEP_TEXTS = new Set(['ts']);
+async function sepText(id, d1, t) {
+  let ed;
+  try { ed = await json(`data/gpl/${id}/s${d1}.json`); } catch { return t; }
+  const apply = (l, es) => { let o = l; for (const [, at, del, ins] of [...es].sort((x, y) => y[1] - x[1])) o = o.slice(0, at) + ins + o.slice(at + del); return o; };
+  const out = {};
+  for (const [d2, vs] of Object.entries(t)) {
+    out[d2] = vs.map((v) => {
+      const es = ed[d2]?.[v[0]];
+      if (!es) return v;
+      const w = [...v]; w[1] = v[1].map((l, li) => apply(l, es.filter((x) => x[0] === li)));
+      return w;
+    });
+  }
+  return out;
 }
 
 // Sāyaṇa's bhāṣya comes in files of 20 sūktas (scripts/sayana.mjs), fetched on demand.
@@ -864,7 +894,7 @@ function dailyCards(m) {
   const ref = m.t === 'sk' ? T(m.src, m.srcSa) : SA() ? `<span lang="sa">${esc(`${REF_SA[m.t] || ''} ${dg(m.ref)}`)}</span>` : esc(m.t === 'rv' ? `Ṛgveda ${m.ref}` : m.src);
   const names = [m.d, m.r, m.c].filter(Boolean);
   const tags = SA() ? `<span lang="sa">${esc(names.map((x) => x[2] || x[1]).join(' · '))}</span>` : esc(names.map((x) => cap(x[1])).join(' · '));
-  const lines = m.t === 'sk' ? m.lines : svaraLines(m.t, m.lines, m.pada);
+  const lines = m.t === 'sk' ? anvLines(m.lines) : svaraLines(m.t, m.lines, m.pada);
   const cards = [{ k: T('Mantra', 'मन्त्रः'), html: `<div class="hero-m" lang="sa">${lines.map((l) => `<div>${esc(l)}</div>`).join('')}</div>
       <div class="hero-r"><b>${ref}</b><span>${tags}</span></div>` }];
   if (m.m) cards.push({ k: T('Meaning', 'अर्थः'), html: `<p class="dm-p">${dmL(m.m)}</p>` });
@@ -898,7 +928,7 @@ const dmTagsPlain = (m) => [m.d, m.r, m.c].filter(Boolean).map((x) => (SA() ? in
 // the cards as plain text, in the script and language the app is showing
 function dailyPlain(m) {
   const kn = dmKn(); const lip = (x) => (kn ? toKnda(x) : x);
-  const lines = (m.t === 'sk' ? m.lines : svaraLines(m.t, m.lines, m.pada)).map(lip);
+  const lines = (m.t === 'sk' ? anvLines(m.lines) : svaraLines(m.t, m.lines, m.pada)).map(lip);
   const out = [{ k: Tp('Mantra', 'मन्त्रः'), lines, ref: dmRefPlain(m), tags: dmTagsPlain(m) }];
   const pair = (x) => x?.[kn ? 1 : 0] || x?.[0] || '';
   if (m.m) out.push({ k: Tp('Meaning', 'अर्थः'), text: pair(m.m) });
@@ -1244,7 +1274,7 @@ const KIND = { upaniṣad: ['Upaniṣad', 'उपनिषत्'], sūkta: ['S�
 async function viewSuktaVersions(s, params) {
   const ver = s.versions.find((v) => v.id === params?.get('p')) || s.versions[0];
   // the South Indian text is published with dīrgha svarita; the Antarjāla pāṭha writes one stroke
-  const style = (l) => (prefs.patha === 'std' ? l.replace(/᳚/g, '॑') : l);
+  const style = (l) => anvLines([prefs.patha === 'std' ? l.replace(/᳚/g, '॑') : l])[0];
   const wordsHTML = (line, li, marks) => line.split(' ').map((w, wi) => (marks?.some(([a, b]) => a === li && b === wi) ? `<mark class="pv">${esc(w)}</mark>` : esc(w))).join(' ');
   // ṛks taken from the app's Ṛgveda (src: [text, d1, d2, v]) follow the pāṭha like the reader
   const rv = await Promise.all(ver.verses.map(async (v) => {
@@ -2345,6 +2375,7 @@ const OB = {
   tsize: { en: 'Text size', sa: 'अक्षरमानम्', icon: () => '<span class="ob-t" aria-hidden="true">A<small>A</small></span>', on: () => (prefs.tsize || 1) !== 1 },
   svara: { en: 'Svara marks', sa: 'स्वरचिह्नानि', ch: [['bold', 'Bold', 'स्थूलम्'], ['std', 'Standard', 'सामान्यम्']] },
   openIn: { en: 'Open sūktas in', sa: 'सूक्तं पठ्यते', ch: [['reading', 'Reading view', 'पठनदृश्ये'], ['chant', 'Chant view', 'पारायणदृश्ये']] },
+  anv: { en: 'Anusvāra and visarga', sa: 'अनुस्वारविसर्गौ', ch: [['text', 'As in the text', 'यथापाठम्'], ['join', 'Joined', 'संयुक्तौ'], ['sep', 'Separate', 'पृथक्']] },
   dfont: { en: 'Devanagari font', sa: 'देवनागरीलिपिरूपम्', ch: [['noto', 'Noto Serif', 'Noto Serif'], ['shobhika', 'Shobhika', 'Shobhika']] },
 };
 const OB_GLOBAL = ['lipi', 'menu', 'theme', 'tr', 'bhashya'];
@@ -2432,7 +2463,7 @@ function openOptPanel(only) {
       ${pageKeys.includes('tsize') ? sizeRow() : ''}
       ${acts.length ? `<div class="ob-acts">${acts.map((a) => `<button type="button" class="chip" data-pact="${a.id}"${a.on !== undefined ? ` aria-pressed="${String(!!a.on)}"` : ''}>${a.icon}<span>${esc(a.label)}</span></button>`).join('')}</div>` : ''}
       <div class="ob-acts"><button type="button" class="chip" data-pdfp>${PDF_ICON}<span>${T('Export PDF', 'PDF')}</span></button><button type="button" class="chip" data-printp><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="7" y="14" width="10" height="7" rx="1"/></svg><span>${T('Print', 'मुद्रणम्')}</span></button></div>
-      <div class="ob-h">${T('Reading', 'पठनम्')}</div>${row('svara')}${row('dfont')}${row('openIn')}
+      <div class="ob-h">${T('Reading', 'पठनम्')}</div>${row('svara')}${row('anv')}${row('dfont')}${row('openIn')}
       <div class="ob-links"><a class="ob-all" href="#/settings?s=offline">${T('Offline downloads', 'अनुजालविना पठनम्')} ›</a><a class="ob-all" href="#/settings">${T('All settings', 'सर्वे विन्यासाः')} ›</a></div>`;
     panel.querySelectorAll('[data-k]').forEach((b) => b.addEventListener('click', () => {
       const k = b.dataset.k; const raw = b.dataset.v;
@@ -2769,6 +2800,9 @@ async function viewSettings() {
     <section class="set"><h2>Svara marks</h2><p>Bold marks are drawn heavier so <span lang="sa">॑</span> and <span lang="sa">॒</span> stand out at reading size; Standard keeps each font’s own thin strokes. In both, every anudātta sits at the same depth under the line.</p>
       <div class="seg wide-seg">${opt('svara', 'bold', 'Bold')}${opt('svara', 'std', 'Standard')}</div>
       <p class="svara-demo" lang="sa">अ॒ग्निमी॑ळे पु॒रोहि॑तं य॒ज्ञस्य॑ दे॒वमृ॒त्विज॑म्</p></section>
+    <section class="set"><h2>Anusvāra and visarga</h2><p>How an anusvāra or a visarga before a consonant is printed. <b>Joined</b> writes the anusvāra inside a word as the nasal of the next letter (<span lang="sa">सङ्कल्पः</span> for <span lang="sa">संकल्पः</span>) and a visarga before श ष स as that letter (<span lang="sa">नमश्शिवाय</span>), as many Kannada and Vedic books do. <b>Separate</b> undoes the Taittirīya Saṃhitā’s joined forms (<span lang="sa">नम॑श्श॒र्वाय</span> → <span lang="sa">नमः॑ श॒र्वाय</span>, <span lang="sa">चि॒त्तञ्च॑</span> → <span lang="sa">चि॒त्तं च॑</span>), using its padapāṭha; other texts already print them separate.</p>
+      <div class="seg wide-seg">${opt('anv', 'text', 'As in the text')}${opt('anv', 'join', 'Joined')}${opt('anv', 'sep', 'Separate')}</div>
+      <p class="svara-demo" lang="sa" id="anvDemo">${esc(anvLines(['संकल्पः । नमः शिवाय ।'])[0])}</p></section>
     <section class="set"><h2>In the reader, show</h2>
       <div class="seg wide-seg">${opt('script', 'both', 'Both')}${opt('script', 'deva', 'Script only')}${opt('script', 'roman', 'IAST only')}</div></section>
     <section class="set"><h2>Ṛgveda text</h2>
@@ -2817,7 +2851,7 @@ async function viewSettings() {
     prefs[k] = raw === 'true' ? true : raw === 'false' ? false : raw;
     savePrefs();
     if (k === 'svara' || k === 'dfont') applyLipiClass();
-    if (k === 'patha') { const y = window.scrollY; route().then(() => window.scrollTo(0, y)); return; }
+    if (k === 'patha' || k === 'anv') { const y = window.scrollY; route().then(() => window.scrollTo(0, y)); return; }
     b.parentElement.querySelectorAll('button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
   }));
 }
