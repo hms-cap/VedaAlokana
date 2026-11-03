@@ -93,7 +93,7 @@ The Dākṣiṇātya pāṭha is computed in the browser by `web/dakshinatya.js`
 
 ## Dictionary
 
-`#/kosha` is a browsable, searchable Sanskrit → Kannada dictionary (Śabdārtha Kaustubha), also reached from the Library page and as a "Dictionary" group in search results. Build it with `node scripts/build-kosha.mjs <shabdArtha_kaustubha.babylon>`; the source file, its licence question and the limits are in `docs/DATA_SOURCES.md`. Not yet cleared for publication.
+`#/kosha` is a browsable, searchable Sanskrit → Kannada dictionary (Śabdārtha Kaustubha), also reached from the Library page and as a "Dictionary" group in search results. Build it with `node scripts/build-kosha.mjs <shabdArtha_kaustubha.babylon>`; the source file, its licence question and the limits are in `docs/DATA_SOURCES.md`.
 
 ## Search
 

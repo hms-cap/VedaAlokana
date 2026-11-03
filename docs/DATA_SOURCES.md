@@ -34,7 +34,7 @@ GRETIL texts are romanised, so their Devanagari and Kannada are converted and ca
 
 - **What:** about 46,800 headwords and 94,000 senses, each with part of speech, a Kannada meaning, and often the formation, derivation, a Sanskrit quotation and its source. About 1.5% of headwords carry no Kannada meaning in the source.
 - **Source:** [indic-dict/stardict-sanskrit](https://github.com/indic-dict/stardict-sanskrit), `sa-head/other-indic-entries/shabdArtha_kaustubha/shabdArtha_kaustubha.babylon` (35 MB, not kept in this repo). [Ambuda](https://github.com/ambuda-org/data) carries the same text, but its build script rewrote the headwords and labels into SLP1, so the original is used. Build: `node scripts/build-kosha.mjs <file.babylon>` → `web/data/kosha/` (36 shards of about 700 KB, `shards.json`, `keys.tsv`).
-- **Licence: not known.** Neither repository states a licence or the original author's terms. **Do not publish this data until that is settled** (ask the stardict-sanskrit maintainers, or Ambuda). Merging to `main` publishes it through GitHub Pages.
+- **Licence: not stated.** Neither repository gives a licence or the original author's terms. Published on the owner's decision that this is not an issue; if the rights holder objects, remove `web/data/kosha/` and the `#/kosha` route.
 - **Limits:** a general classical lexicon, so it gives classical senses, not Vedic ones (soma is the moon, not the plant). A search finds headwords only, not words inside the Kannada meanings. Entries that share a headword are merged; the variant headwords of a source line (`अर्द|गतौ|याचने`) are kept as "also". The dictionary is not in the offline packs: a shard is cached the first time it is opened.
 
 ## Before a public launch

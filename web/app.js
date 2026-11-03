@@ -295,7 +295,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
-  ['1.27.0', '2026-11-04', ['New Dictionary (Library → Dictionary, or a word typed in search): the Śabdārtha Kaustubha, about 46,800 Sanskrit words with Kannada meanings, derivations and quotations. Browse by letter, look a word up in Devanagari, Kannada or Roman letters, and step to the neighbouring words. Not for publication until its licence is cleared.']],
+  ['1.27.0', '2026-11-04', ['New Dictionary (Library → Dictionary, or a word typed in search): the Śabdārtha Kaustubha, about 46,800 Sanskrit words with Kannada meanings, derivations and quotations. Browse by letter, look a word up in Devanagari, Kannada or Roman letters, and step to the neighbouring words.']],
   ['1.26.0', '2026-11-03', [
     'Padapāṭha in the sūkta view: choose Text → Padapāṭha on a sūkta from the Ṛgveda or the Taittirīya Saṃhitā (Taittirīya with svara marks). Other pieces stay as the saṃhitā.']],
   ['1.25.0', '2026-11-03', [
