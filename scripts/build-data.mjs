@@ -421,6 +421,7 @@ console.log(`suktas: ${suktas.length} found in the text`);
 (await import('./build-search.mjs')).buildSearch(OUT);
 // ---- the Taittirīya Saṃhitā's separate anusvāra / visarga forms, from its padapāṭha (GPL-3.0 data, web/data/gpl/)
 execFileSync(process.execPath, [new URL('./build-ts-sep.mjs', import.meta.url).pathname, OUT], { stdio: 'inherit' });
+execFileSync(process.execPath, [new URL('./build-ts-pada.mjs', import.meta.url).pathname, OUT], { stdio: 'inherit' });
 // ---- daily mantra cards (scripts/build-daily.mjs reads scripts/daily/)
 (await import('node:child_process')).execFileSync(process.execPath, [path.join(path.dirname(new URL(import.meta.url).pathname), 'build-daily.mjs'), OUT], { stdio: 'inherit' });
 console.log('wrote', OUT);

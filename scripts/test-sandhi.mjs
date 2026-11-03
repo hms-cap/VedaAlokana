@@ -52,6 +52,19 @@ for (let k = 1; k <= 7; k++) {
     after += (apply(l, (e[p]?.[v[0]] || []).filter((x) => x[0] === li).map((x) => x.slice(1))).match(re) || []).length;
   });
 }
+// padapāṭha view data (web/data/gpl/ts/p<k>.json): one entry per pañcāśat, no headings left in
+let pu = 0; let pw = 0;
+for (let k = 1; k <= 7; k++) {
+  const t = JSON.parse(fs.readFileSync(path.join(data, 'ts', `t${k}.json`), 'utf8'));
+  const pd = JSON.parse(fs.readFileSync(path.join(data, 'gpl', 'ts', `p${k}.json`), 'utf8'));
+  for (const [p, vs] of Object.entries(t)) {
+    if ((pd[p] || []).length !== vs.length) { failed++; console.log(`FAIL padapāṭha ${k}.${p}: ${(pd[p] || []).length} of ${vs.length} units`); continue; }
+    for (const u of pd[p]) { pu++; for (const w of u) { pw++; if (/\d\.\d/.test(w)) { failed++; console.log(`FAIL padapāṭha heading in ${k}.${p}: ${w}`); } } }
+  }
+}
+const first = JSON.parse(fs.readFileSync(path.join(data, 'gpl', 'ts', 'p1.json'), 'utf8'))[1][0];
+eq(first.slice(0, 3).join(' | '), 'इ॒षे | त्वा॒ | ऊ॒र्जे', 'padapāṭha of TS 1.1.1');
+has(first.join(' '), 'उ॒पा॒यव॒ इत्यु॑प-आ॒यवः॑', 'padapāṭha iti form');
 if (after > before * 0.02) { failed++; console.log(`FAIL doubled sibilants left: ${after} of ${before}`); }
-console.log(failed ? `${failed} check(s) failed` : `all sandhi checks passed (${J.length} joined forms; TS doubled sibilants ${before} → ${after})`);
+console.log(failed ? `${failed} check(s) failed` : `all sandhi checks passed (${J.length} joined forms; TS doubled sibilants ${before} → ${after}; padapāṭha ${pu} pañcāśats, ${pw} words)`);
 process.exit(failed ? 1 : 0);

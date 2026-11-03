@@ -40,7 +40,7 @@ function unIti(t) {
 }
 
 // ---- padapāṭha: units "TS k.p.a.n" in order; each a list of segments { text, end: 'word'|'member' }
-function padaUnits(k) {
+export function rawPadaUnits(k) {
   const s = fs.readFileSync(path.join(SRC, `PadaPaatha_00${k}.html`), 'utf8').replace(/<[^>]+>/g, ' ');
   const parts = s.split(/TS (\d+)\.(\d+)\.(\d+)\.(\d+)/);
   const units = [];
@@ -48,9 +48,15 @@ function padaUnits(k) {
     const p = Number(parts[i + 1]);
     let body = parts[i + 4].replace(/\s\d+\s*\(\s*\d*\s*\)\s*$/, '').replace(/\(\s*\)/g, ' ');
     body = body.replace(/\s\d+\s*\(\s*\d+\s*\)/g, ' ');
+    units.push({ p, toks: body.split(/[।॥]/).map((t) => t.trim().replace(/\s*-\s*/g, '-')).filter(Boolean) });
+  }
+  return units;
+}
+function padaUnits(k) {
+  const units = [];
+  for (const { p, toks } of rawPadaUnits(k)) {
     const segs = [];
-    for (let tok of body.split(/[।॥]/)) {
-      tok = tok.trim().replace(/\s*-\s*/g, '-'); if (!tok) continue;
+    for (let tok of toks) {
       // "बा॒हुभ्या॒मिति॑ बा॒हु-भ्या॒म्": the analysed form after iti; "उ॒तो इति॑": the word before it
       // "अ॒ग्रे॒पु॒व॒ इत्य॑ग्रे-पु॒वः॒": iti run into the analysis (iti + agre); the analysis is what follows it
       // "अ॒श्विभ्या॒मित्य॒श्वि-भ्या॒म्": the same with no space at all

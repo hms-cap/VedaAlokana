@@ -8,6 +8,7 @@ import { FACETS, FKEYS, LAYERS, cap, fmt, refOf, groupName, findHref } from './c
 import { search, groupResults } from './search.js';
 import { padaDeva, cleanPada } from './pada.js';
 import { joinForms } from './sandhi.js';
+import { devaToIast } from './translit.js';
 
 const COL = { d1: 0, d2: 1, v: 2, rishi: 3, devata: 4, chandas: 5 };
 const LEVEL_DEVA = {
@@ -41,7 +42,7 @@ const MENU_SA = { home: 'गृहम्', library: 'ग्रन्थालय
 const $ = (s, el = document) => el.querySelector(s);
 const main = $('#main');
 const rail = $('#rail');
-const cache = { catalog: null, index: {}, text: {}, bhashya: {}, names: null, aliases: null };
+const cache = { catalog: null, index: {}, text: {}, bhashya: {}, gpada: {}, names: null, aliases: null };
 
 // Routing: the URL hash by default; an in-memory route when embedded where
 // path-like hashes can't be used (set window.VEDA_MEMORY_ROUTER before loading).
@@ -292,6 +293,8 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.25.0', '2026-11-03', [
+    'Padapāṭha for the Taittirīya Saṃhitā: choose Text → Padapāṭha on any kāṇḍa page. Words are shown as the printed book has them, with svara marks, in Devanagari or Kannada (or IAST); analysed words (after iti) and compound breaks are kept as printed.']],
   ['1.24.0', '2026-11-03', [
     'New setting, Anusvāra and visarga (⋯ menu and Settings), in Kannada and Devanagari. Joined writes an anusvāra inside a word as the nasal of the next letter (ಸಙ್ಕಲ್ಪ for ಸಂಕಲ್ಪ) and a visarga before ś, ṣ, s as that letter (ನಮಶ್ಶಿವಾಯ), as many Kannada books print them. Separate undoes the Taittirīya Saṃhitā’s joined forms (ನಮಃ ಶರ್ವಾಯ, ಚಿತ್ತಂ ಚ), word by word from its padapāṭha.',
     'Taittirīya Saṃhitā 2.1 and 2.2 are complete (they showed 3 of their 136 pañcāśats), and 1.4.23–24 are in the right order.',
@@ -758,6 +761,14 @@ async function sepText(id, d1, t) {
   return out;
 }
 
+// The Taittirīya Saṃhitā's padapāṭha, per kāṇḍa: { prapāṭhaka: [ [word, …] per pañcāśat ] } from
+// scripts/build-ts-pada.mjs (web/data/gpl/, GPL-3.0: hvram1/krishnayajurveda). Missing (offline, not stored): no padapāṭha view.
+const PADA_GPL = new Set(['ts']);
+async function gplPada(id, d1) {
+  if (!PADA_GPL.has(id)) return null;
+  try { return await (cache.gpada[`${id}/${d1}`] ||= json(`data/gpl/${id}/p${d1}.json`)); } catch { delete cache.gpada[`${id}/${d1}`]; return null; }
+}
+
 // Sāyaṇa's bhāṣya comes in files of 20 sūktas (scripts/sayana.mjs), fetched on demand.
 async function bhashya(id, d1, d2) {
   const k = `${id}/s${d1}-${Math.floor((d2 - 1) / 20)}`;
@@ -797,7 +808,7 @@ function badgesHTML(meta) {
   const has = [
     ['Svara marks', meta.has.svara],
     ['IAST', meta.has.roman],
-    ['Padapāṭha', meta.has.pada],
+    ['Padapāṭha', meta.has.pada || PADA_GPL.has(meta.id)],
     [meta.has.translation ? `English · ${meta.has.translation}` : 'English', !!meta.has.translation],
     ...(meta.has.bhashya ? [[`${meta.has.bhashya} bhāṣya`, true]] : []),
     ...(tagged ? [
@@ -1897,13 +1908,14 @@ async function viewContainer(id, d1, d2, params) {
   if (!c) return notFound();
   const t = await text(id, d1);
   const verses = t[d2] || [];
+  const gpada = (await gplPada(id, d1))?.[d2];   // padapāṭha of the Taittirīya Saṃhitā, per pañcāśat
   const rows = x.rows.filter((r) => r[0] === d1 && r[1] === d2);
   const rowOf = new Map(rows.map((r) => [r[2], r]));
   const cref = containerRef(meta, d1, d2, c[2]);
   setTitle(cref ? `${meta.ref} ${cref}` : meta.name);
   const hasDeva = verses.some((v) => v[1].length);
   const hasRoman = verses.some((v) => v[2].length);
-  const hasPada = verses.some((v) => v[3].length);
+  const hasPada = verses.some((v) => v[3].length) || !!gpada;
   const hasTr = verses.some((v) => v[4]);
   const hasBh = !!meta.has?.bhashya;
   const hl = Number(params.get('v')) || null;
@@ -1960,8 +1972,9 @@ async function viewContainer(id, d1, d2, params) {
     // the one before it, so a long sūkta is not interrupted by the same chips under every verse.
     const shown = Object.fromEntries(summary.map(([f, e]) => [f, e[0]]));
     $('#sumTags')?.toggleAttribute('hidden', !prefs.tags);
-    const padaNote = pada && prefs.script !== 'roman' ? `<p class="pada-note">${T('The padapāṭha is shown without svara marks.', 'पदपाठे स्वरचिह्नानि न दर्श्यन्ते।')}</p>` : '';
-    $('#verses').innerHTML = padaNote + verses.map(([v, deva, roman, pd, tr, label]) => {
+    const padaNote = pada && gpada ? `<p class="pada-note">${T('Padapāṭha with svara marks; analysed words (after iti) are shown as the book prints them. Source: hvram1/krishnayajurveda (GPL-3.0).', 'पदपाठः स्वरचिह्नैः सह।')}</p>`
+      : pada && prefs.script !== 'roman' ? `<p class="pada-note">${T('The padapāṭha is shown without svara marks.', 'पदपाठे स्वरचिह्नानि न दर्श्यन्ते।')}</p>` : '';
+    $('#verses').innerHTML = padaNote + verses.map(([v, deva, roman, pd, tr, label], vi) => {
       const r = rowOf.get(v);
       const tags = r ? FKEYS.filter((f) => {
         if (!prefs.tags || r[COL[f]] < 0 || meta.tagLevel !== 'verse') return false;
@@ -1974,7 +1987,12 @@ async function viewContainer(id, d1, d2, params) {
       }).join('') : '';
       const ref = refOf(meta, d1, d2, v, label);
       let body = '';
-      if (pada) {
+      if (pada && gpada) {
+        const ws = (gpada[vi] || []).map((w) => (prefs.patha === 'std' ? w.replace(/᳚/g, '॑') : w));
+        const bar = '<span aria-hidden="true">|</span>';
+        if (prefs.script !== 'roman' || !hasRoman) body += `<div class="pada pada-deva" lang="sa">${ws.map((w) => `<span>${esc(w)}</span>`).join(bar)}</div>`;
+        if (prefs.script !== 'deva' && hasRoman) body += `<div class="pada" lang="sa-Latn">${ws.map((w) => `<span>${esc(devaToIast(w.replace(/[॒॑᳚]/g, '')))}</span>`).join(bar)}</div>`;
+      } else if (pada) {
         // the reading script decides: Devanagari (Kannada with the Kannada switch) or IAST, both when both are on
         const bar = '<span aria-hidden="true">|</span>';
         if (showDeva) body += `<div class="pada pada-deva" lang="sa">${padaDeva(pd).map((w) => `<span>${esc(w)}</span>`).join(bar)}</div>`;

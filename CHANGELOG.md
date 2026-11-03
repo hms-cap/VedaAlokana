@@ -2,6 +2,9 @@
 
 Versions follow [semantic versioning](https://semver.org). The version lives in `web/version.js`; the same notes appear in the app under Settings → About.
 
+## 1.25.0 — 2026-11-03
+- Padapāṭha view for the Taittirīya Saṃhitā (Text → Padapāṭha on every kāṇḍa page), with svara marks, in Devanagari / Kannada (or IAST). `scripts/build-ts-pada.mjs` writes `web/data/gpl/ts/p<k>.json` (GPL-3.0, 2,198 pañcāśats, ~109,000 words) from the vendored hvram1/krishnayajurveda padapāṭha; loaded on demand and part of the Kṛṣṇa Yajurveda offline pack.
+
 ## 1.24.0 — 2026-11-03
 - Setting `anv` (Anusvāra and visarga): *As in the text*, *Joined* (`web/sandhi.js`, applied in `svaraLines` and to versioned texts / daily cards), *Separate* (Taittirīya Saṃhitā: edits from `scripts/build-ts-sep.mjs` in `web/data/gpl/ts/`, applied when a TS file is loaded; joined words separated by U+2005 so sūkta cuts keep their word counts).
 - TS padapāṭha from hvram1/krishnayajurveda vendored under `scripts/sources/gpl/` (GPL-3.0, kept apart with its licence).
