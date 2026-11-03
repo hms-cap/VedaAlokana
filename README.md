@@ -91,6 +91,10 @@ The Ṛgveda can be shown two ways (Settings, or the switch in the reader):
 
 The Dākṣiṇātya pāṭha is computed in the browser by `web/dakshinatya.js`; the rules are written out at the top of that file. Word boundaries come from aligning each ṛk with its padapāṭha, and pāda boundaries from the syllable count of the half-verse. The dīrgha-svarita rules were derived from, and are tested against, Dayananda Aithal's [Saswara Rigveda Samhita](https://github.com/daithal/saswara-rigveda), whose dīrgha svaritas were themselves added by program: on all 10,552 ṛks they agree on 99.99% of svarita marks. No text is copied from that site. The other rules were read off printed Gaṇapati, Hiraṇyagarbha, Puruṣa and Devī sūktas, which the test reproduces exactly.
 
+## Dictionary
+
+`#/kosha` is a browsable, searchable Sanskrit → Kannada dictionary (Śabdārtha Kaustubha), also reached from the Library page and as a "Dictionary" group in search results. Build it with `node scripts/build-kosha.mjs <shabdArtha_kaustubha.babylon>`; the source file, its licence question and the limits are in `docs/DATA_SOURCES.md`. Not yet cleared for publication.
+
 ## Search
 
 Everything runs in the browser from small files in `web/data/search/`, built by `node scripts/build-search.mjs` (also run by `build-data.mjs`; it works on the data already in `web/data`):
@@ -117,6 +121,7 @@ node scripts/test-names.mjs          # names index: seed names in four spellings
 node scripts/test-query.mjs          # query parser, result groups, highlighting
 node scripts/test-mantra-index.mjs   # every verse indexed, openings and middles found
 node scripts/test-search.mjs --check-baseline --min-top1 0.85 --min-top5 0.95   # 73 queries through the real search
+node scripts/test-kosha.mjs          # dictionary data: every shard, lookups, search rows in three scripts
 node scripts/check-search-fresh.mjs # committed search indexes match a fresh build (add --fix to rebuild them)
 node scripts/test-all.mjs            # all of the above
 ```
