@@ -10,7 +10,7 @@ const VERSION = self.VEDALOKANA.version;
 const SHELL = `vedalokana-shell-${VERSION}`;
 const DATA = 'vedalokana-data';
 const SHELL_FILES = [
-  './', 'index.html', 'app.js', 'common.js', 'pada.js', 'pdf.js', 'search.js', 'search-key.js', 'kosha.js', 'query.js', 'translit.js', 'lipi.js', 'sandhi.js', 'panchanga.js', 'dakshinatya.js', 'styles.css', 'version.js', 'manifest.webmanifest',
+  './', 'index.html', 'app.js', 'common.js', 'pada.js', 'pdf.js', 'search.js', 'search-key.js', 'kosha.js', 'kosha-ui.js', 'query.js', 'translit.js', 'lipi.js', 'sandhi.js', 'panchanga.js', 'dakshinatya.js', 'styles.css', 'version.js', 'manifest.webmanifest',
   'fonts/IBMPlexSans-Var.woff', 'fonts/GentiumBookPlus-Regular.woff', 'fonts/GentiumBookPlus-Italic.woff', 'fonts/GentiumBookPlus-Bold.woff',
   'fonts/NotoSerifDevanagari-Vedic.woff', 'fonts/NotoSerifKannada-Vedic.woff',
   'fonts/NotoSerifDevanagari-Std.woff', 'fonts/NotoSerifKannada-Std.woff',
@@ -53,7 +53,7 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
   const path = rel(url);
-  if (path === null || url.searchParams.has('fresh')) return;  // ?fresh: an update check, straight to the network
+  if (path === null || path.startsWith('kosha/') || url.searchParams.has('fresh')) return;  // kosha/ is the standalone Dictionary app, with its own worker  // ?fresh: an update check, straight to the network
   if (e.request.mode === 'navigate') {
     e.respondWith((async () => (await caches.match('index.html', { cacheName: SHELL })) || fetch(e.request))());
   } else if (path.startsWith('data/')) {
