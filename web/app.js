@@ -206,12 +206,19 @@ function applyMenu() {
     const en = { home: 'Home', library: 'Library', suktas: 'Sūktas', my: 'My sūktas', kosha: 'Dictionary', settings: 'Settings' }[k];
     span.innerHTML = T(en, MENU_SA[k]);
   });
+  const KB = { home: ['Dictionary home', 'कोशगृहम्'], find: ['Find', 'अन्वेषणम्'], today: ['Today', 'अद्य'], exit: ['Exit', 'निर्गमः'] };
+  document.querySelectorAll('#kbar [data-k] > span').forEach((sp) => { const k = KB[sp.parentElement.dataset.k]; sp.innerHTML = T(k[0], k[1]); });
   $('#brand span').innerHTML = T('Vedāvalokanam', 'वेदावलोकनम्');
   paintOfflineIcon(); paintAboutIcon(); paintMyBadge();
   const b = $('#menuBtn');
   if (b) { b.setAttribute('aria-pressed', String(!SA())); b.title = SA() ? 'Show menus in English' : 'Show menus in the reading script'; }
 }
 document.getElementById('menuBtn')?.addEventListener('click', () => setMenu(SA() ? 'en' : 'script'));
+// the dictionary bar: Today opens today's word
+document.getElementById('kToday').addEventListener('click', async (e) => {
+  e.preventDefault();
+  try { const w = wordOfDay(await koshaData.words()); go(koshaHref(w[0])); } catch { go('#/kosha'); }
+});
 
 function applyLipiClass() {
   document.body.classList.toggle('kn', prefs.lipi === 'knda');
@@ -295,6 +302,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.29.0', '2026-11-04', ['The Dictionary works like an app: its home shows only the letters (with their word counts) and the word of the day; a letter opens its own page with its first word at the top and the rest of the dictionary scrolling on below, with a letter strip to jump between letters. On phones a Dictionary bar (Home, Find, Today, Exit) replaces the app tabs, every word shows where you are (Dictionary › letter › word), and Back returns to the same place in the list.']],
   ['1.28.3', '2026-11-04', ['The Dictionary page has an About the author note (Chakravarti Srinivasa Gopalacharya), also linked from every word. Fixed: the letter buttons now scroll to the chosen letter instead of the top of the page.']],
   ['1.28.2', '2026-11-04', ['Settings → Offline has a Dictionary download (about 23 MB on the device, 4 MB to download): every word, the search and the Word of the day then work with no connection. Without it, a word works offline only once you have opened its part of the dictionary.']],
   ['1.28.1', '2026-11-04', ['On phones, Search moves to a magnifier at the right end of the top bar, on every page. The bottom bar keeps Home, Library, Dictionary and My sūktas, with its icons back to full size.']],
@@ -2570,6 +2578,7 @@ $('#tabbar').addEventListener('click', (e) => {
 });
 const CHEV = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
 let currentPath = [];
+let koshaExit = '#/'; // where Exit leaves the dictionary to: the last place outside it
 function renderChrome(r, path) {
   currentPath = path;
   applyMenu();
@@ -2599,6 +2608,14 @@ function renderChrome(r, path) {
   // tabs
   const tab = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 'about' ? 'settings' : page === 's' ? (r.params.get('from') === 'my' ? 'my' : '') : page === 'suktas' ? '' : page);
   $('#tabbar').querySelectorAll('[data-tab]').forEach((a) => (a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
+  // inside the dictionary its own bar replaces the app's tabs (on phones)
+  document.body.classList.toggle('in-kosha', page === 'kosha');
+  const kb = $('#kbar'); kb.hidden = page !== 'kosha';
+  if (page !== 'kosha') { koshaExit = getHash() || '#/'; } else {
+    $('#kExit').setAttribute('href', koshaExit);
+    const kHome = !r.parts[1] && !r.params.get('letter') && !r.params.get('at') && !r.params.get('find');
+    kb.querySelectorAll('[data-k]').forEach((a) => ((a.dataset.k === 'home' && kHome) || (a.dataset.k === 'find' && r.params.get('find')) ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
+  }
   $('#tbSearch')?.[page === 'search' ? 'setAttribute' : 'removeAttribute']('aria-current', 'page');
   document.body.classList.toggle('reading', page === 'v' && r.parts[2] === 'c');
   if (!(page === 'v' && r.parts[2] === 'c')) { $('#readerbar').hidden = true; readerNav = page === 's' ? sukNav : page === 'kosha' ? readerNav : null; }
@@ -2655,6 +2672,7 @@ const KOSHA_AUTHOR = `<details class="k-about" id="kAbout">
 </details>`;
 
 async function viewKosha(head, params) {
+  kosha_off?.();
   setTitle(head ? `${devaToIast(head)} · Dictionary` : 'Dictionary');
   const man = await koshaData.manifest();
   const bar = `<form class="k-find" id="kFind" role="search"><input id="kq" type="search" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="${esc(Tp('Look up a word: agni, अग्नि, ಅಗ್ನಿ', 'शब्दं विचिनु'))}" aria-label="${esc(Tp('Look up a word', 'शब्दं विचिनु'))}"><div class="k-sug" id="kSug" hidden></div></form>`;
@@ -2665,7 +2683,7 @@ async function viewKosha(head, params) {
     const { prev, next } = await koshaNeighbours(koshaData, head);
     // a sideways swipe (or the arrow keys) moves to the neighbouring word
     readerNav = { prev: prev && { href: koshaHref(prev), label: devaToIast(prev) }, next: next && { href: koshaHref(next), label: devaToIast(next) }, sec: 'word' };
-    main.innerHTML = `<article class="col k-entry">${bar}
+    main.innerHTML = `<article class="col k-entry"><nav class="k-crumb" aria-label="${esc(Tp('Where you are', 'स्थानम्'))}"><a href="#/kosha">${T('Dictionary', 'कोशः')}</a><span aria-hidden="true">›</span>${/[\u0904-\u0939]/.test([...e[0]][0]) ? `<a href="${koshaLetterHref([...e[0]][0])}" lang="sa">${[...e[0]][0]}</a><span aria-hidden="true">›</span>` : ''}<b lang="sa">${esc(e[0])}</b></nav>${bar}
       <h1 class="k-head" lang="sa">${esc(e[0])}</h1>
       <p class="k-iast">${esc(devaToIast(e[0]))}${e[1].length ? ` · <span class="k-alt">${T('also', 'अपि')} <span lang="sa">${e[1].map(esc).join(', ')}</span></span>` : ''}</p>
       <ol class="k-senses">${koshaSenses(e[2])}</ol>
@@ -2674,23 +2692,86 @@ async function viewKosha(head, params) {
     wireKoshaFind(); return;
   }
   readerNav = null;
-  // browse: the letters, and the page of headwords that holds `at`
-  const at = params.get('at') || man.shards[0][0];
-  const page = await shardAt(koshaData, at);
-  const firstAt = page.entries.findIndex((x) => x[0] >= at);
+  const man2 = man;
+  if (params.get('letter') || params.get('at')) return viewKoshaList(man2, params, bar, credit);
+  // home: the search box, the word of the day and the letters (no word list: a letter opens its own page)
+  kScroll.clear();
   main.innerHTML = `<div class="col k-browse">${bar}
     <section class="hero wotd" id="wotd" hidden></section>
-    <h1>${T('Dictionary', 'कोशः')}</h1>
-    <p class="lede">${esc(Tp('Śabdārtha Kaustubha: Sanskrit words and their Kannada meanings. Look a word up above, or pick a letter.', 'शब्दार्थकौस्तुभः'))}</p>
-    <div class="chips k-letters" role="group" aria-label="${esc(Tp('Letters', 'वर्णाः'))}">${KOSHA_LETTERS.map((l) => `<a class="chip" lang="sa" href="#/kosha?at=${l}">${l}</a>`).join('')}</div>
-    <div class="k-pager">${page.prev ? `<a href="#/kosha?at=${encodeURIComponent(page.prev)}">← ${esc(Tp('Earlier words', 'पूर्वशब्दाः'))}</a>` : '<span></span>'}<small>${fmt(page.entries.length)} ${esc(Tp('words', 'शब्दाः'))}</small>${page.next ? `<a href="#/kosha?at=${encodeURIComponent(page.next)}">${esc(Tp('Later words', 'उत्तरशब्दाः'))} →</a>` : '<span></span>'}</div>
-    <div class="k-list">${page.entries.map((x, i) => `<a${i === firstAt ? ' id="kfirst"' : ''} href="${koshaHref(x[0])}"><b lang="sa">${esc(x[0])}</b><span lang="kn">${esc((x[2][0]?.[1] || '').slice(0, 70))}</span></a>`).join('')}</div>
+    <div class="k-sub"><h2>${T('Browse by letter', 'वर्णक्रमेण')}</h2><small>${fmt(man.letters.length)} ${esc(Tp('letters', 'वर्णाः'))} · ${fmt(man.count)} ${esc(Tp('words', 'शब्दाः'))}</small></div>
+    <nav class="k-grid" aria-label="${esc(Tp('Letters', 'वर्णाः'))}">${man.letters.map((l) => `<a class="k-tile" href="${koshaLetterHref(l[0])}"><b lang="sa">${l[0]}</b><small>${fmt(l[1])}</small></a>`).join('')}</nav>
     ${KOSHA_AUTHOR}
     ${credit}</div>`;
   wireKoshaFind();
   wireWotd($('#wotd')).catch(() => { /* the card is optional: not yet cached and offline */ });
   if (params.get('about') === 'author') { const d = $('#kAbout'); d.open = true; d.scrollIntoView({ block: 'start' }); }
-  else if (params.get('at')) document.getElementById('kfirst')?.scrollIntoView({ block: 'start' });
+  else if (params.get('find')) setTimeout(() => { window.scrollTo(0, 0); $('#kq')?.focus(); }, 0);
+}
+const koshaLetterHref = (ch) => `#/kosha?letter=${encodeURIComponent(ch)}`;
+const KOSHA_QUICK = [...'अआइउएकखगचजटतदधनपफबमयरलवशसह'];
+const kScroll = new Map(); // where each list was left when a word was opened: Back returns to the same spot
+let kosha_off = null; // removes the scroll listeners of the list on screen
+// a letter page (or the words around one word): a continuous list that starts at the first word, with dividers between letters
+async function viewKoshaList(man, params, bar, credit) {
+  const letter = params.get('letter');
+  const counts = new Map(man.letters.map((l) => [l[0], l[1]]));
+  const li = man.letters.find((l) => l[0] === letter);
+  const start = li ? li[2] : params.get('at');
+  if (letter && !li) { go('#/kosha'); return; }
+  const page = await shardAt(koshaData, start);
+  const idx = page.entries.findIndex((x) => x[0] >= start);
+  const from = li ? Math.max(idx, 0) : Math.max(0, idx - 6);
+  const startLetter = [...start][0];
+  let shard = page.i; let prevL = li ? letter : null; // the bar already names the letter a letter page opens on
+  const rowsHTML = (entries, f) => entries.slice(f).map((x, k) => {
+    const ch = [...x[0]][0]; let h = '';
+    if (ch !== prevL && counts.has(ch)) h = `<div class="k-div" id="kl-${ch}" data-l="${ch}" data-n="${counts.get(ch)}"><b lang="sa">${ch}</b><small>${fmt(counts.get(ch))} ${esc(Tp('words', 'शब्दाः'))}</small></div>`;
+    prevL = ch;
+    return `${h}<a${!li && f + k === idx ? ' id="kfirst"' : ''} href="${koshaHref(x[0])}"><b lang="sa">${esc(x[0])}</b><span lang="kn">${esc((x[2][0]?.[1] || '').slice(0, 70))}</span></a>`;
+  }).join('');
+  main.innerHTML = `<div class="col k-browse has-strip">
+    <div class="k-bar" id="kBar"><a href="#/kosha">${T('Dictionary', 'कोशः')}</a><span aria-hidden="true">›</span><b lang="sa" id="kBarL">${startLetter}</b><small id="kBarN">${fmt(counts.get(startLetter) || 0)} ${esc(Tp('words', 'शब्दाः'))}</small></div>
+    ${bar}
+    <div class="k-list" id="kList">${rowsHTML(page.entries, from)}</div>
+    <div class="k-more" id="kMore">${esc(Tp('Loading more words…', 'शब्दाः आगच्छन्ति…'))}</div>
+    ${credit}</div>
+    <nav class="k-strip" id="kStrip" aria-label="${esc(Tp('Jump to a letter', 'वर्णं गच्छ'))}">${KOSHA_QUICK.map((l) => `<a href="${koshaLetterHref(l)}" lang="sa" data-l="${l}">${l}</a>`).join('')}</nav>`;
+  wireKoshaFind();
+  const list = $('#kList'); const more = $('#kMore');
+  let loaded = 1; let busy = false;
+  const loadNext = async () => {
+    if (busy) return false;
+    if (shard >= man.shards.length - 1) { more.textContent = Tp('End of the dictionary', 'कोशस्य अन्तः'); io?.disconnect(); return false; }
+    busy = true;
+    try { const es = await koshaData.shard(man.shards[shard + 1][1]); shard++; loaded++; list.insertAdjacentHTML('beforeend', rowsHTML(es, 0)); }
+    catch { more.textContent = Tp('Could not load more words. Check the connection.', 'अधिकशब्दाः न लब्धाः।'); busy = false; return false; }
+    busy = false; return true;
+  };
+  const io = 'IntersectionObserver' in window ? new IntersectionObserver((en) => { if (en[0].isIntersecting) loadNext().then((ok) => ok && sync()); }, { rootMargin: '900px 0px' }) : null;
+  io?.observe(more);
+  // the bar and the strip follow the letter at the top of the screen
+  const barL = $('#kBarL'); const barN = $('#kBarN'); let cur = startLetter;
+  const sync = () => {
+    const lim = $('#kBar').getBoundingClientRect().bottom + 2; let d = null;
+    for (const el of list.querySelectorAll('.k-div')) { if (el.getBoundingClientRect().top <= lim) d = el; else break; }
+    const ch = d ? d.dataset.l : startLetter;
+    if (ch === cur) return;
+    cur = ch; barL.textContent = ch; barN.textContent = `${fmt(counts.get(ch) || 0)} ${Tp('words', 'शब्दाः')}`;
+    document.querySelectorAll('#kStrip a').forEach((a) => (a.dataset.l === ch ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current')));
+  };
+  let tick = 0;
+  const onScroll = () => { if (!tick) tick = requestAnimationFrame(() => { tick = 0; sync(); }); };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  kosha_off = () => { window.removeEventListener('scroll', onScroll); io?.disconnect(); kosha_off = null; };
+  sync();
+  list.addEventListener('click', (e) => { if (e.target.closest('a[href^="#/kosha/"]')) kScroll.set(getHash(), { y: window.scrollY, n: loaded }); });
+  // Back from a word: load the same stretch of the list and return to the same place
+  const saved = kScroll.get(getHash());
+  if (saved) {
+    while (loaded < saved.n && await loadNext()) { /* load the stretch you had open */ }
+    await document.fonts.ready; window.scrollTo(0, saved.y); sync();
+  } else if (!li) document.getElementById('kfirst')?.scrollIntoView({ block: 'start' });
+  else window.scrollTo(0, 0);
 }
 // the word-of-the-day card: today's word from a fixed list, and a button for another one at random
 const SHUFFLE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h3.5c2 0 3.2 1 4.3 2.6l2.4 3.8c1.1 1.6 2.3 2.6 4.3 2.6H21M3 17h3.5c2 0 3.2-1 4.3-2.6M13.2 8.4c1.1-1.4 2.3-1.4 4.3-1.4H21M18 4l3 3-3 3M18 14l3 3-3 3"/></svg>';
@@ -3078,7 +3159,7 @@ async function route() {
     }));
   } else {
     // the dictionary scrolls itself to a letter (?at) or the author note (?about)
-    const placed = r.parts[0] === 'kosha' && !r.parts[1] && (r.params.get('at') || r.params.get('about'));
+    const placed = r.parts[0] === 'kosha' && !r.parts[1] && (r.params.get('at') || r.params.get('about') || r.params.get('letter') || r.params.get('find'));
     if (!placed && (!r.params.get('v') || r.params.get('v') === '1')) window.scrollTo(0, 0);
     routing = false;
   }
