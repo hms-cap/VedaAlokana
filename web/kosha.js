@@ -64,3 +64,17 @@ export async function neighbours(data, head) {
   const next = at >= 0 && at < es.length - 1 ? es[at + 1][0] : i < m.shards.length - 1 ? m.shards[i + 1][0] : null;
   return { prev, next };
 }
+
+/** Whole days since 1970 for a date, by its local calendar day (so the word changes at the reader's midnight). */
+export const dayNumber = (d = new Date()) => Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+
+/** The word of the day: the pool is in a fixed order and the card walks along it one word a day. */
+export const wordOfDay = (words, day = dayNumber()) => words[((day % words.length) + words.length) % words.length];
+
+/** Another word at random, never the one shown (rnd is Math.random, or a fixed function in tests). */
+export function anotherWord(words, shown, rnd = Math.random) {
+  if (words.length < 2) return words[0];
+  let w;
+  do { w = words[Math.floor(rnd() * words.length)]; } while (w[0] === shown);
+  return w;
+}

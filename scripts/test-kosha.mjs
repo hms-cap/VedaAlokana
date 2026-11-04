@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import { parseBabylon } from './build-kosha.mjs';
 import { looseKey } from '../web/search-key.js';
-import { koshaRows, lookup, shardOf, matchKeys, neighbours } from '../web/kosha.js';
+import { koshaRows, lookup, shardOf, matchKeys, neighbours, wordOfDay, anotherWord, dayNumber } from '../web/kosha.js';
 
 const dir = new URL('../web/data/kosha/', import.meta.url).pathname;
 let bad = 0;
@@ -73,6 +73,20 @@ for (let i = 1; i < man.shards.length; i++) {
 const mid = walk[Math.floor(walk.length / 2)];
 check((await neighbours(data, mid)).prev === walk[Math.floor(walk.length / 2) - 1] && (await neighbours(data, mid)).next === walk[Math.floor(walk.length / 2) + 1], 'neighbours inside a shard');
 check((await neighbours(data, walk[0])).prev === null && (await neighbours(data, walk.at(-1))).next === null, 'no neighbour past the ends');
+
+// word of the day: a pool of documented words, each really in the dictionary and matching its first sense
+const wotd = JSON.parse(fs.readFileSync(dir + 'wotd.json', 'utf8')).words;
+check(wotd.length >= 1000 && new Set(wotd.map((w) => w[0])).size === wotd.length, `word-of-the-day pool: ${wotd.length} distinct words`);
+for (const w of wotd.filter((_, i) => i % 40 === 0)) {
+  const e = await lookup(data, w[0]);
+  check(e && e[2][0][1] === w[2] && w.slice(2).every(Boolean), `${w[0]}: card matches the entry`);
+}
+check(dayNumber(new Date(2026, 10, 4)) - dayNumber(new Date(2026, 10, 3)) === 1, 'dayNumber counts local days');
+check(wordOfDay(wotd, 100)[0] === wotd[100][0] && wordOfDay(wotd, wotd.length + 5)[0] === wotd[5][0] && wordOfDay(wotd, -1)[0] === wotd.at(-1)[0], 'wordOfDay walks the list and wraps');
+check(new Set(Array.from({ length: wotd.length }, (_, i) => wordOfDay(wotd, i)[0])).size === wotd.length, 'a different word every day until the list repeats');
+let k = 0; // a fixed sequence of random numbers that first lands on the shown word
+const seq = () => (k++ % 2 ? 0.5 : 0);
+check(anotherWord(wotd, wotd[0][0], seq)[0] !== wotd[0][0] && anotherWord(wotd, wotd[3][0])[0] !== wotd[3][0], 'another word is never the one shown');
 
 console.log(bad ? `${bad} check(s) failed` : 'all dictionary checks passed');
 process.exit(bad ? 1 : 0);

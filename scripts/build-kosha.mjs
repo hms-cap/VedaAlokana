@@ -15,6 +15,8 @@
 //   kosha/shards.json   { v, count, shards: [[first headword, file, headwords]] }  (sorted: a headword is in the last shard whose first headword is not after it)
 //   kosha/<file>.json   [[headword, [variants], [sense, …]], …] sorted by headword
 //                       sense = [पदविभागः, कन्नडार्थः, निष्पत्तिः, व्युत्पत्तिः, प्रयोगाः, उल्लेखाः, विस्तारः] (trailing empties dropped)
+//   kosha/wotd.json     { v, words: [[headword, पदविभागः, कन्नडार्थः, व्युत्पत्तिः, प्रयोगाः, उल्लेखाः]] } for the word-of-the-day card:
+//                       about 1,100 well-documented words in a fixed shuffled order (see pickWords)
 //   kosha/keys.tsv      "<looseKey>\t<headword>" for every headword and variant, sorted by key
 // Shards are runs of the sorted headwords, about 700 KB each.
 import fs from 'node:fs';
@@ -62,6 +64,26 @@ export function parseBabylon(text) {
   return recs;
 }
 
+/**
+ * Words for the word-of-the-day card: a single word of 3-9 letters whose first sense has a Kannada meaning, a derivation and a
+ * quotation with its source, and that has at most four senses. A seeded shuffle fixes the order, so the same data always gives
+ * the same list; the card walks along it one word a day.
+ */
+export function pickWords(recs, count = 1100) {
+  const ok = [];
+  for (const r of recs) {
+    const n = [...r.h].filter((c) => /[\u0904-\u0939]/.test(c)).length;
+    const s = r.senses[0];
+    if (/[\s()+]/.test(r.h) || n < 3 || n > 9 || r.senses.length > 4) continue;
+    if (!s[1] || !s[3] || !s[4] || !s[5] || s[1].length > 60 || s[4].length > 140) continue;
+    ok.push([r.h, s[0] || '', s[1], s[3], s[4], s[5]]);
+  }
+  let a = 0x1927; // mulberry32
+  const rnd = () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  for (let i = ok.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [ok[i], ok[j]] = [ok[j], ok[i]]; }
+  return ok.slice(0, count);
+}
+
 export function buildKosha(babylonPath, dataDir = 'web/data') {
   const recs = [...parseBabylon(fs.readFileSync(babylonPath, 'utf8')).values()].filter((r) => r.senses.length);
   recs.sort((a, b) => (a.h < b.h ? -1 : a.h > b.h ? 1 : 0));
@@ -94,6 +116,7 @@ export function buildKosha(babylonPath, dataDir = 'web/data') {
   for (const r of recs) for (const w of [r.h, ...r.alts]) { const k = looseKey(w); if (k) keys.add(`${k}\t${r.h}`); }
   const lines = [...keys].sort();
   fs.writeFileSync(path.join(out, 'keys.tsv'), lines.join('\n'));
+  fs.writeFileSync(path.join(out, 'wotd.json'), JSON.stringify({ v: 1, words: pickWords(recs) }));
   fs.writeFileSync(path.join(out, 'shards.json'), JSON.stringify({ v: 1, count: recs.length, shards: manifest }));
   console.log(`kosha: ${recs.length} headwords, ${recs.reduce((n, r) => n + r.senses.length, 0)} senses, ${manifest.length} shards (${(bytes / 1e6).toFixed(1)} MB), ${lines.length} keys`);
   return { count: recs.length, shards: manifest.length };
