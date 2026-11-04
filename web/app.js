@@ -302,6 +302,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.29.1', '2026-11-04', ['Fixed: the Dictionary showed “Couldn’t load this page” on devices that had the previous version’s dictionary index stored.']],
   ['1.29.0', '2026-11-04', ['The Dictionary works like an app: its home shows only the letters (with their word counts) and the word of the day; a letter opens its own page with its first word at the top and the rest of the dictionary scrolling on below, with a letter strip to jump between letters. On phones a Dictionary bar (Home, Find, Today, Exit) replaces the app tabs, every word shows where you are (Dictionary › letter › word), and Back returns to the same place in the list.']],
   ['1.28.3', '2026-11-04', ['The Dictionary page has an About the author note (Chakravarti Srinivasa Gopalacharya), also linked from every word. Fixed: the letter buttons now scroll to the chosen letter instead of the top of the page.']],
   ['1.28.2', '2026-11-04', ['Settings → Offline has a Dictionary download (about 23 MB on the device, 4 MB to download): every word, the search and the Word of the day then work with no connection. Without it, a word works offline only once you have opened its part of the dictionary.']],
@@ -2642,7 +2643,13 @@ async function viewLibrary() {
 // ---------- dictionary: Śabdārtha Kaustubha, Sanskrit → Kannada ----------
 const koshaData = {
   keys: () => (cache.kkeys ||= tsv('data/kosha/keys.tsv').then((ls) => ls.map((l) => l.split('\t'))).catch((e) => { cache.kkeys = null; throw e; })),
-  manifest: async () => (cache.kman ||= await json('data/kosha/shards.json')),
+  // an older copy kept by the offline cache has no letters: fetch it fresh, and if that fails, fall back to the plain letters
+  manifest: async () => (cache.kman ||= await (async () => {
+    let m = await json('data/kosha/shards.json');
+    if (!m.letters) { try { m = await (await fetch(`data/kosha/shards.json?fresh=${Date.now()}`, { cache: 'reload' })).json(); } catch { /* offline */ } }
+    if (!m.letters) m = { ...m, letters: KOSHA_LETTERS.map((l) => [l, 0, l]) };
+    return m;
+  })()),
   words: async () => (cache.kwotd ||= (await json('data/kosha/wotd.json')).words),
   shard: async (f) => ((cache.kshard ||= new Map()).has(f) ? cache.kshard.get(f) : (cache.kshard.set(f, await json(`data/kosha/${f}.json`)), cache.kshard.get(f))),
 };
@@ -2699,7 +2706,7 @@ async function viewKosha(head, params) {
   main.innerHTML = `<div class="col k-browse">${bar}
     <section class="hero wotd" id="wotd" hidden></section>
     <div class="k-sub"><h2>${T('Browse by letter', 'वर्णक्रमेण')}</h2><small>${fmt(man.letters.length)} ${esc(Tp('letters', 'वर्णाः'))} · ${fmt(man.count)} ${esc(Tp('words', 'शब्दाः'))}</small></div>
-    <nav class="k-grid" aria-label="${esc(Tp('Letters', 'वर्णाः'))}">${man.letters.map((l) => `<a class="k-tile" href="${koshaLetterHref(l[0])}"><b lang="sa">${l[0]}</b><small>${fmt(l[1])}</small></a>`).join('')}</nav>
+    <nav class="k-grid" aria-label="${esc(Tp('Letters', 'वर्णाः'))}">${man.letters.map((l) => `<a class="k-tile" href="${koshaLetterHref(l[0])}"><b lang="sa">${l[0]}</b><small>${l[1] ? fmt(l[1]) : ''}</small></a>`).join('')}</nav>
     ${KOSHA_AUTHOR}
     ${credit}</div>`;
   wireKoshaFind();
@@ -2725,12 +2732,12 @@ async function viewKoshaList(man, params, bar, credit) {
   let shard = page.i; let prevL = li ? letter : null; // the bar already names the letter a letter page opens on
   const rowsHTML = (entries, f) => entries.slice(f).map((x, k) => {
     const ch = [...x[0]][0]; let h = '';
-    if (ch !== prevL && counts.has(ch)) h = `<div class="k-div" id="kl-${ch}" data-l="${ch}" data-n="${counts.get(ch)}"><b lang="sa">${ch}</b><small>${fmt(counts.get(ch))} ${esc(Tp('words', 'शब्दाः'))}</small></div>`;
+    if (ch !== prevL && counts.get(ch)) h = `<div class="k-div" id="kl-${ch}" data-l="${ch}" data-n="${counts.get(ch)}"><b lang="sa">${ch}</b><small>${fmt(counts.get(ch))} ${esc(Tp('words', 'शब्दाः'))}</small></div>`;
     prevL = ch;
     return `${h}<a${!li && f + k === idx ? ' id="kfirst"' : ''} href="${koshaHref(x[0])}"><b lang="sa">${esc(x[0])}</b><span lang="kn">${esc((x[2][0]?.[1] || '').slice(0, 70))}</span></a>`;
   }).join('');
   main.innerHTML = `<div class="col k-browse has-strip">
-    <div class="k-bar" id="kBar"><a href="#/kosha">${T('Dictionary', 'कोशः')}</a><span aria-hidden="true">›</span><b lang="sa" id="kBarL">${startLetter}</b><small id="kBarN">${fmt(counts.get(startLetter) || 0)} ${esc(Tp('words', 'शब्दाः'))}</small></div>
+    <div class="k-bar" id="kBar"><a href="#/kosha">${T('Dictionary', 'कोशः')}</a><span aria-hidden="true">›</span><b lang="sa" id="kBarL">${startLetter}</b><small id="kBarN">${counts.get(startLetter) ? `${fmt(counts.get(startLetter))} ${esc(Tp('words', 'शब्दाः'))}` : ''}</small></div>
     ${bar}
     <div class="k-list" id="kList">${rowsHTML(page.entries, from)}</div>
     <div class="k-more" id="kMore">${esc(Tp('Loading more words…', 'शब्दाः आगच्छन्ति…'))}</div>
@@ -2756,7 +2763,7 @@ async function viewKoshaList(man, params, bar, credit) {
     for (const el of list.querySelectorAll('.k-div')) { if (el.getBoundingClientRect().top <= lim) d = el; else break; }
     const ch = d ? d.dataset.l : startLetter;
     if (ch === cur) return;
-    cur = ch; barL.textContent = ch; barN.textContent = `${fmt(counts.get(ch) || 0)} ${Tp('words', 'शब्दाः')}`;
+    cur = ch; barL.textContent = ch; barN.textContent = counts.get(ch) ? `${fmt(counts.get(ch))} ${Tp('words', 'शब्दाः')}` : '';
     document.querySelectorAll('#kStrip a').forEach((a) => (a.dataset.l === ch ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current')));
   };
   let tick = 0;
