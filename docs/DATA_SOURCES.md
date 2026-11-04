@@ -101,3 +101,10 @@ The search indexes in `web/data/search/` are derived from the app's own data (no
 - Aliases of sūktas (`scripts/suktas.mjs`) and the kind, facet, Veda, everyday and stop words (`scripts/search-aliases.json`) were written for this app. The Kannada and Hindi everyday words (ಬೆಂಕಿ, ಮುಂಜಾನೆ, ಗಾಳಿ …) should be read by a native speaker.
 - Known limits: a few verse numbers repeat inside one section of the source (Atharvaveda 11.3, Yajurveda 1.6 and 1.12), so those verses cannot be told apart by number; Atharvaveda 16.8.5 has no text; the Devanagari and IAST editions of about 85 Ṛgveda verses differ in a letter (cit/cid), so a typed spelling may match one and not the other; a typo in a long query (sandhi, mis-heard words) and English words from the translation are not searched yet.
 
+
+### Dictionary corrections
+
+The digital text of the Śabdārtha Kaustubha has some typing and encoding slips. `scripts/build-kosha.mjs` corrects them when it builds the data:
+- **Reviewed word corrections** in `scripts/kosha-errata.tsv`, each with its evidence (usually the entry's own derivation or quotation), e.g. अष्टमूत्रिधर → अष्टमूर्तिधर. The source spelling of a corrected headword still finds the word in search but is not shown.
+- **Mechanical clean-ups** of the Sanskrit text (`cleanSa`): two vowel signs in a row, a virama before a vowel sign, the Latin letter s used for the avagraha, zero-width joiners standing for spaces, and the digit zero used as the abbreviation sign (माघ० → माघ॰). The Kannada meanings are left as they are.
+- `node scripts/kosha-suspects.mjs` lists possible misspellings for review; nothing it lists is applied until it is checked and added to the errata file.

@@ -1,0 +1,14 @@
+# Corrections to the Śabdārtha Kaustubha source text, applied by scripts/build-kosha.mjs.
+# kind	wrong	right	evidence
+# head: a headword spelt wrongly in the source (the wrong spelling stays searchable as a variant)
+# text: a wrong piece of text inside the senses (replaced everywhere it occurs)
+head	अष्टमूत्रि	अष्टमूर्ति	derivation "अष्टौ मूर्तयोऽस्य"; Kannada "೮ ಮೂರ್ತಿಗಳು"
+head	अष्टमूत्रिधर	अष्टमूर्तिधर	derivation "अष्टानां मूर्तीनां धरः"; quotation "…अभूदष्टमूर्तिधरमूर्तिः…" (Māgha 14.18)
+head	क्षेममूत्रि	क्षेममूर्ति	quotation "उग्रश्रवाः उग्रसेनः क्षेममूर्तिस्तथैव च" (Mahābhārata, Ādi 67)
+head	चतुर्विंशतिमूत्रि	चतुर्विंशतिमूर्ति	Kannada "೨೪ ಮೂರ್ತಿಗಳು"
+head	गत्रिका	गर्तिका	derivation "गर्तोऽस्त्यस्याः"; quotation "तन्तुशाला तु गर्तिका" (Abhidhānacintāmaṇi)
+text	माघ्ha0	माघ०	stray Latin letters in a source reference
+text	धिष्ण्Yओल्का	धिष्ण्योल्का	stray Latin letter (धिष्ण्या + उल्का)
+text	विशेXओऽस्ति	विशेषोऽस्ति	stray Latin letter
+text	नित्यप्रळಯ.v"	नित्यप्रळಯ. "	stray Latin letter after a full stop
+text	ಅಂಗೀಕರಿಸಿರುವರು.v	ಅಂಗೀಕರಿಸಿರುವರು.	stray Latin letter after a full stop

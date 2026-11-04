@@ -30,7 +30,8 @@ function toScript(root) {
   const hit = [];
   for (let n = w.nextNode(); n; n = w.nextNode()) if (DEVA.test(n.data) && n.parentElement?.closest('[lang="sa"]')) hit.push(n);
   // only write what changed: signs that stay the same in Kannada (the danda) would otherwise match again and loop forever
-  for (const n of hit) { const t = toKnda(n.data); if (t !== n.data) n.data = t; }
+  // the abbreviation sign (माघ॰) is written as a full stop in Kannada (ಮಾಘ.)
+  for (const n of hit) { const t = toKnda(n.data).replace(/\u0970/g, '.'); if (t !== n.data) n.data = t; }
 }
 const scriptObserver = new MutationObserver((ms) => {
   if (prefs.script !== 'knda') return;

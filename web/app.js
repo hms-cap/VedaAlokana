@@ -303,6 +303,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.30.1', '2026-11-04', ['Dictionary corrections: misspelt headwords fixed from their own derivations and quotations (अष्टमूर्तिधर, not अष्टमूत्रिधर, and others), encoding slips in the source cleaned up (doubled vowel signs, stray Latin letters, the abbreviation sign: माघ॰). The old spellings still find the word in search.']],
   ['1.30.0', '2026-11-04', ['The Dictionary is also available as its own app, Śabdārtha Kaustubha, at kosha/ (linked from the Dictionary footer): it installs separately, has its own version and shares the offline download with this app. The Dictionary screens moved into a shared module; nothing changes in how they work.']],
   ['1.29.1', '2026-11-04', ['Fixed: the Dictionary showed “Couldn’t load this page” on devices that had the previous version’s dictionary index stored.']],
   ['1.29.0', '2026-11-04', ['The Dictionary works like an app: its home shows only the letters (with their word counts) and the word of the day; a letter opens its own page with its first word at the top and the rest of the dictionary scrolling on below, with a letter strip to jump between letters. On phones a Dictionary bar (Home, Find, Today, Exit) replaces the app tabs, every word shows where you are (Dictionary › letter › word), and Back returns to the same place in the list.']],
