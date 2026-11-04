@@ -140,3 +140,11 @@ docs/           data sources, licences, gaps
 ## Licence note
 
 The Ṛgveda texts from VedaWeb are CC BY-NC-SA 4.0, so this project must stay **non-commercial**, credit its sources, and share derived data under the same terms. See [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md) before publishing it more widely.
+
+## Standalone Dictionary app (`web/kosha/`)
+
+The Dictionary is also an app of its own at `kosha/` (Śabdārtha Kaustubha, installable, own icon, own service worker with the scope `kosha/`).
+- Screens: `web/kosha-ui.js` is shared by Vedāvalokanam (`web/app.js`) and the standalone app (`web/kosha/app.js`).
+- Versions are separate: `web/version.js` (Vedāvalokanam) and `web/kosha/version.js` (standalone). A change to `kosha-ui.js`, `kosha.js`, `styles.css` or `data/kosha/` reaches both apps: bump both. A change only inside `web/kosha/` bumps only `web/kosha/version.js`.
+- Offline: both apps keep dictionary data in the same cache (`vedalokana-data`), so one download serves both.
+- `node scripts/test-kosha-app.mjs` checks the app's files, manifest, icons and service-worker list.
