@@ -9,7 +9,7 @@ import { search, groupResults } from './search.js';
 import { padaDeva, cleanPada } from './pada.js';
 import { joinForms } from './sandhi.js';
 import { devaToIast } from './translit.js';
-import { FIELDS, SOURCE, koshaHref, koshaRows, lookup as koshaLookup, neighbours as koshaNeighbours, shardAt } from './kosha.js';
+import { FIELDS, SOURCE, koshaHref, koshaRows, lookup as koshaLookup, neighbours as koshaNeighbours, shardAt, wordOfDay, anotherWord } from './kosha.js';
 import { looseKey } from './search-key.js';
 
 const COL = { d1: 0, d2: 1, v: 2, rishi: 3, devata: 4, chandas: 5 };
@@ -295,6 +295,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.28.0', '2026-11-04', ['The Dictionary tab opens with a Word of the day card: a documented word with its Kannada meaning, derivation and a quotation, new every day at your midnight. Another word picks one at random; Today’s word brings it back; the arrow opens the full entry.']],
   ['1.27.2', '2026-11-04', ['In the Dictionary, swipe left or right on a word to move to the next or previous word (the arrow keys do the same on a keyboard).']],
   ['1.27.1', '2026-11-04', ['The Dictionary has its own place in the bottom bar (and in the side list on wide screens). The five bar icons are slightly smaller to fit.']],
   ['1.27.0', '2026-11-04', ['New Dictionary (Library → Dictionary, or a word typed in search): the Śabdārtha Kaustubha, about 46,800 Sanskrit words with Kannada meanings, derivations and quotations. Browse by letter, look a word up in Devanagari, Kannada or Roman letters, and step to the neighbouring words.']],
@@ -2621,6 +2622,7 @@ async function viewLibrary() {
 const koshaData = {
   keys: () => (cache.kkeys ||= tsv('data/kosha/keys.tsv').then((ls) => ls.map((l) => l.split('\t'))).catch((e) => { cache.kkeys = null; throw e; })),
   manifest: async () => (cache.kman ||= await json('data/kosha/shards.json')),
+  words: async () => (cache.kwotd ||= (await json('data/kosha/wotd.json')).words),
   shard: async (f) => ((cache.kshard ||= new Map()).has(f) ? cache.kshard.get(f) : (cache.kshard.set(f, await json(`data/kosha/${f}.json`)), cache.kshard.get(f))),
 };
 // the letters of the browse bar: vowels, then consonants
@@ -2658,6 +2660,7 @@ async function viewKosha(head, params) {
   const page = await shardAt(koshaData, at);
   const firstAt = page.entries.findIndex((x) => x[0] >= at);
   main.innerHTML = `<div class="col k-browse">${bar}
+    <section class="hero wotd" id="wotd" hidden></section>
     <h1>${T('Dictionary', 'कोशः')}</h1>
     <p class="lede">${esc(Tp('Śabdārtha Kaustubha: Sanskrit words and their Kannada meanings. Look a word up above, or pick a letter.', 'शब्दार्थकौस्तुभः'))}</p>
     <div class="chips k-letters" role="group" aria-label="${esc(Tp('Letters', 'वर्णाः'))}">${KOSHA_LETTERS.map((l) => `<a class="chip" lang="sa" href="#/kosha?at=${l}">${l}</a>`).join('')}</div>
@@ -2665,8 +2668,38 @@ async function viewKosha(head, params) {
     <div class="k-list">${page.entries.map((x, i) => `<a${i === firstAt ? ' id="kfirst"' : ''} href="${koshaHref(x[0])}"><b lang="sa">${esc(x[0])}</b><span lang="kn">${esc((x[2][0]?.[1] || '').slice(0, 70))}</span></a>`).join('')}</div>
     ${credit}</div>`;
   wireKoshaFind();
+  wireWotd($('#wotd')).catch(() => { /* the card is optional: not yet cached and offline */ });
   if (params.get('at')) document.getElementById('kfirst')?.scrollIntoView({ block: 'start' });
 }
+// the word-of-the-day card: today's word from a fixed list, and a button for another one at random
+const SHUFFLE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h3.5c2 0 3.2 1 4.3 2.6l2.4 3.8c1.1 1.6 2.3 2.6 4.3 2.6H21M3 17h3.5c2 0 3.2-1 4.3-2.6M13.2 8.4c1.1-1.4 2.3-1.4 4.3-1.4H21M18 4l3 3-3 3M18 14l3 3-3 3"/></svg>';
+function wotdHTML(w, today) {
+  const [head, pos, kn, deriv, quote, src] = w;
+  const day = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' }).format(new Date());
+  return `${SUN_SVG}
+    <p class="hero-k" id="wotdK">${today ? `${T('Word of the day', 'अद्यतनः शब्दः')} · ${esc(day)}` : T('Another word', 'अन्यः शब्दः')}</p>
+    <a class="wotd-w" href="${koshaHref(head)}" lang="sa">${esc(head)}</a>
+    <p class="wotd-i">${esc(devaToIast(head))}${pos ? ` · <span lang="sa">${esc(pos)}</span>` : ''}</p>
+    <p class="wotd-kn" lang="kn">${esc(kn)}</p>
+    ${deriv ? `<p class="wotd-d"><small>${T('Derivation', 'व्युत्पत्तिः')}</small> <span lang="sa">${esc(deriv)}</span></p>` : ''}
+    ${quote ? `<p class="wotd-q" lang="sa">${esc(quote.replace(/^"|"$/g, ''))}<cite>${esc(src)}</cite></p>` : ''}
+    <div class="hero-f wotd-f">
+      <span class="wotd-btns"><button type="button" class="wotd-b" id="wotdMore">${SHUFFLE}<span>${T('Another word', 'अन्यं शब्दम्')}</span></button>${today ? '' : `<button type="button" class="wotd-b" id="wotdToday"><span>${T('Today’s word', 'अद्यतनः')}</span></button>`}</span>
+      <a class="hero-go" href="${koshaHref(head)}" aria-label="${esc(Tp('Open the entry', 'प्रविष्टिं पश्य'))}">${ARROW}</a>
+    </div>`;
+}
+async function wireWotd(el) {
+  const words = await koshaData.words();
+  const today = wordOfDay(words);
+  const show = (w) => {
+    el.innerHTML = wotdHTML(w, w === today);
+    el.querySelector('#wotdMore').addEventListener('click', () => show(anotherWord(words, w[0])));
+    el.querySelector('#wotdToday')?.addEventListener('click', () => show(today));
+  };
+  show(today);
+  el.hidden = false;
+}
+
 // the look-up box on the dictionary pages: suggestions as you type, Enter opens the best match
 function wireKoshaFind() {
   const input = $('#kq'); const box = $('#kSug'); if (!input) return;
