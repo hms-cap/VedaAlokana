@@ -29,7 +29,8 @@ function toScript(root) {
   const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const hit = [];
   for (let n = w.nextNode(); n; n = w.nextNode()) if (DEVA.test(n.data) && n.parentElement?.closest('[lang="sa"]')) hit.push(n);
-  for (const n of hit) n.data = toKnda(n.data);
+  // only write what changed: signs that stay the same in Kannada (the danda) would otherwise match again and loop forever
+  for (const n of hit) { const t = toKnda(n.data); if (t !== n.data) n.data = t; }
 }
 const scriptObserver = new MutationObserver((ms) => {
   if (prefs.script !== 'knda') return;
