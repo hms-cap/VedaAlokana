@@ -29,6 +29,11 @@ for (const v of cat.vedas) {
 // the daily mantra cards on Home
 const daily = filesOf('daily');
 if (daily.length) packs.push({ id: 'daily', name: 'Daily mantra cards', deva: 'दैनिकमन्त्राः', files: daily, bytes: daily.reduce((n, f) => n + size(f), 0) });
+// the dictionary (scripts/build-kosha.mjs): every shard, the word list, the search keys and the word-of-the-day pool
+if (fs.existsSync(path.join(web, 'data', 'kosha', 'shards.json'))) {
+  const kosha = fs.readdirSync(path.join(web, 'data', 'kosha')).sort().map((f) => `data/kosha/${f}`);
+  packs.push({ id: 'kosha', name: 'Dictionary (Śabdārtha Kaustubha)', deva: 'शब्दार्थकौस्तुभः', files: kosha, bytes: kosha.reduce((n, f) => n + size(f), 0) });
+}
 const out = { built: cat.built, packs };
 fs.writeFileSync(path.join(web, 'data', 'offline.json'), JSON.stringify(out));
 for (const p of packs) console.log(`${p.id.padEnd(12)} ${String(p.files.length).padStart(4)} files ${(p.bytes / 1e6).toFixed(1).padStart(6)} MB`);
