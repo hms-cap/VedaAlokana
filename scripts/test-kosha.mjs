@@ -39,6 +39,18 @@ for (const [first, file, n] of man.shards) {
 check(heads === man.count, `${heads} headwords in shards, manifest says ${man.count}`);
 // the source itself leaves the meaning out of about 1.5% of the headwords (a derivation only)
 check(noKannada / heads < 0.03, `${noKannada} headwords without a Kannada meaning`);
+// letters: each starts at its first headword, counts add up (apart from headwords that do not start with a letter)
+{
+  const ls = man.letters; let total = 0; let all = [];
+  for (const f of man.shards) all = all.concat((await data.shard(f[1])).map((e) => e[0]));
+  for (const [ch, n, first] of ls) {
+    const run = all.filter((h) => [...h][0] === ch);
+    check(run.length === n && run[0] === first, `letter ${ch}: ${n} words from ${first}`);
+    total += n;
+  }
+  check(ls.length >= 40 && total <= man.count && man.count - total < 20, `letters cover ${total} of ${man.count} headwords`);
+  check(ls.every((l, i) => !i || ls[i - 1][2] < l[2]), 'letters are in order');
+}
 console.log(`${heads} headwords, ${senses} senses, ${man.shards.length} shards`);
 
 // every headword is found by its shard

@@ -12,7 +12,7 @@
 //   <headword><br><br><b>पदविभागः - </b>…<br><b>कन्नडार्थः - </b>…<br><br><headword><br><br>…  (one block per sense)
 //
 // Output:
-//   kosha/shards.json   { v, count, shards: [[first headword, file, headwords]] }  (sorted: a headword is in the last shard whose first headword is not after it)
+//   kosha/shards.json   { v, count, shards: [[first headword, file, headwords]], letters: [[letter, headwords, first headword]] }  (sorted: a headword is in the last shard whose first headword is not after it)
 //   kosha/<file>.json   [[headword, [variants], [sense, …]], …] sorted by headword
 //                       sense = [पदविभागः, कन्नडार्थः, निष्पत्तिः, व्युत्पत्तिः, प्रयोगाः, उल्लेखाः, विस्तारः] (trailing empties dropped)
 //   kosha/wotd.json     { v, words: [[headword, पदविभागः, कन्नडार्थः, व्युत्पत्तिः, प्रयोगाः, उल्लेखाः]] } for the word-of-the-day card:
@@ -84,6 +84,17 @@ export function pickWords(recs, count = 1100) {
   return ok.slice(0, count);
 }
 
+/** The letters the headwords start with, in order: [[letter, number of headwords, first headword]] (for the dictionary's letter grid). */
+export function lettersOf(recs) {
+  const out = [];
+  for (const r of recs) {
+    const ch = [...r.h][0];
+    if (!/[\u0904-\u0939]/.test(ch)) continue;
+    if (out.at(-1)?.[0] === ch) out.at(-1)[1]++; else out.push([ch, 1, r.h]);
+  }
+  return out;
+}
+
 export function buildKosha(babylonPath, dataDir = 'web/data') {
   const recs = [...parseBabylon(fs.readFileSync(babylonPath, 'utf8')).values()].filter((r) => r.senses.length);
   recs.sort((a, b) => (a.h < b.h ? -1 : a.h > b.h ? 1 : 0));
@@ -117,7 +128,7 @@ export function buildKosha(babylonPath, dataDir = 'web/data') {
   const lines = [...keys].sort();
   fs.writeFileSync(path.join(out, 'keys.tsv'), lines.join('\n'));
   fs.writeFileSync(path.join(out, 'wotd.json'), JSON.stringify({ v: 1, words: pickWords(recs) }));
-  fs.writeFileSync(path.join(out, 'shards.json'), JSON.stringify({ v: 1, count: recs.length, shards: manifest }));
+  fs.writeFileSync(path.join(out, 'shards.json'), JSON.stringify({ v: 1, count: recs.length, shards: manifest, letters: lettersOf(recs) }));
   console.log(`kosha: ${recs.length} headwords, ${recs.reduce((n, r) => n + r.senses.length, 0)} senses, ${manifest.length} shards (${(bytes / 1e6).toFixed(1)} MB), ${lines.length} keys`);
   return { count: recs.length, shards: manifest.length };
 }
