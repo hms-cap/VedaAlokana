@@ -10,7 +10,7 @@ const DATA = 'vedalokana-data';
 const SHELL_FILES = [
   './', 'index.html', 'app.js', 'kosha.css', 'version.js', 'manifest.webmanifest',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/apple-touch-icon.png',
-  '../styles.css', '../kosha-ui.js', '../kosha.js', '../translit.js', '../search-key.js', '../common.js',
+  '../styles.css', '../kosha-ui.js', '../kosha.js', '../translit.js', '../search-key.js', '../common.js', '../lipi.js',
   '../fonts/IBMPlexSans-Var.woff', '../fonts/GentiumBookPlus-Regular.woff', '../fonts/GentiumBookPlus-Italic.woff', '../fonts/GentiumBookPlus-Bold.woff',
   '../fonts/NotoSerifDevanagari-Vedic.woff', '../fonts/NotoSerifKannada-Vedic.woff',
   '../fonts/NotoSerifDevanagari-Std.woff', '../fonts/NotoSerifKannada-Std.woff',
