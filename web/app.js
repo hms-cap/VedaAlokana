@@ -203,7 +203,7 @@ function setMenu(m) {
 function applyMenu() {
   document.querySelectorAll('#tabbar [data-tab]').forEach((a) => {
     const k = a.dataset.tab; const span = a.querySelector('span');
-    const en = { home: 'Home', library: 'Library', suktas: 'Sūktas', my: 'My sūktas', kosha: 'Dictionary', search: 'Search', settings: 'Settings' }[k];
+    const en = { home: 'Home', library: 'Library', suktas: 'Sūktas', my: 'My sūktas', kosha: 'Dictionary', settings: 'Settings' }[k];
     span.innerHTML = T(en, MENU_SA[k]);
   });
   $('#brand span').innerHTML = T('Vedāvalokanam', 'वेदावलोकनम्');
@@ -295,6 +295,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.28.1', '2026-11-04', ['On phones, Search moves to a magnifier at the right end of the top bar, on every page. The bottom bar keeps Home, Library, Dictionary and My sūktas, with its icons back to full size.']],
   ['1.28.0', '2026-11-04', ['The Dictionary tab opens with a Word of the day card: a documented word with its Kannada meaning, derivation and a quotation, new every day at your midnight. Another word picks one at random; Today’s word brings it back; the arrow opens the full entry.']],
   ['1.27.2', '2026-11-04', ['In the Dictionary, swipe left or right on a word to move to the next or previous word (the arrow keys do the same on a keyboard).']],
   ['1.27.1', '2026-11-04', ['The Dictionary has its own place in the bottom bar (and in the side list on wide screens). The five bar icons are slightly smaller to fit.']],
@@ -2596,6 +2597,7 @@ function renderChrome(r, path) {
   // tabs
   const tab = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 'about' ? 'settings' : page === 's' ? (r.params.get('from') === 'my' ? 'my' : '') : page === 'suktas' ? '' : page);
   $('#tabbar').querySelectorAll('[data-tab]').forEach((a) => (a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
+  $('#tbSearch')?.[page === 'search' ? 'setAttribute' : 'removeAttribute']('aria-current', 'page');
   document.body.classList.toggle('reading', page === 'v' && r.parts[2] === 'c');
   if (!(page === 'v' && r.parts[2] === 'c')) { $('#readerbar').hidden = true; readerNav = page === 's' ? sukNav : page === 'kosha' ? readerNav : null; }
   if (page !== 's') sukNav = null;
