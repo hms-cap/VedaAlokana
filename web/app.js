@@ -295,6 +295,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.28.2', '2026-11-04', ['Settings → Offline has a Dictionary download (about 23 MB on the device, 4 MB to download): every word, the search and the Word of the day then work with no connection. Without it, a word works offline only once you have opened its part of the dictionary.']],
   ['1.28.1', '2026-11-04', ['On phones, Search moves to a magnifier at the right end of the top bar, on every page. The bottom bar keeps Home, Library, Dictionary and My sūktas, with its icons back to full size.']],
   ['1.28.0', '2026-11-04', ['The Dictionary tab opens with a Word of the day card: a documented word with its Kannada meaning, derivation and a quotation, new every day at your midnight. Another word picks one at random; Today’s word brings it back; the arrow opens the full entry.']],
   ['1.27.2', '2026-11-04', ['In the Dictionary, swipe left or right on a word to move to the next or previous word (the arrow keys do the same on a keyboard).']],

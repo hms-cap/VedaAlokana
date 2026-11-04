@@ -11,7 +11,7 @@
   --fire: #C2410C;
   --cta: #C2410C; /* button fill that carries white text */
   /* one colour per Veda, used on Home tiles, the Veda page wheel and chant view */
-  --v-rv: #2B3990; --v-daily: #C2410C; --v-syv: #B43C0B; --v-kyv: #8A4B0F; --v-sv: #0F6B5C; --v-av: #6D2E6B;
+  --v-rv: #2B3990; --v-daily: #C2410C; --v-kosha: #0F5F7A; --v-syv: #B43C0B; --v-kyv: #8A4B0F; --v-sv: #0F6B5C; --v-av: #6D2E6B;
   --hero: #2B3990; --hero-ink: #FFFFFF; --hero-soft: #C9CEF2; --sun: #C2410C; --sun-ring: #E8793F;
   --deva: 'Vedalokana Devanagari', 'Noto Serif Devanagari', serif;
   --deva-lh: 2.15;
@@ -24,7 +24,7 @@
   :root:not([data-theme="light"]) {
     --ground: #101215; --surface: #181B1F; --surface-2: #1F2328; --ink: #ECEDEB; --muted: #A3A9AF;
     --line: #3A4047; --line-soft: #23272C; --indigo: #A9B4F5; --indigo-soft: #232A52; --fire: #F29255;
-    --v-rv: #4453C4; --v-syv: #C24E17; --v-kyv: #9C5A16; --v-sv: #138270; --v-av: #8B3F88;
+    --v-rv: #4453C4; --v-syv: #C24E17; --v-kyv: #9C5A16; --v-sv: #138270; --v-av: #8B3F88; --v-kosha: #2F8FB0;
     --hero: #29348C; --hero-soft: #B9C0F0; --sun: #E0662A; --sun-ring: #F29255;
     color-scheme: dark;
   }
@@ -32,7 +32,7 @@
 :root[data-theme="dark"] {
     --ground: #101215; --surface: #181B1F; --surface-2: #1F2328; --ink: #ECEDEB; --muted: #A3A9AF;
     --line: #3A4047; --line-soft: #23272C; --indigo: #A9B4F5; --indigo-soft: #232A52; --fire: #F29255;
-    --v-rv: #4453C4; --v-syv: #C24E17; --v-kyv: #9C5A16; --v-sv: #138270; --v-av: #8B3F88;
+    --v-rv: #4453C4; --v-syv: #C24E17; --v-kyv: #9C5A16; --v-sv: #138270; --v-av: #8B3F88; --v-kosha: #2F8FB0;
     --hero: #29348C; --hero-soft: #B9C0F0; --sun: #E0662A; --sun-ring: #F29255;
     color-scheme: dark;
 }

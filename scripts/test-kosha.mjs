@@ -88,5 +88,11 @@ let k = 0; // a fixed sequence of random numbers that first lands on the shown w
 const seq = () => (k++ % 2 ? 0.5 : 0);
 check(anotherWord(wotd, wotd[0][0], seq)[0] !== wotd[0][0] && anotherWord(wotd, wotd[3][0])[0] !== wotd[3][0], 'another word is never the one shown');
 
+// the offline pack lists every dictionary file, so "Download for offline" stores all of it
+const pack = JSON.parse(fs.readFileSync(dir + '../offline.json', 'utf8')).packs.find((p) => p.id === 'kosha');
+const onDisk = fs.readdirSync(dir).map((f) => `data/kosha/${f}`).sort();
+check(pack && JSON.stringify([...pack.files].sort()) === JSON.stringify(onDisk), 'offline pack lists every file in data/kosha');
+check(pack && pack.files.includes('data/kosha/keys.tsv') && pack.files.includes('data/kosha/wotd.json') && pack.files.includes('data/kosha/shards.json'), 'offline pack has keys, word list and pool');
+
 console.log(bad ? `${bad} check(s) failed` : 'all dictionary checks passed');
 process.exit(bad ? 1 : 0);
