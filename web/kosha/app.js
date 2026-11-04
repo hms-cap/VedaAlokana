@@ -179,12 +179,22 @@ async function checkUpdate() {
     if (!latest || !newer(latest, mine)) { out.textContent = `You have the latest version (${mine}).`; btn.disabled = false; return; }
     out.textContent = `Version ${latest} is available. Updating…`;
     const reg = await navigator.serviceWorker?.getRegistration();
-    const swapped = new Promise((res) => { navigator.serviceWorker?.addEventListener('controllerchange', res, { once: true }); setTimeout(res, 15000); });
-    await reg?.update(); await swapped;
-    location.reload();
+    await reg?.update();
+    const w = reg?.installing || reg?.waiting;
+    if (!w) { out.textContent = `Version ${latest} is published, but this device still holds the old copy. Try again in a few minutes.`; btn.disabled = false; return; }
+    // the new worker takes over by itself; reload once it has
+    const done = await new Promise((res) => {
+      const t = setTimeout(() => res(false), 20000);
+      const ok = () => { clearTimeout(t); res(true); };
+      if (w.state === 'activated') ok();
+      w.addEventListener('statechange', () => { if (w.state === 'activated') ok(); if (w.state === 'redundant') { clearTimeout(t); res(false); } });
+      navigator.serviceWorker.addEventListener('controllerchange', ok, { once: true });
+    });
+    if (done) { location.reload(); return; }
+    out.textContent = 'The update did not finish. Check the connection and try again.'; btn.disabled = false;
   } catch { out.textContent = 'Could not check for updates. Are you online?'; btn.disabled = false; }
 }
 
-if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {});
+if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js', { scope: './', updateViaCache: 'none' }).catch(() => {});
 if (!location.hash || location.hash === '#' || location.hash === '#/') history.replaceState(null, '', '#/kosha');
 loadPack().then(() => route());
