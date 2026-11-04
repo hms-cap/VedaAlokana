@@ -76,10 +76,6 @@ function chrome(head, params, about) {
   const find = !!params.get('find');
   document.querySelectorAll('#kbar [data-k]').forEach((a) => ((a.dataset.k === 'home' && home) || (a.dataset.k === 'find' && find) || (a.dataset.k === 'about' && about) ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
 }
-$('#kToday').addEventListener('click', async (e) => {
-  e.preventDefault();
-  try { go(koshaHref((await K.wotd())[0])); } catch { go('#/kosha'); }
-});
 window.addEventListener('hashchange', () => { if (!location.hash || location.hash === '#' || location.hash === '#/') { history.replaceState(null, '', '#/kosha'); } route(); });
 // swipe sideways on a word, or press the arrow keys, for the neighbouring word
 let sx = 0; let sy = 0; let st = 0;
