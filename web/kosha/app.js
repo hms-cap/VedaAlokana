@@ -17,7 +17,7 @@ const K = createKosha({
   setTitle: (t) => { document.title = t ? `${t} — Śabdārtha Kaustubha` : 'Śabdārtha Kaustubha — Sanskrit–Kannada dictionary'; },
   setReaderNav: (v) => { readerNav = v; },
   sourcesHref: '../#/about',
-  creditExtra: ' · <a href="../">Vedāvalokanam</a> · <button type="button" class="k-dl" id="kDl"></button>',
+  creditExtra: ' · <button type="button" class="k-dl" id="kDl"></button>',
 });
 
 let routing = false;
