@@ -18,6 +18,7 @@
 //   kosha/wotd.json     { v, words: [[headword, पदविभागः, कन्नडार्थः, व्युत्पत्तिः, प्रयोगाः, उल्लेखाः]] } for the word-of-the-day card:
 //                       about 1,100 well-documented words in a fixed shuffled order (see pickWords)
 //   kosha/keys.tsv      "<looseKey>\t<headword>" for every headword and variant, sorted by key
+// Corrections: scripts/kosha-errata.tsv (reviewed, word by word) and cleanSa (mechanical encoding slips) are applied to the text.
 // Shards are runs of the sorted headwords, about 700 KB each.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -95,8 +96,64 @@ export function lettersOf(recs) {
   return out;
 }
 
+/**
+ * Mechanical clean-ups of Sanskrit text in the source (not the Kannada meanings), from encoding slips in the digital text:
+ * two vowel signs in a row (keep the last), a virama before a vowel sign, the Latin letter s for the avagraha, zero-width joiners
+ * standing where a space belongs, and the digit zero used as the abbreviation sign (माघ० → माघ॰).
+ */
+export function cleanSa(s) {
+  if (!s) return s;
+  return s
+    .replace(/[\u093E-\u094C]+(?=[\u093E-\u094C])/g, '')
+    .replace(/\u094D(?=[\u093E-\u094C])/g, '')
+    .replace(/([\u0900-\u097F])[sS](?=[\u0900-\u097F])/g, '$1\u093D')
+    .replace(/(?<!\u094D)[ \t]*[\u200C\u200D][ \t]*/g, ' ')
+    .replace(/([\u0905-\u0939\u093E-\u094C\u0902\u0903])\u0966(?![\u0966-\u096F])/g, '$1\u0970')
+    .replace(/ {2,}/g, ' ')
+    .trim();
+}
+
+/** Reads scripts/kosha-errata.tsv → { head: Map(wrong → right), text: [[wrong, right]] }. */
+export function readErrata(file = new URL('./kosha-errata.tsv', import.meta.url)) {
+  const head = new Map(); const text = [];
+  for (const line of fs.readFileSync(file, 'utf8').split('\n')) {
+    if (!line.trim() || line.startsWith('#')) continue;
+    const [kind, wrong, right] = line.split('\t');
+    if (kind === 'head') head.set(wrong, right); else if (kind === 'text') text.push([wrong, right]);
+  }
+  return { head, text };
+}
+
+/** Applies the errata and the clean-ups to parsed records, merging records whose corrected headwords meet. */
+export function correctRecs(recs, errata) {
+  const out = new Map();
+  const fixText = (v, k) => {
+    if (!v) return v;
+    for (const [a, b] of errata.text) v = v.split(a).join(b);
+    return k === 1 ? v : cleanSa(v); // field 1 is the Kannada meaning: left as it is
+  };
+  const fixHead = (h) => cleanSa(errata.head.get(h) ?? h);
+  for (const r of recs.values()) {
+    const h = fixHead(r.h);
+    if (!out.has(h)) out.set(h, { h, alts: new Set(), old: new Set(), senses: [] });
+    const o = out.get(h);
+    if (h !== r.h) o.old.add(r.h); // the source spelling stays findable in search, but is not shown
+    for (const a of r.alts) { const f = fixHead(a); if (f !== h) o.alts.add(f); if (a !== f) o.old.add(a); }
+    for (const s of r.senses) o.senses.push(s.map(fixText));
+  }
+  return out;
+}
+
 export function buildKosha(babylonPath, dataDir = 'web/data') {
-  const recs = [...parseBabylon(fs.readFileSync(babylonPath, 'utf8')).values()].filter((r) => r.senses.length);
+  const raw = parseBabylon(fs.readFileSync(babylonPath, 'utf8'));
+  const errata = readErrata();
+  // the word-of-the-day list is picked from the source as it is, so corrections never reshuffle it; its text is then corrected
+  const wotd = pickWords([...raw.values()].filter((r) => r.senses.length).sort((a, b) => (a.h < b.h ? -1 : a.h > b.h ? 1 : 0))).map(([h, ...f]) => {
+    const fh = cleanSa(errata.head.get(h) ?? h);
+    const fixed = f.map((v, i) => { for (const [a, b] of errata.text) v = v.split(a).join(b); return i === 1 ? v : cleanSa(v); });
+    return [fh, ...fixed];
+  });
+  const recs = [...correctRecs(raw, errata).values()].filter((r) => r.senses.length);
   recs.sort((a, b) => (a.h < b.h ? -1 : a.h > b.h ? 1 : 0));
 
   // shards: runs of the sorted headwords of about SHARD_CHARS characters each, so every file is a similar size
@@ -124,10 +181,10 @@ export function buildKosha(babylonPath, dataDir = 'web/data') {
   write();
 
   const keys = new Set();
-  for (const r of recs) for (const w of [r.h, ...r.alts]) { const k = looseKey(w); if (k) keys.add(`${k}\t${r.h}`); }
+  for (const r of recs) for (const w of [r.h, ...r.alts, ...(r.old || [])]) { const k = looseKey(w); if (k) keys.add(`${k}\t${r.h}`); }
   const lines = [...keys].sort();
   fs.writeFileSync(path.join(out, 'keys.tsv'), lines.join('\n'));
-  fs.writeFileSync(path.join(out, 'wotd.json'), JSON.stringify({ v: 1, words: pickWords(recs) }));
+  fs.writeFileSync(path.join(out, 'wotd.json'), JSON.stringify({ v: 1, words: wotd }));
   fs.writeFileSync(path.join(out, 'shards.json'), JSON.stringify({ v: 1, count: recs.length, shards: manifest, letters: lettersOf(recs) }));
   console.log(`kosha: ${recs.length} headwords, ${recs.reduce((n, r) => n + r.senses.length, 0)} senses, ${manifest.length} shards (${(bytes / 1e6).toFixed(1)} MB), ${lines.length} keys`);
   return { count: recs.length, shards: manifest.length };

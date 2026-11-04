@@ -1,7 +1,7 @@
 // Checks the Śabdārtha Kaustubha dictionary data (web/data/kosha/) and the lookups in web/kosha.js.
 // The data is built by scripts/build-kosha.mjs from a source file that is not in the repo, so this reads the built files.
 import fs from 'node:fs';
-import { parseBabylon } from './build-kosha.mjs';
+import { parseBabylon, cleanSa, readErrata, correctRecs } from './build-kosha.mjs';
 import { looseKey } from '../web/search-key.js';
 import { koshaRows, lookup, shardOf, matchKeys, neighbours, wordOfDay, anotherWord, dayNumber } from '../web/kosha.js';
 
@@ -50,6 +50,34 @@ check(noKannada / heads < 0.03, `${noKannada} headwords without a Kannada meanin
   }
   check(ls.length >= 40 && total <= man.count && man.count - total < 20, `letters cover ${total} of ${man.count} headwords`);
   check(ls.every((l, i) => !i || ls[i - 1][2] < l[2]), 'letters are in order');
+}
+// corrections: the clean-ups on made-up text, and the reviewed errata in the built data
+check(cleanSa('अम्लिी') === 'अम्ली' && cleanSa('नलिनेी') === 'नलिनी', 'two vowel signs: the last one stays');
+check(cleanSa('कालान्ुसारिन्') === 'कालानुसारिन्', 'virama before a vowel sign is dropped');
+check(cleanSa('विशुद्धोsपि') === 'विशुद्धोऽपि', 'Latin s between Devanagari letters is the avagraha');
+check(cleanSa('तीक्ष्णं\u200Dपत्रं') === 'तीक्ष्णं पत्रं' && cleanSa('उद् +\u200D णम') === 'उद् + णम', 'a joiner standing for a space');
+check(cleanSa('माघ० १४-१८') === 'माघ॰ १४-१८' && cleanSa('१० ५०') === '१० ५०', 'zero as the abbreviation sign; digits stay');
+{
+  const er = readErrata();
+  const all = man.shards.flatMap((s) => JSON.parse(fs.readFileSync(`${dir}${s[1]}.json`, 'utf8')));
+  const byHead = new Map(all.map((e) => [e[0], e]));
+  for (const [wrong, right] of er.head) {
+    check(byHead.has(right) && !byHead.has(wrong), `errata: ${wrong} → ${right}`);
+    check(matchKeys(keys, looseKey(wrong)).exact.includes(right), `errata: searching ${wrong} finds ${right}`);
+    check(!byHead.get(right)?.[1].includes(wrong), `errata: ${wrong} is not shown on the page`);
+  }
+  const text = all.map((e) => JSON.stringify(e)).join('\n');
+  for (const [wrong] of er.text) check(!text.includes(wrong), `errata text gone: ${wrong}`);
+  // guards: the encoding slips do not come back (Sanskrit fields; field 1 is the Kannada meaning)
+  const sa = all.flatMap((e) => [e[0], ...e[1], ...e[2].flatMap((x) => x.filter((v, i) => i !== 1))]).filter(Boolean);
+  const guard = (re, what) => { const hit = sa.filter((v) => re.test(v)); check(!hit.length, `${what}: ${hit.slice(0, 3).join(' | ')}`); };
+  guard(/[\u093E-\u094C][\u093E-\u094C]/, 'two vowel signs in a row');
+  guard(/\u094D[\u093E-\u094C]/, 'virama before a vowel sign');
+  guard(/[\u0905-\u0939\u093E-\u094C\u0902\u0903]\u0966(?![\u0966-\u096F])/, 'zero used as the abbreviation sign');
+  guard(/[\u0900-\u097F][sS](?=[\u0900-\u097F])/, 'Latin s for the avagraha');
+  // merging records whose corrected headwords meet keeps every sense
+  const m2 = correctRecs(new Map([['अम्लिी', { h: 'अम्लिी', alts: new Set(), senses: [['a']] }], ['अम्ली', { h: 'अम्ली', alts: new Set(), senses: [['b']] }]]), { head: new Map(), text: [] });
+  check(m2.size === 1 && m2.get('अम्ली').senses.length === 2 && m2.get('अम्ली').old.has('अम्लिी'), 'corrected headwords merge');
 }
 console.log(`${heads} headwords, ${senses} senses, ${man.shards.length} shards`);
 

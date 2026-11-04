@@ -275,13 +275,13 @@ abinava	अभिनव
 abinavatamarasa	अभिनवतामरस
 abinavodbid	अभिनवोद्भिद्
 abinaya	अभिनय
-abinayati	अभि +‍ णीञ्
+abinayati	अभि + णीञ्
 abindana	अबिन्धन
 abinetavya	अभिनेतव्य
 abinetr	अभिनेतृ
 abinetr	अभिनेत्री
 abineya	अभिनेय
-abini	अभि +‍ णीञ्
+abini	अभि + णीञ्
 abinidana	अभिनिधन
 abinidana	अभिनिधान
 abinihnava	अभिनिह्नव
@@ -3165,7 +3165,7 @@ anlavarga	अम्लवर्ग
 anlavastuka	अम्लवास्तूक
 anlavetasa	अम्लवेतस
 anlavrksa	अम्लवृक्ष
-anli	अम्लिी
+anli	अम्ली
 anlika	अम्लिका
 anlodgara	अम्लोद्गार
 anmaya	अम्मय
@@ -5434,8 +5434,10 @@ astamana	अस्तमन
 astamangala	अष्टमङ्गल
 astamaya	अस्तमय
 astami	अष्टमी
-astamutr	अष्टमूत्रि
-astamutrdara	अष्टमूत्रिधर
+astamurti	अष्टमूर्ति
+astamurtidara	अष्टमूर्तिधर
+astamutr	अष्टमूर्ति
+astamutrdara	अष्टमूर्तिधर
 astana	अस्थान
 astana	आस्थान
 astane	अस्थाने
@@ -6170,7 +6172,7 @@ aulukyadarsana	औलूक्यदर्शन
 auma	औमम्
 aumaka	औमक
 aumika	औमिक
-aumina	औमिीन
+aumina	औमीन
 aunatya	औन्नत्य
 aunmukya	औन्मुख्य
 aupacandasika	औपच्छन्दसिक
@@ -6242,7 +6244,7 @@ aurvara	और्वर
 aurvaseya	और्वशेय
 ausada	औषध
 ausadi	औषधि
-ausadiya	औषधिीय
+ausadiya	औषधीय
 ausanasa	औशनस
 ausara	औषर
 ausasa	औषस
@@ -8546,7 +8548,7 @@ camaragrahi	चामरग्राहिन्
 camaragrahika	चामरग्राहिक
 camaragrahini	चामरग्राहिणी
 camarapuspa	चामरपुष्प
-camari	चमरिी
+camari	चमरी
 camarka	चमरिक
 camasa	चमस
 camasi	चमसी
@@ -9112,7 +9114,8 @@ caturvidya	चातुर्विध्य
 caturvinsa	चतुर्विंश
 caturvinsati	चतुर्विंशति
 caturvinsatika	चतुर्विंशतिक
-caturvinsatimutr	चतुर्विंशतिमूत्रि
+caturvinsatimurti	चतुर्विंशतिमूर्ति
+caturvinsatimutr	चतुर्विंशतिमूर्ति
 caturvinsatitama	चतुर्विंशतितम
 caturvinsatitami	चतुर्विंशतितमी
 caturvinsi	चतुर्विंशी
@@ -10762,7 +10765,7 @@ darvata	दर्वट
 darvata	दार्वट
 darvi	दर्वि
 darvi	दर्वी
-darvi	दार्विी
+darvi	दार्वी
 darvibrt	दर्विभृत्
 darvika	दार्विका
 darvikara	दर्वीकर
@@ -11218,7 +11221,7 @@ devakata	देवखात
 devakatmaja	देवकात्मजा
 devaki	देवकी
 devakinandana	देवकिनन्दन
-devakisunu	देवकिीसूनु
+devakisunu	देवकीसूनु
 devakisuta	देवकीसुत
 devakitanaya	देवकीतनय
 devakrda	देवाक्रीड
@@ -12505,9 +12508,10 @@ duskarna	दुष्कर्ण
 duskirti	दुष्कीर्ति
 duskr	दुर् + कृञ् , दुस् + कृञ्
 duskrama	दुष्क्रम
-duskrita	दुष्क्रिीत
+duskrita	दुष्क्रीत
 duskrta	दुर् + कृञ् , दुस् + कृञ्
 duskrta	दुष्कृत
+duskrta	दुष्क्रीत
 duskrti	दुष्कृति
 duskrti	दुष्कृतिन्
 duskrtya	दुष्कृत्य
@@ -13352,7 +13356,7 @@ ekasatatama	एकशततम
 ekasatatami	एकशततमी
 ekasesa	एकशेष
 ekasi	एकाशिन्
-ekasita	एकाशिीत
+ekasita	एकाशीत
 ekasiti	एकाशीति
 ekasitipada	एकाशीतिपद
 ekasititama	एकाशीतितम
@@ -14193,6 +14197,7 @@ garsya	घर्ष्य
 garta	गर्त
 gartaka	गार्तक
 gartasraya	गर्ताश्रय
+gartika	गर्तिका
 gartika	घार्तिक
 gartra	गारित्र
 garuda	गरुड
@@ -14388,7 +14393,7 @@ gatravati	गात्रवती
 gatravigarsane	कण्डूञ्
 gatraviname	जृभि
 gatrayasti	गात्रयष्टि
-gatrka	गत्रिका
+gatrka	गर्तिका
 gatu	गातु
 gatuka	घातुक
 gatva	गत्वा
@@ -15510,7 +15515,6 @@ guruvarti	गुरुवर्तिन्
 guruvasara	गुरुवासर
 guruvat	गुरुवत्
 guruvrti	गुरुवृत्ति
-gurvi	गुर्विी
 gurvi	गुर्वी
 gurvini	गुर्विणी
 guryate	गूरी
@@ -17612,7 +17616,7 @@ jihma	जिह्म
 jihmaga	जिह्मग
 jihmamehana	जिह्ममेहन
 jihmasi	जिह्माशिन्
-jihmikrta	जिह्मिीकृत
+jihmikrta	जिह्मीकृत
 jihmita	जिह्मित
 jihva	जिह्वा
 jihvacapalya	जिह्वाचापल्य
@@ -18478,7 +18482,7 @@ kalantara	कलान्तर
 kalantara	कालान्तर
 kalanunadi	कालानुनादिन्
 kalanunadini	कालानुनादिनी
-kalanusar	कालान्ुसारिन्
+kalanusar	कालानुसारिन्
 kalanusaraka	कालानुसारक
 kalanusarya	कालानुसार्य
 kalanusaryaka	कालानुसार्यक
@@ -22095,7 +22099,8 @@ ksemakara	क्षेमकर
 ksemakara	क्षेमकार
 ksemakaraka	क्षेमकारक
 ksemakrt	क्षेमकृत्
-ksemamutr	क्षेममूत्रि
+ksemamurti	क्षेममूर्ति
+ksemamutr	क्षेममूर्ति
 ksemankar	क्षेमङ्करी
 ksemankara	क्षेमङ्कर
 ksemapala	क्षेमफला
@@ -26021,7 +26026,7 @@ nagnibavana	नग्नीभवन
 nagnibuta	नग्नीभूत
 nagnika	नग्निका
 nagnikarana	नग्नीकरण
-nagnikrta	नग्निीकृत
+nagnikrta	नग्नीकृत
 nagoda	नागोद
 nagodara	नागोद
 nagodbeda	नागोद्भेद
@@ -26218,8 +26223,9 @@ nalikela	नालिकेल
 nalikera	नालिकेर
 nalikini	नालीकिनी
 nalina	नलिन
-nalinei	नलिनेी
+nalinei	नलिनी
 nalinesaya	नलिनेशय
+nalini	नलिनी
 nalinidala	नलिनीदल
 nalinikanda	नलिनीखण्ड
 nalininandana	नलिनीनन्दन
@@ -32464,7 +32470,7 @@ pratiaganlr	प्रति + आ + गम्लृ
 pratiahana	प्रति+आ+हन
 pratiakala	प्रति + आ + कल
 pratiakya	प्रति + आ + ख्या
-pratiani	प्रति + आ +‍ णीञ्
+pratiani	प्रति + आ + णीञ्
 pratiavaiksa	प्रति + अव + ईक्ष
 pratiba	प्रतिभा
 pratiba	प्रातिभ
@@ -32977,9 +32983,9 @@ pratyanantara	प्रत्यनन्तर
 pratyanata	प्रत्याम्नात
 pratyanaya	प्रत्याम्नाय
 pratyanayana	प्रत्यानयन
-pratyanayati	प्रति + आ +‍ णीञ्
+pratyanayati	प्रति + आ + णीञ्
 pratyanga	प्रत्यङ्ग
-pratyani	प्रति + आ +‍ णीञ्
+pratyani	प्रति + आ + णीञ्
 pratyanika	प्रत्यनीक
 pratyanila	प्रत्यनिल
 pratyanmuka	प्रत्यङ्मुख
@@ -42261,7 +42267,7 @@ trvarnaka	त्रिवर्णक
 trvarsa	त्रिवर्ष
 trvarsa	त्रिवर्षा
 trvarsika	त्रिवर्षिका
-trvarsiya	त्रिवर्षिीय
+trvarsiya	त्रिवर्षीय
 trvartma	त्रिवर्त्मन्
 trveda	त्रिवेद
 trveni	त्रिवेणी
@@ -44291,7 +44297,7 @@ utkatakeli	उत्खातकेलि
 utkaya	उत्खाय
 utkira	उत्किर
 utkirati	उद् + कॄ
-utkirna	उत्किीर्ण
+utkirna	उत्कीर्ण
 utkirtana	उत्कीर्तन
 utkirtita	उत्कीर्तित
 utklesa	उत्क्लेश
