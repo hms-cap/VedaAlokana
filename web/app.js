@@ -295,6 +295,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.28.3', '2026-11-04', ['The Dictionary page has an About the author note (Chakravarti Srinivasa Gopalacharya), also linked from every word. Fixed: the letter buttons now scroll to the chosen letter instead of the top of the page.']],
   ['1.28.2', '2026-11-04', ['Settings → Offline has a Dictionary download (about 23 MB on the device, 4 MB to download): every word, the search and the Word of the day then work with no connection. Without it, a word works offline only once you have opened its part of the dictionary.']],
   ['1.28.1', '2026-11-04', ['On phones, Search moves to a magnifier at the right end of the top bar, on every page. The bottom bar keeps Home, Library, Dictionary and My sūktas, with its icons back to full size.']],
   ['1.28.0', '2026-11-04', ['The Dictionary tab opens with a Word of the day card: a documented word with its Kannada meaning, derivation and a quotation, new every day at your midnight. Another word picks one at random; Today’s word brings it back; the arrow opens the full entry.']],
@@ -2638,11 +2639,26 @@ function koshaSenses(senses) {
       ${rest.map((v, j) => kLine(FIELDS[j + 2], v)).join('')}</li>`;
   }).join('');
 }
+// "About the author" on the dictionary page. Only what the catalogue records and booksellers' listings say: no dates or life
+// story are given in the sources used, so none are written here.
+const KOSHA_AUTHOR = `<details class="k-about" id="kAbout">
+  <summary>${T('About the author', 'लेखकपरिचयः')}</summary>
+  <div class="k-about-b">
+    <h2 class="k-an"><span>Chakravarti Srinivasa Gopalacharya</span> <span lang="kn">ಚಕ್ರವರ್ತಿ ಶ್ರೀನಿವಾಸ ಗೋಪಾಲಾಚಾರ್ಯ</span></h2>
+    <p class="k-at">Sāhitya Vidvān</p>
+    <p>Chakravarti Srinivasa Gopalacharya compiled the <i>Śabdārtha Kaustubha</i>, a Sanskrit–Kannada dictionary in six volumes. The scanned edition runs to 3,016 pages, and a bookseller describes more than 75,000 entries. Each gives the word’s derivation, its Kannada meanings and its usages, with terms from the śāstras, sāhitya, tarka, vyākaraṇa and other fields.</p>
+    <p>Part 2 of an earlier Sanskrit–Kannada word-book under his name, the <i>Saṃskṛta-Kannaḍa Śabdakośa</i>, is catalogued as printed by Bangalore Press in 1967 (522 pages). A 2014 printing of the <i>Śabdārtha Kaustubha</i> is sold under the BAPPCO imprint.</p>
+    <p>This app reads the dictionary from the open digital text distributed by the indic-dict project.</p>
+    <p class="k-an-note">His dates and life are not given in the sources used for this app. They are best taken from the preface of the printed volumes.</p>
+    <p class="k-an-src"><a href="https://archive.org/details/Sabdartha_Kausthubha_Sanskrit_Kannada_Dictionary_Sahitya_Vidwan_Sri_Chakravarti_" rel="noopener">Scanned edition</a> · <a href="https://archive.org/details/gss.samskrutakannada0000part2.chak" rel="noopener">Śabdakośa, part 2</a> · <a href="https://www.exoticindia.com/book/details/sanskrit-kannada-dictionary-set-of-6-volumes-nzf763" rel="noopener">Six-volume set</a></p>
+  </div>
+</details>`;
+
 async function viewKosha(head, params) {
   setTitle(head ? `${devaToIast(head)} · Dictionary` : 'Dictionary');
   const man = await koshaData.manifest();
   const bar = `<form class="k-find" id="kFind" role="search"><input id="kq" type="search" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="${esc(Tp('Look up a word: agni, अग्नि, ಅಗ್ನಿ', 'शब्दं विचिनु'))}" aria-label="${esc(Tp('Look up a word', 'शब्दं विचिनु'))}"><div class="k-sug" id="kSug" hidden></div></form>`;
-  const credit = `<p class="k-credit">${esc(SOURCE)} · ${T('Sanskrit words with Kannada meanings', 'संस्कृतशब्दाः कन्नडार्थैः सह')}. <a href="#/about">${T('Sources', 'स्रोतांसि')}</a></p>`;
+  const credit = `<p class="k-credit">${esc(SOURCE)} · ${T('Sanskrit words with Kannada meanings', 'संस्कृतशब्दाः कन्नडार्थैः सह')}. <a href="#/kosha?about=author">${T('About the author', 'लेखकपरिचयः')}</a> · <a href="#/about">${T('Sources', 'स्रोतांसि')}</a></p>`;
   if (head) {
     const e = await koshaLookup(koshaData, head);
     if (!e) { main.innerHTML = `<div class="col">${bar}<h1>${esc(head)}</h1><p class="lede">${esc(Tp('That word is not in the dictionary.', 'अयं शब्दः कोशे नास्ति।'))} <a href="#/kosha">${esc(Tp('Browse the dictionary', 'कोशं पश्य'))}</a></p></div>`; wireKoshaFind(); return; }
@@ -2669,10 +2685,12 @@ async function viewKosha(head, params) {
     <div class="chips k-letters" role="group" aria-label="${esc(Tp('Letters', 'वर्णाः'))}">${KOSHA_LETTERS.map((l) => `<a class="chip" lang="sa" href="#/kosha?at=${l}">${l}</a>`).join('')}</div>
     <div class="k-pager">${page.prev ? `<a href="#/kosha?at=${encodeURIComponent(page.prev)}">← ${esc(Tp('Earlier words', 'पूर्वशब्दाः'))}</a>` : '<span></span>'}<small>${fmt(page.entries.length)} ${esc(Tp('words', 'शब्दाः'))}</small>${page.next ? `<a href="#/kosha?at=${encodeURIComponent(page.next)}">${esc(Tp('Later words', 'उत्तरशब्दाः'))} →</a>` : '<span></span>'}</div>
     <div class="k-list">${page.entries.map((x, i) => `<a${i === firstAt ? ' id="kfirst"' : ''} href="${koshaHref(x[0])}"><b lang="sa">${esc(x[0])}</b><span lang="kn">${esc((x[2][0]?.[1] || '').slice(0, 70))}</span></a>`).join('')}</div>
+    ${KOSHA_AUTHOR}
     ${credit}</div>`;
   wireKoshaFind();
   wireWotd($('#wotd')).catch(() => { /* the card is optional: not yet cached and offline */ });
-  if (params.get('at')) document.getElementById('kfirst')?.scrollIntoView({ block: 'start' });
+  if (params.get('about') === 'author') { const d = $('#kAbout'); d.open = true; d.scrollIntoView({ block: 'start' }); }
+  else if (params.get('at')) document.getElementById('kfirst')?.scrollIntoView({ block: 'start' });
 }
 // the word-of-the-day card: today's word from a fixed list, and a button for another one at random
 const SHUFFLE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h3.5c2 0 3.2 1 4.3 2.6l2.4 3.8c1.1 1.6 2.3 2.6 4.3 2.6H21M3 17h3.5c2 0 3.2-1 4.3-2.6M13.2 8.4c1.1-1.4 2.3-1.4 4.3-1.4H21M18 4l3 3-3 3M18 14l3 3-3 3"/></svg>';
@@ -3059,7 +3077,9 @@ async function route() {
       routing = false;
     }));
   } else {
-    if (!r.params.get('v') || r.params.get('v') === '1') window.scrollTo(0, 0);
+    // the dictionary scrolls itself to a letter (?at) or the author note (?about)
+    const placed = r.parts[0] === 'kosha' && !r.parts[1] && (r.params.get('at') || r.params.get('about'));
+    if (!placed && (!r.params.get('v') || r.params.get('v') === '1')) window.scrollTo(0, 0);
     routing = false;
   }
   paintOptbar();

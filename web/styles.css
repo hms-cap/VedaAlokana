@@ -1152,3 +1152,12 @@ a.mrow { display: block; }
 .wotd-b { display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 14px; border-radius: 19px; border: 1px solid rgba(255, 255, 255, .35); background: rgba(255, 255, 255, .12); color: var(--hero-ink); font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
 .wotd-b:hover { background: rgba(255, 255, 255, .2); }
 .wotd-b:focus-visible, .wotd-w:focus-visible, .wotd .hero-go:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* about the author (dictionary) */
+.k-about { scroll-margin-top: 70px; margin: 26px 0 0; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.k-about summary { padding: 14px 16px; cursor: pointer; font-weight: 600; list-style-position: inside; }
+.k-about-b { padding: 0 16px 14px; }
+.k-about-b p { margin: 8px 0; line-height: 1.6; }
+.k-an { margin: 0; font-size: 18px; font-weight: 600; display: flex; flex-wrap: wrap; gap: 2px 12px; align-items: baseline; }
+.k-at { color: var(--muted); font-size: 14px; margin-top: 2px !important; }
+.k-an-note, .k-an-src { color: var(--muted); font-size: 14px; }
