@@ -7,9 +7,11 @@ import { dakshinatyaVerse, dakshinatyaNasals } from './dakshinatya.js';
 import { FACETS, FKEYS, LAYERS, cap, fmt, refOf, groupName, findHref } from './common.js';
 import { search, groupResults } from './search.js';
 import { padaDeva, cleanPada } from './pada.js';
+import { createRvWords, headCandidates, grassmannHref, KIND as RW_KIND, CREDIT as RW_CREDIT } from './rvwords.js';
+import { iastToDeva } from './translit.js';
 import { joinForms } from './sandhi.js';
 import { devaToIast } from './translit.js';
-import { koshaHref } from './kosha.js';
+import { koshaHref, lookup as koshaLookup } from './kosha.js';
 import { createKosha } from './kosha-ui.js';
 import { looseKey } from './search-key.js';
 
@@ -303,6 +305,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.31.0', '2026-11-05', ['Ṛgveda padapāṭha: tap a word to see its grammar, its lemma, the Śabdārtha Kaustubha entry with the Kannada meaning, and a link to Grassmann’s Rig-Veda dictionary. The word lists now follow the VedaWeb Zurich annotation (CC BY 4.0), which also repairs about 9,000 words the old lists had broken.']],
   ['1.30.1', '2026-11-04', ['Dictionary corrections: misspelt headwords fixed from their own derivations and quotations (अष्टमूर्तिधर, not अष्टमूत्रिधर, and others), encoding slips in the source cleaned up (doubled vowel signs, stray Latin letters, the abbreviation sign: माघ॰). The old spellings still find the word in search.']],
   ['1.30.0', '2026-11-04', ['The Dictionary is also available as its own app, Śabdārtha Kaustubha, at kosha/ (linked from the Dictionary footer): it installs separately, has its own version and shares the offline download with this app. The Dictionary screens moved into a shared module; nothing changes in how they work.']],
   ['1.29.1', '2026-11-04', ['Fixed: the Dictionary showed “Couldn’t load this page” on devices that had the previous version’s dictionary index stored.']],
@@ -795,6 +798,45 @@ async function gplPada(id, d1) {
   if (!PADA_GPL.has(id)) return null;
   try { return await (cache.gpada[`${id}/${d1}`] ||= json(`data/gpl/${id}/p${d1}.json`)); } catch { delete cache.gpada[`${id}/${d1}`]; return null; }
 }
+
+// Ṛgveda words you can tap (web/rvwords.js): the aligned padapāṭha with lemma and grammar for each word.
+const RW = createRvWords({ json });
+const rvDeva = (w) => iastToDeva(w.replace(/-/g, 'ऽ'));
+const rvWordBtn = (ref, i, text) => `<button type="button" class="pw" data-r="${ref}" data-i="${i}">${esc(text)}</button>`;
+let koshaHeads = null; let koshaHeadsOf = null;
+async function openWord(ref, i) {
+  const [m, sk, vs] = ref.split('.');
+  const w = RW.words(m, sk, vs)?.[i];
+  if (!w) return;
+  const L = RW.lemma(w[1]);
+  const gram = RW.gram(w[2]);
+  const formDeva = rvDeva(w[0]);
+  const stemIast = L ? L.stem.replace(/^√/, '').replace(/-$/, '') : '';
+  let entry = null;
+  if (L) {
+    try {
+      const keys = await K.data.keys();
+      if (koshaHeadsOf !== keys) { koshaHeads = new Set(keys.map((k) => k[1])); koshaHeadsOf = keys; }
+      const h = headCandidates(L.stem).find((c) => koshaHeads.has(c));
+      if (h) entry = await koshaLookup(K.data, h);
+    } catch { /* dictionary not stored yet: the word still shows its grammar */ }
+  }
+  const sa = (x) => `<span lang="sa">${esc(inLipi(x))}</span>`;
+  const kn = entry ? entry[2].map((x) => x[1]).filter(Boolean).slice(0, 3) : [];
+  const html = `<div class="wd">
+    <p class="wd-form">${prefs.script === 'roman' ? `<span lang="sa-Latn">${esc(w[0])}</span>` : `${sa(formDeva)} <small lang="sa-Latn">${esc(w[0])}</small>`}</p>
+    ${gram ? `<p class="wd-gram">${esc(cap(gram))}</p>` : ''}
+    ${L ? `<p class="wd-row"><small>${esc(Tp('Lemma', 'मूलशब्दः'))}</small> ${L.kind === 'v' ? '√' : ''}${prefs.script === 'roman' ? `<span lang="sa-Latn">${esc(stemIast)}</span>` : `${sa(iastToDeva(stemIast))} <small lang="sa-Latn">${esc(stemIast)}</small>`} <small>· ${esc(RW_KIND[L.kind] || '')}</small></p>` : ''}
+    ${entry ? `<div class="wd-k"><p class="wd-row"><small>${esc(Tp('Dictionary', 'कोशः'))}</small> <a href="${koshaHref(entry[0])}">${sa(entry[0])}</a></p>${kn.length ? `<p class="wd-kn" lang="kn">${esc(kn.join(' · '))}</p>` : ''}</div>` : `<p class="wd-none">${esc(Tp('No Kaustubha entry found for this lemma.', 'अस्य मूलशब्दस्य कौस्तुभे प्रविष्टिः न लब्धा।'))}</p>`}
+    ${L?.gid ? `<p class="wd-row"><a href="${esc(grassmannHref(L.gid))}" target="_blank" rel="noopener">Grassmann, Wörterbuch zum Rig-Veda ↗</a></p>` : ''}
+    <p class="wd-credit">${esc(RW_CREDIT.text)} <a href="${RW_CREDIT.href}" target="_blank" rel="noopener">${esc(Tp('Source', 'स्रोतः'))}</a></p>
+  </div>`;
+  openSheet({ title: w[0], html });
+}
+document.addEventListener('click', (e) => {
+  const b = e.target.closest?.('button.pw');
+  if (b) openWord(b.dataset.r, Number(b.dataset.i));
+});
 
 // Sāyaṇa's bhāṣya comes in files of 20 sūktas (scripts/sayana.mjs), fetched on demand.
 async function bhashya(id, d1, d2) {
@@ -1479,6 +1521,7 @@ async function viewSukta(sid, params) {
   for (const [gi, g] of s.segs.entries()) {
     const meta = metaOf(g.t);
     const vs = ((await text(g.t, g.d1))[g.d2] || []).filter((v) => v[0] >= g.v[0] && v[0] <= g.v[1]);
+    const rwOk = g.t === 'rv' && prefs.mode === 'pada' && await RW.ensure(g.d1);   // tap-a-word data of this maṇḍala
     vs.forEach((v, i) => {
       const a = i === 0 ? g.a : null; const b = i === vs.length - 1 ? g.b : null;
       const lines = !a && !b ? v[1] : v[1].map((l, li) => {
@@ -1489,8 +1532,9 @@ async function viewSukta(sid, params) {
       // the source's own count at the end of a unit, "(6)", is not part of the mantra
       const clean = lines.map((l) => l.replace(/\s*\(\d+\)(\s*-\s*।\s*\d+\s*।)?\s*$/, '')).filter((l) => l.trim());
       // padapāṭha words of this piece: the Ṛgveda's own (whole ṛks), or the Taittirīya Saṃhitā's (cuts included)
-      const pada = g.t === 'rv' && !a && !b && v[3]?.length ? padaDeva(v[3]).map((w) => w) : (tsPada?.[gi]?.[i]?.length ? tsPada[gi][i] : null);
-      blocks.push({ g, meta, v, lines: clean, cut: !!(a || b), pada, padaTs: g.t !== 'rv' });
+      const rw = rwOk && !a && !b ? RW.words(g.d1, g.d2, v[0]) : null;
+      const pada = g.t === 'rv' && !a && !b && (rw || v[3]?.length) ? (rw ? rw.map((x) => rvDeva(x[0])) : padaDeva(v[3])) : (tsPada?.[gi]?.[i]?.length ? tsPada[gi][i] : null);
+      blocks.push({ g, meta, v, lines: clean, cut: !!(a || b), pada, padaTs: g.t !== 'rv', rw: rw ? `${g.d1}.${g.d2}.${v[0]}` : null });
     });
   }
   // an anuvāka is its chunks run together under one number (the source's 50-word units mean nothing to a reader)
@@ -1500,6 +1544,7 @@ async function viewSukta(sid, params) {
     while (j < blocks.length && blocks[j].g === blocks[i].g) { blocks[i].lines = blocks[i].lines.concat(blocks[j].lines); j++; }
     blocks[i].cut = true;
     if (blocks.slice(i, j).every((x) => x.pada)) blocks[i].pada = blocks.slice(i, j).flatMap((x) => x.pada); else blocks[i].pada = null;
+    blocks[i].rw = null;
     blocks.splice(i + 1, j - i - 1);
   }
   const showRoman = (b) => !b.cut && b.v[2]?.length && (prefs.script !== 'deva' || !b.lines.length);
@@ -1516,7 +1561,7 @@ async function viewSukta(sid, params) {
     if (padaOn) {
       const bar = '<span aria-hidden="true">|</span>';
       const ws = b.pada.map((w) => (b.padaTs && prefs.patha === 'std' ? w.replace(/᳚/g, '॑') : w));
-      html += `<div class="pada pada-deva" lang="sa">${ws.map((w) => `<span>${esc(w)}</span>`).join(bar)}</div>`;
+      html += `<div class="pada pada-deva" lang="sa">${ws.map((w, wi) => (b.rw && !b.cut ? rvWordBtn(b.rw, wi, w) : `<span>${esc(w)}</span>`)).join(bar)}</div>`;
     } else if (b.lines.length && prefs.script !== 'roman') html += `<div class="deva" lang="sa">${svaraLines(b.g.t, b.lines, b.cut ? null : b.v[3]).map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
     if (!padaOn && showRoman(b)) html += `<div class="roman" lang="sa-Latn">${b.v[2].map((l) => `<div>${esc(l.replace(/\s*\(\d+\)\s*$/, ''))}</div>`).join('')}</div>`;
     if (!b.cut && b.v[4] && prefs.tr) html += `<p class="tr" lang="en">${esc(b.v[4])}</p>`;
@@ -1528,7 +1573,7 @@ async function viewSukta(sid, params) {
   const onPada = prefs.mode === 'pada' && blocks.some((x) => x.pada);
   const padaNote = !onPada ? '' : `<p class="pada-note">${[
     blocks.some((x) => x.pada && x.padaTs) ? T('Taittirīya padapāṭha with svara marks (source: hvram1/krishnayajurveda, GPL-3.0).', 'तैत्तिरीयपदपाठः स्वरचिह्नैः सह।') : '',
-    blocks.some((x) => x.pada && !x.padaTs) ? T('The Ṛgveda padapāṭha is shown without svara marks.', 'ऋग्वेदपदपाठे स्वरचिह्नानि न दर्श्यन्ते।') : '',
+    blocks.some((x) => x.pada && !x.padaTs) ? T('The Ṛgveda padapāṭha is shown without svara marks. Tap a word for its grammar and dictionary meaning.', 'ऋग्वेदपदपाठे स्वरचिह्नानि न दर्श्यन्ते। पदं स्पृश।') : '',
     blocks.some((x) => !x.pada && x.lines.length) ? T('Pieces with no padapāṭha are shown as the saṃhitā.', 'पदपाठरहिताः भागाः संहितायां दर्श्यन्ते।') : '',
   ].filter(Boolean).join(' ')}</p>`;
   const k = KIND[s.kind] || KIND.sūkta;
@@ -2008,16 +2053,18 @@ async function viewContainer(id, d1, d2, params) {
     </nav>
   </article>`;
 
+  let rwAsked = false;
   const draw = () => {
     const showDeva = hasDeva && prefs.script !== 'roman';
     const showRoman = hasRoman && (prefs.script !== 'deva' || !hasDeva);
     const pada = hasPada && prefs.mode === 'pada';
+    if (pada && id === 'rv' && !rwAsked) { rwAsked = true; RW.ensure(d1).then((ok) => { if (ok) draw(); }); }   // tap-a-word data, then draw again
     // The header shows each facet's main value; a verse repeats a tag only when it differs from
     // the one before it, so a long sūkta is not interrupted by the same chips under every verse.
     const shown = Object.fromEntries(summary.map(([f, e]) => [f, e[0]]));
     $('#sumTags')?.toggleAttribute('hidden', !prefs.tags);
     const padaNote = pada && gpada ? `<p class="pada-note">${T('Padapāṭha with svara marks; analysed words (after iti) are shown as the book prints them. Source: hvram1/krishnayajurveda (GPL-3.0).', 'पदपाठः स्वरचिह्नैः सह।')}</p>`
-      : pada && prefs.script !== 'roman' ? `<p class="pada-note">${T('The padapāṭha is shown without svara marks.', 'पदपाठे स्वरचिह्नानि न दर्श्यन्ते।')}</p>` : '';
+      : pada && prefs.script !== 'roman' ? `<p class="pada-note">${T(`The padapāṭha is shown without svara marks.${id === 'rv' ? ' Tap a word for its grammar and dictionary meaning.' : ''}`, `पदपाठे स्वरचिह्नानि न दर्श्यन्ते।${id === 'rv' ? ' पदं स्पृश।' : ''}`)}</p>` : '';
     $('#verses').innerHTML = padaNote + verses.map(([v, deva, roman, pd, tr, label], vi) => {
       const r = rowOf.get(v);
       const tags = r ? FKEYS.filter((f) => {
@@ -2039,8 +2086,15 @@ async function viewContainer(id, d1, d2, params) {
       } else if (pada) {
         // the reading script decides: Devanagari (Kannada with the Kannada switch) or IAST, both when both are on
         const bar = '<span aria-hidden="true">|</span>';
+        const rw = id === 'rv' ? RW.words(d1, d2, v) : null;   // tap-a-word data: the aligned words, each with its lemma and grammar
+        const rref = `${d1}.${d2}.${v}`;
+        if (rw) {
+          if (showDeva) body += `<div class="pada pada-deva" lang="sa">${rw.map((x, wi) => rvWordBtn(rref, wi, rvDeva(x[0]))).join(bar)}</div>`;
+          if (showRoman || !showDeva) body += `<div class="pada" lang="sa-Latn">${rw.map((x, wi) => rvWordBtn(rref, wi, x[0])).join(bar)}</div>`;
+        } else {
         if (showDeva) body += `<div class="pada pada-deva" lang="sa">${padaDeva(pd).map((w) => `<span>${esc(w)}</span>`).join(bar)}</div>`;
         if (showRoman || !showDeva) body += `<div class="pada" lang="sa-Latn">${cleanPada(pd).map((w) => `<span>${esc(w)}</span>`).join(bar)}</div>`;
+        }
       } else {
         if (showDeva) body += `<div class="deva" lang="sa">${svaraLines(id, deva, pd).map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
         if (showRoman) body += `<div class="roman" lang="sa-Latn">${roman.map((l) => `<div>${esc(l)}</div>`).join('')}</div>`;
@@ -2300,9 +2354,9 @@ function closeSheet(silent) {
   lastFocus?.focus?.();
 }
 function sheetPop() { sheetRoot.innerHTML = ''; document.body.classList.remove('sheet-open'); lastFocus?.focus?.(); }
-function openSheet({ title, items, layout = 'list', note }) {
+function openSheet({ title, items = [], layout = 'list', note, html }) {
   lastFocus = document.activeElement;
-  const body = items.length
+  const body = html ? html : items.length
     ? `<div class="sheet-${layout}">${items.map((it) => `<a href="${it.href}"${it.current ? ' aria-current="true"' : ''}${it.disabled ? ' aria-disabled="true"' : ''}>
         <span class="si-main">${SA() && it.deva ? `<span lang="sa">${esc(it.deva)}</span>` : `${it.deva ? `<span class="dv" lang="sa">${esc(it.deva)}</span>` : ''}<span>${esc(it.label)}</span>`}</span>
         ${it.sub ? `<span class="si-sub">${esc(it.sub)}</span>` : ''}</a>`).join('')}</div>`
@@ -2319,7 +2373,7 @@ function openSheet({ title, items, layout = 'list', note }) {
   sheetRoot.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => closeSheet()));
   // following a link from the sheet takes the sheet's place in history
   sheetRoot.querySelectorAll('.sheet-body a').forEach((a) => a.addEventListener('click', (e) => {
-    if (e.metaKey || e.ctrlKey) return;
+    if (e.metaKey || e.ctrlKey || !a.getAttribute('href').startsWith('#')) return;
     e.preventDefault(); closeSheet(true); go(a.getAttribute('href'), { replace: true });
   }));
   if (overlayClose !== sheetPop) overlayOpen(sheetPop);
