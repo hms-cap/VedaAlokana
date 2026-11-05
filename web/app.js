@@ -7,7 +7,7 @@ import { dakshinatyaVerse, dakshinatyaNasals } from './dakshinatya.js';
 import { FACETS, FKEYS, LAYERS, cap, fmt, refOf, groupName, findHref } from './common.js';
 import { search, groupResults } from './search.js';
 import { padaDeva, cleanPada } from './pada.js';
-import { createRvWords, grassmannHref, KIND as RW_KIND, CREDIT as RW_CREDIT, CAPELLER_CREDIT as RW_CAP } from './rvwords.js';
+import { createRvWords, KIND as RW_KIND, CREDIT as RW_CREDIT, CAPELLER_CREDIT as RW_CAP } from './rvwords.js';
 import { iastToDeva } from './translit.js';
 import { joinForms } from './sandhi.js';
 import { devaToIast } from './translit.js';
@@ -305,6 +305,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.32.2', '2026-11-05', ['Ṛgveda word sheet: the Grassmann link and the Cappeller credit line are gone from the sheet; the credits for the word data are now on the About page.']],
   ['1.32.1', '2026-11-05', ['Ṛgveda words: the English sense from Cappeller is shown under the Kaustubha’s Kannada meaning too, not only when the Kaustubha has no entry.']],
   ['1.32.0', '2026-11-05', ['Ṛgveda words: better Kaustubha matching (verb roots under their dhātupāṭha forms, pronouns, the dictionary’s own spellings), and an English sense from Cappeller’s Sanskrit-English Dictionary when the Kaustubha has no entry. About 96% of words now show a meaning.']],
   ['1.31.0', '2026-11-05', ['Ṛgveda padapāṭha: tap a word to see its grammar, its lemma, the Śabdārtha Kaustubha entry with the Kannada meaning, and a link to Grassmann’s Rig-Veda dictionary. The word lists now follow the VedaWeb Zurich annotation (CC BY 4.0), which also repairs about 9,000 words the old lists had broken.']],
@@ -826,9 +827,8 @@ async function openWord(ref, i) {
     ${gram ? `<p class="wd-gram">${esc(cap(gram))}</p>` : ''}
     ${L ? `<p class="wd-row"><small>${esc(Tp('Lemma', 'मूलशब्दः'))}</small> ${L.kind === 'v' ? '√' : ''}${prefs.script === 'roman' ? `<span lang="sa-Latn">${esc(stemIast)}</span>` : `${sa(iastToDeva(stemIast))} <small lang="sa-Latn">${esc(stemIast)}</small>`} <small>· ${esc(RW_KIND[L.kind] || '')}</small></p>` : ''}
     ${entry ? `<div class="wd-k"><p class="wd-row"><small>${esc(Tp('Dictionary', 'कोशः'))}</small> <a href="${koshaHref(entry[0])}">${sa(entry[0])}</a></p>${kn.length ? `<p class="wd-kn" lang="kn">${esc(kn.join(' · '))}</p>` : ''}</div>` : ''}
-    ${en ? `<div class="wd-en"><p class="wd-row"><small>English</small> <span lang="en">${esc(en)}</span></p><p class="wd-credit">${esc(RW_CAP.text)} <a href="${RW_CAP.href}" target="_blank" rel="noopener">${esc(Tp('Source', 'स्रोतः'))}</a></p></div>`
+    ${en ? `<div class="wd-en"><p class="wd-row"><small>English</small> <span lang="en">${esc(en)}</span></p></div>`
       : entry ? '' : `<p class="wd-none">${esc(Tp('No dictionary entry found for this lemma.', 'अस्य मूलशब्दस्य कोशे प्रविष्टिः न लब्धा।'))}</p>`}
-    ${L?.gid ? `<p class="wd-row"><a href="${esc(grassmannHref(L.gid))}" target="_blank" rel="noopener">Grassmann, Wörterbuch zum Rig-Veda ↗</a></p>` : ''}
     <p class="wd-credit">${esc(RW_CREDIT.text)} <a href="${RW_CREDIT.href}" target="_blank" rel="noopener">${esc(Tp('Source', 'स्रोतः'))}</a></p>
   </div>`;
   openSheet({ title: w[0], html });
@@ -2247,6 +2247,9 @@ async function viewAbout() {
       <ul>${items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></li>`).join('')}</ol>
     <h2>Texts and where they come from</h2>
     <div class="table-wrap"><table class="src-table"><thead><tr><th>Veda</th><th>Layer</th><th>Text</th><th>Source</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <h2>Ṛgveda words</h2>
+    <p>Tap a word of the Ṛgveda padapāṭha for its grammar and meaning. ${esc(RW_CREDIT.text)} <a href="${RW_CREDIT.href}" rel="noopener">doi:10.5281/zenodo.21527084</a>.
+      Kannada: Śabdārtha Kaustubha. ${esc(RW_CAP.text)} <a href="${RW_CAP.href}" rel="noopener">sanskrit-lexicon.uni-koeln.de</a>.</p>
     <h2>Known gaps</h2>
     <ul>
       <li>Ṛṣi, devatā and chandas are indexed only for the Ṛgveda (per ṛk) and the Atharvaveda (per sūkta).</li>
