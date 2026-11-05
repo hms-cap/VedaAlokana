@@ -9,6 +9,7 @@ import { search, groupResults } from './search.js';
 import { padaDeva, cleanPada } from './pada.js';
 import { createRvWords, KIND as RW_KIND, CREDIT as RW_CREDIT, CAPELLER_CREDIT as RW_CAP } from './rvwords.js';
 import { iastToDeva } from './translit.js';
+import { gramSa } from './gramsa.js';
 import { joinForms } from './sandhi.js';
 import { devaToIast } from './translit.js';
 import { koshaHref, lookup as koshaLookup } from './kosha.js';
@@ -305,6 +306,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.33.0', '2026-11-05', ['Ṛgveda word sheet: the grammar is given in Sanskrit terms (लट्, शतृ, प्रथमा, एकवचनम्, उपसर्गः …), with the English beneath it.']],
   ['1.32.3', '2026-11-05', ['Ṛgveda word sheet ends with the meanings; the VedaWeb credit is on the About page.']],
   ['1.32.2', '2026-11-05', ['Ṛgveda word sheet: the Grassmann link and the Cappeller credit line are gone from the sheet; the credits for the word data are now on the About page.']],
   ['1.32.1', '2026-11-05', ['Ṛgveda words: the English sense from Cappeller is shown under the Kaustubha’s Kannada meaning too, not only when the Kaustubha has no entry.']],
@@ -814,6 +816,7 @@ async function openWord(ref, i) {
   const L = RW.lemma(w[1]);
   const gram = RW.gram(w[2]);
   const formDeva = rvDeva(w[0]);
+  const gsa = gram ? gramSa(gram) : null;   // the same grammar in Pāṇinian terms (web/gramsa.js)
   const stemIast = L ? L.stem.replace(/^√/, '').replace(/-$/, '') : '';
   let entry = null; let en = null;
   if (L) {
@@ -825,7 +828,7 @@ async function openWord(ref, i) {
   const kn = entry ? entry[2].map((x) => x[1]).filter(Boolean).slice(0, 3) : [];
   const html = `<div class="wd">
     <p class="wd-form">${prefs.script === 'roman' ? `<span lang="sa-Latn">${esc(w[0])}</span>` : `${sa(formDeva)} <small lang="sa-Latn">${esc(w[0])}</small>`}</p>
-    ${gram ? `<p class="wd-gram">${esc(cap(gram))}</p>` : ''}
+    ${gram ? (gsa ? `<p class="wd-gram" lang="sa">${esc(inLipi(gsa))}</p><p class="wd-gram-en">${esc(cap(gram))}</p>` : `<p class="wd-gram">${esc(cap(gram))}</p>`) : ''}
     ${L ? `<p class="wd-row"><small>${esc(Tp('Lemma', 'मूलशब्दः'))}</small> ${L.kind === 'v' ? '√' : ''}${prefs.script === 'roman' ? `<span lang="sa-Latn">${esc(stemIast)}</span>` : `${sa(iastToDeva(stemIast))} <small lang="sa-Latn">${esc(stemIast)}</small>`} <small>· ${esc(RW_KIND[L.kind] || '')}</small></p>` : ''}
     ${entry ? `<div class="wd-k"><p class="wd-row"><small>${esc(Tp('Dictionary', 'कोशः'))}</small> <a href="${koshaHref(entry[0])}">${sa(entry[0])}</a></p>${kn.length ? `<p class="wd-kn" lang="kn">${esc(kn.join(' · '))}</p>` : ''}</div>` : ''}
     ${en ? `<div class="wd-en"><p class="wd-row"><small>English</small> <span lang="en">${esc(en)}</span></p></div>`
