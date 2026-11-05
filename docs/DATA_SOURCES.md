@@ -108,3 +108,9 @@ The digital text of the Śabdārtha Kaustubha has some typing and encoding slips
 - **Reviewed word corrections** in `scripts/kosha-errata.tsv`, each with its evidence (usually the entry's own derivation or quotation), e.g. अष्टमूत्रिधर → अष्टमूर्तिधर. The source spelling of a corrected headword still finds the word in search but is not shown.
 - **Mechanical clean-ups** of the Sanskrit text (`cleanSa`): two vowel signs in a row, a virama before a vowel sign, the Latin letter s used for the avagraha, zero-width joiners standing for spaces, and the digit zero used as the abbreviation sign (माघ० → माघ॰). The Kannada meanings are left as they are.
 - `node scripts/kosha-suspects.mjs` lists possible misspellings for review; nothing it lists is applied until it is checked and added to the errata file.
+
+### Ṛgveda word annotation (tap a word)
+`web/data/rv/w1…w10.json` and `wl.json` come from `scripts/build-rv-words.mjs` (input: the VedaWeb Zurich export `vedaweb_zurich.xlsx`, not stored in the repository).
+Each padapāṭha word carries a lemma and an English grammar string. Our own spelling and compound breaks are kept where they agree with the annotation; where ours was broken (joined words, lost ṛ) the annotation's word is used (9,159 of 164,758 words).
+German lemma meanings are not used. Kaustubha entries are matched by lemma (74% of words; verb roots mostly not, the book lists them with markers). The Grassmann link (Cologne Sanskrit Lexicon, `basicadjust.php?dict=GRA`) is built from the annotation's Grassmann id and its URL pattern has not been checked against the live site.
+Licence: CC BY 4.0. Reinöhl, Casaretto, Coenen, Fischer, Halfmann, Korobzow, Kölligan (2024), VedaWeb, Zurich annotation of the Ṛgveda, Zenodo, doi:10.5281/zenodo.21527084.
