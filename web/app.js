@@ -305,6 +305,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.32.1', '2026-11-05', ['Ṛgveda words: the English sense from Cappeller is shown under the Kaustubha’s Kannada meaning too, not only when the Kaustubha has no entry.']],
   ['1.32.0', '2026-11-05', ['Ṛgveda words: better Kaustubha matching (verb roots under their dhātupāṭha forms, pronouns, the dictionary’s own spellings), and an English sense from Cappeller’s Sanskrit-English Dictionary when the Kaustubha has no entry. About 96% of words now show a meaning.']],
   ['1.31.0', '2026-11-05', ['Ṛgveda padapāṭha: tap a word to see its grammar, its lemma, the Śabdārtha Kaustubha entry with the Kannada meaning, and a link to Grassmann’s Rig-Veda dictionary. The word lists now follow the VedaWeb Zurich annotation (CC BY 4.0), which also repairs about 9,000 words the old lists had broken.']],
   ['1.30.1', '2026-11-04', ['Dictionary corrections: misspelt headwords fixed from their own derivations and quotations (अष्टमूर्तिधर, not अष्टमूत्रिधर, and others), encoding slips in the source cleaned up (doubled vowel signs, stray Latin letters, the abbreviation sign: माघ॰). The old spellings still find the word in search.']],
@@ -824,8 +825,9 @@ async function openWord(ref, i) {
     <p class="wd-form">${prefs.script === 'roman' ? `<span lang="sa-Latn">${esc(w[0])}</span>` : `${sa(formDeva)} <small lang="sa-Latn">${esc(w[0])}</small>`}</p>
     ${gram ? `<p class="wd-gram">${esc(cap(gram))}</p>` : ''}
     ${L ? `<p class="wd-row"><small>${esc(Tp('Lemma', 'मूलशब्दः'))}</small> ${L.kind === 'v' ? '√' : ''}${prefs.script === 'roman' ? `<span lang="sa-Latn">${esc(stemIast)}</span>` : `${sa(iastToDeva(stemIast))} <small lang="sa-Latn">${esc(stemIast)}</small>`} <small>· ${esc(RW_KIND[L.kind] || '')}</small></p>` : ''}
-    ${entry ? `<div class="wd-k"><p class="wd-row"><small>${esc(Tp('Dictionary', 'कोशः'))}</small> <a href="${koshaHref(entry[0])}">${sa(entry[0])}</a></p>${kn.length ? `<p class="wd-kn" lang="kn">${esc(kn.join(' · '))}</p>` : ''}</div>` : (en ? `<div class="wd-en"><p class="wd-row"><small>English</small> <span lang="en">${esc(en)}</span></p><p class="wd-credit">${esc(RW_CAP.text)} <a href="${RW_CAP.href}" target="_blank" rel="noopener">${esc(Tp('Source', 'स्रोतः'))}</a></p></div>`
-      : `<p class="wd-none">${esc(Tp('No dictionary entry found for this lemma.', 'अस्य मूलशब्दस्य कोशे प्रविष्टिः न लब्धा।'))}</p>`)}
+    ${entry ? `<div class="wd-k"><p class="wd-row"><small>${esc(Tp('Dictionary', 'कोशः'))}</small> <a href="${koshaHref(entry[0])}">${sa(entry[0])}</a></p>${kn.length ? `<p class="wd-kn" lang="kn">${esc(kn.join(' · '))}</p>` : ''}</div>` : ''}
+    ${en ? `<div class="wd-en"><p class="wd-row"><small>English</small> <span lang="en">${esc(en)}</span></p><p class="wd-credit">${esc(RW_CAP.text)} <a href="${RW_CAP.href}" target="_blank" rel="noopener">${esc(Tp('Source', 'स्रोतः'))}</a></p></div>`
+      : entry ? '' : `<p class="wd-none">${esc(Tp('No dictionary entry found for this lemma.', 'अस्य मूलशब्दस्य कोशे प्रविष्टिः न लब्धा।'))}</p>`}
     ${L?.gid ? `<p class="wd-row"><a href="${esc(grassmannHref(L.gid))}" target="_blank" rel="noopener">Grassmann, Wörterbuch zum Rig-Veda ↗</a></p>` : ''}
     <p class="wd-credit">${esc(RW_CREDIT.text)} <a href="${RW_CREDIT.href}" target="_blank" rel="noopener">${esc(Tp('Source', 'स्रोतः'))}</a></p>
   </div>`;
