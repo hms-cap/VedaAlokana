@@ -2,6 +2,7 @@
 // the words match the padapāṭha in count, and lemmas find their dictionary headwords. Usage: node scripts/test-rvwords.mjs
 import { readFileSync, existsSync } from 'node:fs';
 import { headCandidates, grassmannKey, grassmannHref } from '../web/rvwords.js';
+import { gramSa } from '../web/gramsa.js';
 import { padaDeva } from '../web/pada.js';
 import { iastToDeva } from '../web/translit.js';
 
@@ -55,5 +56,12 @@ if (wk[L('√hū')] === 'हु') fail('√hū must not open हु');
 if (/dogs/.test(cap[L('svapati')] || '')) fail('svapati is not śvapati');
 if (!/^m\. fire/.test(cap[L('agni')] || '')) fail(`agni: ${cap[L('agni')]}`);
 if (!/^make, do/.test(cap[L('√kṛ')] || '')) fail(`√kṛ: ${cap[L('√kṛ')]}`);
+// the grammar in Sanskrit terms: every English string has one, built only from known words
+for (const g of wl.grams) if (g && !gramSa(g)) fail(`no Sanskrit grammar for "${g}"`);
+const sa = (g, want) => { if (gramSa(g) !== want) fail(`gramSa("${g}") = ${gramSa(g)}, wanted ${want}`); };
+sa('indicative present middle 1st person singular', 'लट् · आत्मनेपदम् · उत्तमपुरुषः · एकवचनम्');
+sa('present active participle nominative singular masculine local particle', 'शतृ · प्रथमा · एकवचनम् · पुंलिङ्गम् · उपसर्गः');
+sa('accusative or dative or genitive plural', 'द्वितीया / चतुर्थी / षष्ठी · बहुवचनम्');
+sa('optative present active 3rd person singular', 'विधिलिङ् · परस्मैपदम् · प्रथमपुरुषः · एकवचनम्');
 console.log(bad ? `${bad} failure(s)` : 'ok');
 process.exit(bad ? 1 : 0);
