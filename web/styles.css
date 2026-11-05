@@ -1209,3 +1209,5 @@ a.mrow { display: block; }
 .k-strip a[aria-current="true"] { background: var(--v-kosha); color: #fff; font-weight: 600; }
 .k-browse.has-strip { padding-right: 18px; }
 @media (min-width: 900px) { .k-strip { display: none; } .k-browse.has-strip { padding-right: 0; } .k-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); } .k-bar { margin: 0 0 4px; border-radius: 8px; } }
+.wd-en .wd-row span { line-height: 1.5; }
+.wd-en .wd-credit { margin-top: -4px; }

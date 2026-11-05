@@ -7,7 +7,7 @@ import { dakshinatyaVerse, dakshinatyaNasals } from './dakshinatya.js';
 import { FACETS, FKEYS, LAYERS, cap, fmt, refOf, groupName, findHref } from './common.js';
 import { search, groupResults } from './search.js';
 import { padaDeva, cleanPada } from './pada.js';
-import { createRvWords, headCandidates, grassmannHref, KIND as RW_KIND, CREDIT as RW_CREDIT } from './rvwords.js';
+import { createRvWords, grassmannHref, KIND as RW_KIND, CREDIT as RW_CREDIT, CAPELLER_CREDIT as RW_CAP } from './rvwords.js';
 import { iastToDeva } from './translit.js';
 import { joinForms } from './sandhi.js';
 import { devaToIast } from './translit.js';
@@ -305,6 +305,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.32.0', '2026-11-05', ['Ṛgveda words: better Kaustubha matching (verb roots under their dhātupāṭha forms, pronouns, the dictionary’s own spellings), and an English sense from Cappeller’s Sanskrit-English Dictionary when the Kaustubha has no entry. About 96% of words now show a meaning.']],
   ['1.31.0', '2026-11-05', ['Ṛgveda padapāṭha: tap a word to see its grammar, its lemma, the Śabdārtha Kaustubha entry with the Kannada meaning, and a link to Grassmann’s Rig-Veda dictionary. The word lists now follow the VedaWeb Zurich annotation (CC BY 4.0), which also repairs about 9,000 words the old lists had broken.']],
   ['1.30.1', '2026-11-04', ['Dictionary corrections: misspelt headwords fixed from their own derivations and quotations (अष्टमूर्तिधर, not अष्टमूत्रिधर, and others), encoding slips in the source cleaned up (doubled vowel signs, stray Latin letters, the abbreviation sign: माघ॰). The old spellings still find the word in search.']],
   ['1.30.0', '2026-11-04', ['The Dictionary is also available as its own app, Śabdārtha Kaustubha, at kosha/ (linked from the Dictionary footer): it installs separately, has its own version and shares the offline download with this app. The Dictionary screens moved into a shared module; nothing changes in how they work.']],
@@ -803,7 +804,6 @@ async function gplPada(id, d1) {
 const RW = createRvWords({ json });
 const rvDeva = (w) => iastToDeva(w.replace(/-/g, 'ऽ'));
 const rvWordBtn = (ref, i, text) => `<button type="button" class="pw" data-r="${ref}" data-i="${i}">${esc(text)}</button>`;
-let koshaHeads = null; let koshaHeadsOf = null;
 async function openWord(ref, i) {
   const [m, sk, vs] = ref.split('.');
   const w = RW.words(m, sk, vs)?.[i];
@@ -812,14 +812,11 @@ async function openWord(ref, i) {
   const gram = RW.gram(w[2]);
   const formDeva = rvDeva(w[0]);
   const stemIast = L ? L.stem.replace(/^√/, '').replace(/-$/, '') : '';
-  let entry = null;
+  let entry = null; let en = null;
   if (L) {
-    try {
-      const keys = await K.data.keys();
-      if (koshaHeadsOf !== keys) { koshaHeads = new Set(keys.map((k) => k[1])); koshaHeadsOf = keys; }
-      const h = headCandidates(L.stem).find((c) => koshaHeads.has(c));
-      if (h) entry = await koshaLookup(K.data, h);
-    } catch { /* dictionary not stored yet: the word still shows its grammar */ }
+    const d = await RW.dict(w[1]);   // which Kaustubha entry the lemma opens, and Capeller's first sense (scripts/build-rv-dict.mjs)
+    en = d.capeller;
+    if (d.kosha) { try { entry = await koshaLookup(K.data, d.kosha); } catch { /* dictionary not stored yet */ } }
   }
   const sa = (x) => `<span lang="sa">${esc(inLipi(x))}</span>`;
   const kn = entry ? entry[2].map((x) => x[1]).filter(Boolean).slice(0, 3) : [];
@@ -827,7 +824,8 @@ async function openWord(ref, i) {
     <p class="wd-form">${prefs.script === 'roman' ? `<span lang="sa-Latn">${esc(w[0])}</span>` : `${sa(formDeva)} <small lang="sa-Latn">${esc(w[0])}</small>`}</p>
     ${gram ? `<p class="wd-gram">${esc(cap(gram))}</p>` : ''}
     ${L ? `<p class="wd-row"><small>${esc(Tp('Lemma', 'मूलशब्दः'))}</small> ${L.kind === 'v' ? '√' : ''}${prefs.script === 'roman' ? `<span lang="sa-Latn">${esc(stemIast)}</span>` : `${sa(iastToDeva(stemIast))} <small lang="sa-Latn">${esc(stemIast)}</small>`} <small>· ${esc(RW_KIND[L.kind] || '')}</small></p>` : ''}
-    ${entry ? `<div class="wd-k"><p class="wd-row"><small>${esc(Tp('Dictionary', 'कोशः'))}</small> <a href="${koshaHref(entry[0])}">${sa(entry[0])}</a></p>${kn.length ? `<p class="wd-kn" lang="kn">${esc(kn.join(' · '))}</p>` : ''}</div>` : `<p class="wd-none">${esc(Tp('No Kaustubha entry found for this lemma.', 'अस्य मूलशब्दस्य कौस्तुभे प्रविष्टिः न लब्धा।'))}</p>`}
+    ${entry ? `<div class="wd-k"><p class="wd-row"><small>${esc(Tp('Dictionary', 'कोशः'))}</small> <a href="${koshaHref(entry[0])}">${sa(entry[0])}</a></p>${kn.length ? `<p class="wd-kn" lang="kn">${esc(kn.join(' · '))}</p>` : ''}</div>` : (en ? `<div class="wd-en"><p class="wd-row"><small>English</small> <span lang="en">${esc(en)}</span></p><p class="wd-credit">${esc(RW_CAP.text)} <a href="${RW_CAP.href}" target="_blank" rel="noopener">${esc(Tp('Source', 'स्रोतः'))}</a></p></div>`
+      : `<p class="wd-none">${esc(Tp('No dictionary entry found for this lemma.', 'अस्य मूलशब्दस्य कोशे प्रविष्टिः न लब्धा।'))}</p>`)}
     ${L?.gid ? `<p class="wd-row"><a href="${esc(grassmannHref(L.gid))}" target="_blank" rel="noopener">Grassmann, Wörterbuch zum Rig-Veda ↗</a></p>` : ''}
     <p class="wd-credit">${esc(RW_CREDIT.text)} <a href="${RW_CREDIT.href}" target="_blank" rel="noopener">${esc(Tp('Source', 'स्रोतः'))}</a></p>
   </div>`;

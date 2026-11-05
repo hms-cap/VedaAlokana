@@ -14,7 +14,8 @@ const packs = [];
 for (const v of cat.vedas) {
   const ids = Object.values(v.layers).flat();
   // GPL data kept apart (web/data/gpl/<text>/): the Taittirīya Saṃhitā's separate forms go with its Veda
-  const gpl = ids.filter((id) => fs.existsSync(path.join(web, 'data', 'gpl', id))).flatMap((id) => filesOf(`gpl/${id}`));
+  // and the Cologne dictionary extracts (web/data/cdsl/<text>/, CC BY-NC-SA): the Ṛgveda words' English senses
+  const gpl = ['gpl', 'cdsl'].flatMap((dir) => ids.filter((id) => fs.existsSync(path.join(web, 'data', dir, id))).flatMap((id) => filesOf(`${dir}/${id}`)));
   const all = [...ids.flatMap(filesOf), ...gpl];
   // the mantra-word search index of this Veda (scripts/build-search.mjs), so searching inside it works offline too
   const words = `data/search/text-${v.id}.tsv`;
