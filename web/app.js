@@ -305,6 +305,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.32.3', '2026-11-05', ['Ṛgveda word sheet ends with the meanings; the VedaWeb credit is on the About page.']],
   ['1.32.2', '2026-11-05', ['Ṛgveda word sheet: the Grassmann link and the Cappeller credit line are gone from the sheet; the credits for the word data are now on the About page.']],
   ['1.32.1', '2026-11-05', ['Ṛgveda words: the English sense from Cappeller is shown under the Kaustubha’s Kannada meaning too, not only when the Kaustubha has no entry.']],
   ['1.32.0', '2026-11-05', ['Ṛgveda words: better Kaustubha matching (verb roots under their dhātupāṭha forms, pronouns, the dictionary’s own spellings), and an English sense from Cappeller’s Sanskrit-English Dictionary when the Kaustubha has no entry. About 96% of words now show a meaning.']],
@@ -829,7 +830,6 @@ async function openWord(ref, i) {
     ${entry ? `<div class="wd-k"><p class="wd-row"><small>${esc(Tp('Dictionary', 'कोशः'))}</small> <a href="${koshaHref(entry[0])}">${sa(entry[0])}</a></p>${kn.length ? `<p class="wd-kn" lang="kn">${esc(kn.join(' · '))}</p>` : ''}</div>` : ''}
     ${en ? `<div class="wd-en"><p class="wd-row"><small>English</small> <span lang="en">${esc(en)}</span></p></div>`
       : entry ? '' : `<p class="wd-none">${esc(Tp('No dictionary entry found for this lemma.', 'अस्य मूलशब्दस्य कोशे प्रविष्टिः न लब्धा।'))}</p>`}
-    <p class="wd-credit">${esc(RW_CREDIT.text)} <a href="${RW_CREDIT.href}" target="_blank" rel="noopener">${esc(Tp('Source', 'स्रोतः'))}</a></p>
   </div>`;
   openSheet({ title: w[0], html });
 }
