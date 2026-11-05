@@ -37,5 +37,23 @@ if (mismatch > verses * 0.02) fail('too many verses differ from the padapāṭha
 if (grassmannKey('sa_9064;ta_3606') !== 'sa' || grassmannKey('agni_79') !== 'agni') fail('grassmannKey');
 if (!grassmannHref('fzi_2253').includes('key=fzi')) fail('grassmannHref');
 if (iastToDeva('puraḥ-hitam'.replace(/-/g, 'ऽ')) === '') fail('iastToDeva');
+// dictionary links (scripts/build-rv-dict.mjs): every Kaustubha link is a headword, every index a lemma, and with Capeller nearly
+// every word has a meaning
+const wk = rd('rv/wk.json').k; const cap = rd('cdsl/rv/capeller.json').g;
+for (const [i, h] of Object.entries(wk)) { if (!heads.has(h)) fail(`wk ${i}: ${h} is not a headword`); if (!wl.lemmas[i]) fail(`wk ${i}: no lemma`); }
+for (const [i, g] of Object.entries(cap)) { if (!wl.lemmas[i]) fail(`capeller ${i}: no lemma`); if (!g || g.length > 240 || /Correction|https?:|<[a-z]/i.test(g)) fail(`capeller ${i}: ${g}`); }
+let kTok = 0; let anyTok = 0; let all = 0;
+for (let m = 1; m <= 10; m++) for (const vs of Object.values(rd(`rv/w${m}.json`))) for (const ws of Object.values(vs)) for (const [, li] of ws) { all++; if (wk[li]) kTok++; if (wk[li] || cap[li]) anyTok++; }
+console.log(`Kaustubha links ${(100 * kTok / all).toFixed(1)}% of words, with Capeller ${(100 * anyTok / all).toFixed(1)}%`);
+if (kTok / all < 0.74) fail('Kaustubha links under 74% of words');
+if (anyTok / all < 0.95) fail('a dictionary meaning for under 95% of words');
+const L = (s) => wl.lemmas.findIndex((l) => l[0] === s);
+if (wk[L('√kṛ')] !== 'डुकृञ्') fail('√kṛ should open डुकृञ्');
+if (wk[L('tvam')] !== 'युष्मद्') fail('tvam should open युष्मद्');
+if (wk[L('putra')] !== 'पुत्त्र') fail('putra should open पुत्त्र');
+if (wk[L('√hū')] === 'हु') fail('√hū must not open हु');
+if (/dogs/.test(cap[L('svapati')] || '')) fail('svapati is not śvapati');
+if (!/^m\. fire/.test(cap[L('agni')] || '')) fail(`agni: ${cap[L('agni')]}`);
+if (!/^make, do/.test(cap[L('√kṛ')] || '')) fail(`√kṛ: ${cap[L('√kṛ')]}`);
 console.log(bad ? `${bad} failure(s)` : 'ok');
 process.exit(bad ? 1 : 0);

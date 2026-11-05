@@ -5,6 +5,10 @@
 //   wl.json   : { lemmas: [[stem IAST, kind (n noun · v verb root · i indeclinable · p pronoun), Grassmann id]], grams: [English grammar] }
 import { iastToDeva } from './translit.js';
 
+export const CAPELLER_CREDIT = {
+  text: 'English: Cappeller, A Sanskrit-English Dictionary (1891), from the Cologne Digital Sanskrit Lexicon (© 2014 The Sanskrit Library and Thomas Malten, CC BY-NC-SA 3.0).',
+  href: 'https://www.sanskrit-lexicon.uni-koeln.de/',
+};
 export const CREDIT = {
   text: 'Word forms, lemmas and grammar: VedaWeb, Zurich annotation of the Ṛgveda (Reinöhl, Casaretto, Coenen, Fischer, Halfmann, Korobzow, Kölligan 2024), CC BY 4.0.',
   href: 'https://doi.org/10.5281/zenodo.21527084',
@@ -13,7 +17,7 @@ export const KIND = { n: 'noun / adjective', v: 'verb root', i: 'indeclinable', 
 
 /** The dictionary headwords a lemma could be written as, best first (stems are headwords in the Kaustubha: अग्नि, होतृ). */
 const IRREGULAR = { ayam: 'idam', gav: 'go', 'gō': 'go', tvam: 'tvad', ahar: 'ahan', pitar: 'pitṛ', mātar: 'mātṛ' };
-export function headCandidates(stem) {
+export function headCandidates(stem, { sToS = true } = {}) {
   // the annotation writes śa as "sa" ("visva" for viśva) and marks homonyms with a superscript ("janⁱ")
   const s = stem.replace(/^√/, '').replace(/-$/, '').replace(/[ⁱ¹²³⁴⁵⁶⁷⁸⁹⁰]+$/u, '');
   const forms = new Set([IRREGULAR[s] || s, s]);
@@ -30,8 +34,8 @@ export function headCandidates(stem) {
     if (/i$/.test(f)) add(f.slice(0, -1) + 'ī');
     if (/ī$/.test(f)) add(f.slice(0, -1) + 'i');
     if (/ū$/.test(f)) add(f.slice(0, -1) + 'u');
-    // s may stand for ś: try every way of writing it (up to four s)
-    const at = [...f].map((c, i) => (c === 's' ? i : -1)).filter((i) => i >= 0).slice(0, 4);
+    // s may stand for ś: try every way of writing it (up to four s), unless the spelling is known to be right (sToS false)
+    const at = sToS ? [...f].map((c, i) => (c === 's' ? i : -1)).filter((i) => i >= 0).slice(0, 4) : [];
     for (let mask = 1; mask < 1 << at.length; mask++) {
       const g = [...f]; at.forEach((p, k) => { if (mask & (1 << k)) g[p] = 'ś'; });
       add(g.join(''));
@@ -66,5 +70,13 @@ export function createRvWords(loader) {
     words: (m, s, v) => done.get(`data/rv/w${m}.json`)?.[s]?.[v] || null,
     lemma(i) { const e = done.get('data/rv/wl.json')?.lemmas[i]; return e ? { stem: e[0], kind: e[1], gid: e[2] } : null; },
     gram: (i) => done.get('data/rv/wl.json')?.grams[i] || '',
+    /**
+     * The dictionaries of a lemma, from scripts/build-rv-dict.mjs: { kosha: Kaustubha headword or null, capeller: first English
+     * sense or null }. Loaded on the first tap; either file missing (offline, not stored yet) gives null for it.
+     */
+    async dict(i) {
+      const [k, c] = await Promise.all([get('data/rv/wk.json'), get('data/cdsl/rv/capeller.json')]);
+      return { kosha: k?.k?.[i] || null, capeller: c?.g?.[i] || null };
+    },
   };
 }
