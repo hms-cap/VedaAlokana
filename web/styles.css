@@ -1229,3 +1229,4 @@ a.mrow { display: block; }
 .hero { padding: 18px 20px 16px; gap: 8px; }
 .lib-open { display: flex; align-items: center; justify-content: center; height: 48px; margin-top: 14px; border-radius: 14px; background: var(--v-kosha); color: #FFFFFF; font-weight: 600; }
 .lib-open:hover { text-decoration: none; filter: brightness(1.08); }
+.about .feat { margin: 0 0 18px; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
