@@ -306,6 +306,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.35.0', '2026-11-06', ['Home: the Vedas now stand around the yajña-kuṇḍa. Tap a Veda for its Saṃhitā, Brāhmaṇa, Āraṇyaka and Upaniṣad texts, tap its sruk (ladle) for its sūktas, and tap the agni for all the sūktas. This replaces the Veda tiles and the Sūktas row.']],
   ['1.34.4', '2026-11-06', ['The i summary now lists views, translation and bhāṣya. The one-line pañcāṅga is a little taller with a round button that shows there is more. Continue chanting takes two lines instead of three. Check for updates and Offline downloads are on the i page too.']],
   ['1.34.3', '2026-11-06', ['The i button now opens a short summary of what the app does. The version history, sources and licences, and update check stay under Settings → About.']],
   ['1.34.2', '2026-11-06', ['Fixed: the app did not open without a network, since 1.31.0. Two newer files were missing from the offline copy. Open the app once online to get the fix.']],
@@ -1240,16 +1241,7 @@ async function viewHome() {
       <span class="cont-t"><small>${T('Continue chanting', 'पाठम् अनुवर्तय')}</small><span class="cont-l"><b>${SA() && last.whereSa ? `<span lang="sa">${esc(last.whereSa)}</span>` : esc(last.where)}</b><small>${SA() && last.textSa ? `<span lang="sa">${esc(last.textSa)}</span>` : esc(last.text)}${last.of ? ` · ${SA() ? `<span lang="sa">${dg(last.v)} / ${dg(last.of)}</span>` : `${last.v} of ${last.of}`}` : ''}</small></span></span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>` : ''}
     <section class="hero dm" id="dm" aria-roledescription="carousel" aria-labelledby="todayH">${dailyHTML(dm)}</section>
-    <div class="sec-h"><h2>${T('The Vedas', 'वेदाः')}</h2><a href="#/library">${T('Library', MENU_SA.library)}</a></div>
-    <div class="vtiles">${cat.vedas.map((v) => {
-    const s = v.layers.samhita.map((i) => byId[i]).find((x) => x.has.svara || x.has.roman) || byId[v.layers.samhita[0]];
-    return `<a class="vtile" href="#/veda/${v.id}" style="--vc: var(--v-${v.id})">
-        ${VEDA_ICON[v.id] ? vedaIcon(v.id, 'vt-i') + vedaIcon(v.id, 'vt-w') : `<span class="vt-g" lang="sa">${esc(VEDA_GLYPH[v.id] || v.deva[0])}</span>`}
-        <span class="vt-n"><b>${T(v.name, VEDA_SA[v.id])}</b><small>${s ? `${F(s.verses)} ${unitHTML(s)}` : ''}</small></span></a>`;
-  }).join('')}</div>
-    ${suk.length ? `<div class="sec-h"><h2>${T('Sūktas', 'सूक्तानि')}</h2><a href="#/suktas">${SA() ? `<span lang="sa">सर्वाणि ${dg(suk.length)}</span>` : `All ${suk.length}`}</a></div>
-    ${sukVedaButtons(cat, suk, homeSkOpen, 'button')}
-    <div class="schips" id="homeSk"${homeSkOpen ? '' : ' hidden'}>${homeSkOpen ? sukChips(suk, homeSkOpen) : ''}</div>` : ''}
+    ${mandalaHTML(cat, suk)}
     <a class="my-btn" href="#/my"><span class="my-ic">${STAR(true)}</span><span class="my-t">${T('My sūktas', 'मम सूक्तानि')}</span><span class="my-n">${F(my.saved.length)}</span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
     <p class="lede home-foot">Every text comes from an openly published digital edition.</p>
@@ -1257,10 +1249,60 @@ async function viewHome() {
   renderPanchanga();
   obCan.tr = !!dm.trEn; obCan.bhashya = !!dm.bhx;
   wireDaily(dm);
-  main.querySelectorAll('.skv [data-skv]').forEach((b) => b.addEventListener('click', () => {
-    homeSkOpen = homeSkOpen === b.dataset.skv ? null : b.dataset.skv;   // tap again to close; kept until the app is closed
-    main.querySelectorAll('.skv [data-skv]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.skv === homeSkOpen)));
-    const box = $('#homeSk'); box.hidden = !homeSkOpen; box.innerHTML = homeSkOpen ? sukChips(suk, homeSkOpen) : '';
+  wireMandala(cat, suk);
+}
+
+// ---------- Home: the Vedas around the yajña-kuṇḍa ----------
+// Each Veda is a node: tapping it shows its texts by layer below. Its sruk (ladle) shows its sūkta chips.
+// The agni in the centre opens all the sūktas. The choice is kept for this visit.
+let homeMd = { v: 'rv', m: 'texts' };
+const SRUK = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 19c2-2 6-6 9-9"/><circle cx="17" cy="7" r="3.2"/></svg>';
+const KUNDA = `<svg class="md-kunda" viewBox="0 0 88 88" aria-hidden="true">
+  <rect x="3" y="3" width="82" height="82" rx="7" class="k1"/><rect x="15" y="15" width="58" height="58" rx="5" class="k2"/><rect x="27" y="27" width="34" height="34" rx="4" class="k3"/>
+  <circle class="agni-g" cx="44" cy="46" r="14"/>
+  <path class="agni-o" d="M44 26c3 6 9 8.5 9 16a9 9 0 0 1-18 0c0-4 1.8-6.5 3.8-9 0 4 2 5 3.2 5C42 34 41.5 30 44 26z"/>
+  <path class="agni-i" d="M44 40c1.6 2.2 3 3.4 3 5.4a3 3 0 0 1-6 0c0-2 1.4-3.2 3-5.4z"/></svg>`;
+const MD_W = 358; const MD_H = 276; const MD_ORDER = ['rv', 'syv', 'kyv', 'sv', 'av']; const MD_C = [179, 140]; const MD_R = 100;
+function mandalaHTML(cat, suk) {
+  const n = (id) => suk.filter((e) => e.veda === id).length;
+  const texts = (v) => cat.layers.reduce((k, l) => k + v.layers[l].length, 0);
+  const pct = (x, y) => `left:${(x / MD_W * 100).toFixed(2)}%;top:${(y / MD_H * 100).toFixed(2)}%`;
+  const vs = [...cat.vedas].sort((p, q) => (MD_ORDER.indexOf(p.id) + 1 || 99) - (MD_ORDER.indexOf(q.id) + 1 || 99));
+  const nodes = vs.map((v, i) => {
+    const a = (-90 + i * 360 / vs.length) * Math.PI / 180;
+    const x = MD_C[0] + MD_R * Math.cos(a); const y = MD_C[1] + MD_R * Math.sin(a);
+    const on = homeMd.v === v.id;
+    return `<button type="button" class="md-v" style="--vc: var(--v-${v.id});${pct(x, y)}" data-mdv="${v.id}" data-mdm="texts" aria-pressed="${String(on && homeMd.m === 'texts')}" aria-label="${esc(v.name)}: texts">
+        <span lang="sa">${esc(VEDA_SA_SHORT[v.id])}</span><small>${F(texts(v))} ${T('texts', 'ग्रन्थाः')}</small></button>
+      ${n(v.id) ? `<button type="button" class="md-s" style="--vc: var(--v-${v.id});${pct(x, y + 33)}" data-mdv="${v.id}" data-mdm="suktas" aria-pressed="${String(on && homeMd.m === 'suktas')}" aria-label="${esc(v.name)}: ${n(v.id)} sūktas">${SRUK}${F(n(v.id))} ${T('sūktas', 'सूक्तानि')}</button>` : ''}`;
+  }).join('');
+  return `<div class="sec-h"><h2>${T('The Vedas', 'वेदाः')}</h2><a href="#/library">${T('Library', MENU_SA.library)}</a></div>
+    <div class="md" role="group" aria-label="The Vedas">
+      <div class="md-ring" style="${pct(MD_C[0] - MD_R, MD_C[1] - MD_R)};width:${(2 * MD_R / MD_W * 100).toFixed(2)}%;height:${(2 * MD_R / MD_H * 100).toFixed(2)}%"></div>
+      <a class="md-agni" href="#/suktas" style="${pct(MD_C[0], MD_C[1])}" aria-label="All ${suk.length} sūktas">${KUNDA}<small>${SA() ? `<span lang="sa">सर्वाणि ${dg(suk.length)}<br>सूक्तानि</span>` : `All ${suk.length}<br>sūktas`}</small></a>
+      ${nodes}
+    </div>
+    <p class="md-hint">${T('Tap a Veda for its texts · its sruk for its sūktas · the agni for all', 'वेदं स्पृशतु ग्रन्थेभ्यः · स्रुचं सूक्तेभ्यः · अग्निं सर्वेभ्यः')}</p>
+    <section class="md-pane" id="mdPane" aria-live="polite">${mdPane(cat, suk)}</section>`;
+}
+function mdPane(cat, suk) {
+  const v = cat.vedas.find((x) => x.id === homeMd.v) || cat.vedas[0];
+  const byId = Object.fromEntries(cat.texts.map((x) => [x.id, x]));
+  const name = `<b style="--vc: var(--v-${v.id})">${T(v.name, VEDA_SA[v.id])}</b>`;
+  if (homeMd.m === 'suktas') {
+    const k = suk.filter((e) => e.veda === v.id).length;
+    return `<div class="md-ph">${name}<span>${T('sūktas', 'सूक्तानि')}</span><a href="#/suktas?veda=${v.id}">${SA() ? `<span lang="sa">सर्वाणि ${dg(k)}</span>` : `All ${k}`} ›</a></div>
+      <div class="schips">${sukChips(suk, v.id)}</div>`;
+  }
+  return `<div class="md-ph">${name}<span>${T('texts', 'ग्रन्थाः')}</span><a href="#/veda/${v.id}">${T('Open', 'उद्घाटय')} ›</a></div>
+    ${cat.layers.filter((l) => v.layers[l].length).map((l) => `<div class="md-layer"><span class="md-l">${T(LAYERS[l].label, LAYERS[l].deva)}</span>
+      <div class="schips">${v.layers[l].map((t) => `<a class="schip" href="#/v/${t}">${SA() ? `<span lang="sa">${esc(byId[t].deva)}</span>` : `<b>${esc(byId[t].name)}</b>`}<small>${F(byId[t].verses)}</small></a>`).join('')}</div></div>`).join('')}`;
+}
+function wireMandala(cat, suk) {
+  main.querySelectorAll('.md [data-mdv]').forEach((b) => b.addEventListener('click', () => {
+    homeMd = { v: b.dataset.mdv, m: b.dataset.mdm };
+    main.querySelectorAll('.md [data-mdv]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.mdv === homeMd.v && x.dataset.mdm === homeMd.m)));
+    $('#mdPane').innerHTML = mdPane(cat, suk);
   }));
 }
 
