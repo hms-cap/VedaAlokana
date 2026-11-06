@@ -1215,14 +1215,16 @@ a.mrow { display: block; }
 .wd-en .wd-credit { margin-top: -4px; }
 
 /* Home, compact (1.34.0): the pañcāṅga is one line until opened, Continue chanting sits above the daily card */
-.pc:not(.open) { display: flex; align-items: center; gap: 8px; min-height: 0; padding: 4px 6px 4px 16px; border-radius: 18px; }
+.pc:not(.open) { display: flex; align-items: center; gap: 8px; min-height: 0; padding: 8px 8px 8px 16px; min-height: 56px; border-radius: 18px; cursor: pointer; }
 .pc:not(.open) .pc-main { order: 1; flex: 1; min-width: 0; margin: 0; font-size: 15px; line-height: 1.6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pc:not(.open) .pc-top { display: contents; }
 .pc:not(.open) .pc-date { order: 0; flex: none; font-size: 13px; font-weight: 600; color: var(--ink); white-space: nowrap; }
 .pc:not(.open) .pc-loc { order: 2; flex: none; }
-.pc:not(.open) .pc-sub, .pc:not(.open) .pc-more { display: none; }
-.pc:not(.open) .pc-loc { height: 30px; font-size: 12.5px; max-width: 110px; }
-.pc:not(.open) .pc-tog { order: 3; flex: none; width: 36px !important; height: 44px !important; margin: 0 !important; padding: 0 !important; border: 0 !important; }
+.pc:not(.open) .pc-sub { display: none; }
+.pc:not(.open) .pc-more { display: contents; }
+.pc:not(.open) .pc-more > div { display: none; }
+.pc:not(.open) .pc-loc { height: 30px; font-size: 12px; max-width: 78px; padding: 0 9px; }
+.pc:not(.open) .pc-tog { order: 3; flex: none; width: 34px !important; height: 34px !important; margin: 0 !important; padding: 0 !important; border: 1px solid var(--line) !important; border-radius: 17px; background: var(--ground); color: var(--ink); justify-content: center; }
 .pc:not(.open) .pc-tog span { display: none; }
 .home > .cont { padding: 8px 14px; border-radius: 18px; }
 .home > .cont > svg:first-child { width: 34px; height: 34px; }
@@ -1230,3 +1232,8 @@ a.mrow { display: block; }
 .lib-open { display: flex; align-items: center; justify-content: center; height: 48px; margin-top: 14px; border-radius: 14px; background: var(--v-kosha); color: #FFFFFF; font-weight: 600; }
 .lib-open:hover { text-decoration: none; filter: brightness(1.08); }
 .about .feat { margin: 0 0 18px; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
+
+.home > .cont { padding: 8px 14px; }
+.cont-l { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.cont-l b { flex: none; font-size: 15px; }
+.cont-l small { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
