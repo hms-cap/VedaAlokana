@@ -306,6 +306,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.34.4', '2026-11-06', ['The i summary now lists views, translation and bhāṣya. The one-line pañcāṅga is a little taller with a round button that shows there is more. Continue chanting takes two lines instead of three. Check for updates and Offline downloads are on the i page too.']],
   ['1.34.3', '2026-11-06', ['The i button now opens a short summary of what the app does. The version history, sources and licences, and update check stay under Settings → About.']],
   ['1.34.2', '2026-11-06', ['Fixed: the app did not open without a network, since 1.31.0. Two newer files were missing from the offline copy. Open the app once online to get the fix.']],
   ['1.34.1', '2026-11-06', ['The one-line pañcāṅga shows the date again, before the tithi.']],
@@ -1236,7 +1237,7 @@ async function viewHome() {
     <section class="pc" id="pc" aria-label="Today’s pañcāṅga"></section>
     ${last ? `<a class="cont" href="${esc(last.v > 1 ? `${last.href}${last.href.includes('?') ? '&' : '?'}v=${last.v}` : last.href)}">
       <svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" class="ring-bg"/><circle cx="24" cy="24" r="20" class="ring" stroke-dasharray="${(pct * 125.7).toFixed(1)} 126" transform="rotate(-90 24 24)"/></svg>
-      <span class="cont-t"><small>${T('Continue chanting', 'पाठम् अनुवर्तय')}</small><b>${SA() && last.whereSa ? `<span lang="sa">${esc(last.whereSa)}</span>` : esc(last.where)}</b><small>${SA() && last.textSa ? `<span lang="sa">${esc(last.textSa)}</span>` : esc(last.text)}${last.of ? ` · ${SA() ? `<span lang="sa">${dg(last.v)} / ${dg(last.of)}</span>` : `${last.v} of ${last.of}`}` : ''}</small></span>
+      <span class="cont-t"><small>${T('Continue chanting', 'पाठम् अनुवर्तय')}</small><span class="cont-l"><b>${SA() && last.whereSa ? `<span lang="sa">${esc(last.whereSa)}</span>` : esc(last.where)}</b><small>${SA() && last.textSa ? `<span lang="sa">${esc(last.textSa)}</span>` : esc(last.text)}${last.of ? ` · ${SA() ? `<span lang="sa">${dg(last.v)} / ${dg(last.of)}</span>` : `${last.v} of ${last.of}`}` : ''}</small></span></span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>` : ''}
     <section class="hero dm" id="dm" aria-roledescription="carousel" aria-labelledby="todayH">${dailyHTML(dm)}</section>
     <div class="sec-h"><h2>${T('The Vedas', 'वेदाः')}</h2><a href="#/library">${T('Library', MENU_SA.library)}</a></div>
@@ -1672,7 +1673,7 @@ async function renderPanchanga() {
   setOpen(open);
   const flip = () => { open = !open; setOpen(open); try { localStorage.setItem(PC_OPEN, open ? '1' : '0'); } catch { /* storage unavailable */ } };
   el.querySelector('.pc-tog').addEventListener('click', flip);
-  el.querySelectorAll('.pc-main, .pc-sub').forEach((n) => n.addEventListener('click', flip));
+  el.querySelectorAll('.pc-main, .pc-sub, .pc-date').forEach((n) => n.addEventListener('click', flip));
   el.querySelector('.pc-loc').addEventListener('click', () => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition((pos) => {
@@ -2237,13 +2238,18 @@ function viewInfo() {
     <section class="app-card">
       <img src="icons/icon.svg" alt="" width="72" height="72">
       <div class="app-id"><h1>Vedāvalokanam</h1><p class="app-v">Version <b>${esc(APP.version)}</b></p></div>
+      <div class="app-acts"><button type="button" class="off-btn ghost" id="chkUpd">Check for updates</button><a class="off-btn ghost" href="#/settings?s=offline">Offline downloads</a></div>
+      <p class="upd-out" id="updOut" role="status" aria-live="polite"></p>
     </section>
     <p class="lede">A non-commercial browser for the Vedas, built from openly published digital texts.</p>
     <ul class="feat">
       <li><b>Every Veda, by layer.</b> Saṃhitās, Brāhmaṇas, Āraṇyakas and Upaniṣads, with svara marks, in Devanagari, Kannada or Roman.</li>
       <li><b>Today’s mantra and pañcāṅga</b> on the home page, with the day’s tithi, nakṣatra and sun times.</li>
       <li><b>Sūktas</b> gathered from many places and opened as one piece, with devatā, ṛṣi and chandas.</li>
+      <li><b>Different views.</b> Saṃhitā or padapāṭha (Ṛgveda and Taittirīya Saṃhitā), Devanagari, Kannada or Roman script, svara marks in the style you choose, and a Chant view that shows one mantra at a time, full screen, which you can also print or save as a PDF.</li>
       <li><b>Ṛgveda padapāṭha</b> with a tap on any word for its grammar and meaning.</li>
+      <li><b>Translation.</b> English for the Ṛgveda (Griffith, 1896) and the Sāmaveda (Griffith, 1895), shown under each mantra when you turn it on.</li>
+      <li><b>Bhāṣya.</b> Sāyaṇa’s commentary on the Ṛgveda, beside each ṛk when you turn it on. Today’s mantra can show a meaning and its use too.</li>
       <li><b>Dictionary:</b> Śabdārtha Kaustubha, Sanskrit to Kannada.</li>
       <li><b>Search</b> by reference, name, or the opening words of a mantra, in any script.</li>
       <li><b>My sūktas, continue chanting and offline use</b>, kept on your device.</li>
@@ -2251,6 +2257,8 @@ function viewInfo() {
     <a class="about-link" href="#/about"><span><b>Version history, sources and licences</b><small>What’s new, where each text comes from, known gaps</small></span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
   </div>`;
+  const upd = document.getElementById('chkUpd');
+  upd.onclick = () => checkForUpdate(upd, document.getElementById('updOut'));
 }
 
 async function viewAbout() {
