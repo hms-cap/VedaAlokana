@@ -1213,3 +1213,17 @@ a.mrow { display: block; }
 @media (min-width: 900px) { .k-strip { display: none; } .k-browse.has-strip { padding-right: 0; } .k-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); } .k-bar { margin: 0 0 4px; border-radius: 8px; } }
 .wd-en .wd-row span { line-height: 1.5; }
 .wd-en .wd-credit { margin-top: -4px; }
+
+/* Home, compact (1.34.0): the pañcāṅga is one line until opened, Continue chanting sits above the daily card */
+.pc:not(.open) { display: flex; align-items: center; gap: 8px; min-height: 0; padding: 4px 6px 4px 16px; border-radius: 18px; }
+.pc:not(.open) .pc-main { order: 1; flex: 1; min-width: 0; margin: 0; font-size: 16px; line-height: 1.6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pc:not(.open) .pc-top { order: 2; flex: none; }
+.pc:not(.open) .pc-date, .pc:not(.open) .pc-sub, .pc:not(.open) .pc-more { display: none; }
+.pc:not(.open) .pc-loc { height: 30px; font-size: 12.5px; max-width: 150px; }
+.pc:not(.open) .pc-tog { order: 3; flex: none; width: 36px !important; height: 44px !important; margin: 0 !important; padding: 0 !important; border: 0 !important; }
+.pc:not(.open) .pc-tog span { display: none; }
+.home > .cont { padding: 8px 14px; border-radius: 18px; }
+.home > .cont > svg:first-child { width: 34px; height: 34px; }
+.hero { padding: 18px 20px 16px; gap: 8px; }
+.lib-open { display: flex; align-items: center; justify-content: center; height: 48px; margin-top: 14px; border-radius: 14px; background: var(--v-kosha); color: #FFFFFF; font-weight: 600; }
+.lib-open:hover { text-decoration: none; filter: brightness(1.08); }
