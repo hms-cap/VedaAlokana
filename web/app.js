@@ -306,6 +306,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.34.2', '2026-11-06', ['Fixed: the app did not open without a network, since 1.31.0. Two newer files were missing from the offline copy. Open the app once online to get the fix.']],
   ['1.34.1', '2026-11-06', ['The one-line pañcāṅga shows the date again, before the tithi.']],
   ['1.34.0', '2026-11-06', ['Home: The Vedas now follow the daily card, then Sūktas and My sūktas. The pañcāṅga is one line until opened, and Continue chanting sits above the daily card.', 'Library opens on Veda chips (the Dictionary is the last chip) with the chosen Veda’s texts below.']],
   ['1.33.0', '2026-11-05', ['Ṛgveda word sheet: the grammar is given in Sanskrit terms (लट्, शतृ, प्रथमा, एकवचनम्, उपसर्गः …), with the English beneath it.']],
