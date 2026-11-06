@@ -306,6 +306,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.34.0', '2026-11-06', ['Home: The Vedas now follow the daily card, then Sūktas and My sūktas. The pañcāṅga is one line until opened, and Continue chanting sits above the daily card.', 'Library opens on Veda chips (the Dictionary is the last chip) with the chosen Veda’s texts below.']],
   ['1.33.0', '2026-11-05', ['Ṛgveda word sheet: the grammar is given in Sanskrit terms (लट्, शतृ, प्रथमा, एकवचनम्, उपसर्गः …), with the English beneath it.']],
   ['1.32.3', '2026-11-05', ['Ṛgveda word sheet ends with the meanings; the VedaWeb credit is on the About page.']],
   ['1.32.2', '2026-11-05', ['Ṛgveda word sheet: the Grassmann link and the Cappeller credit line are gone from the sheet; the credits for the word data are now on the About page.']],
@@ -1230,16 +1231,11 @@ async function viewHome() {
   const pct = last?.of ? Math.min(1, last.v / last.of) : 0;
   main.innerHTML = `${ASHRAMA_SVG}<div class="home">
     <section class="pc" id="pc" aria-label="Today’s pañcāṅga"></section>
-    <section class="hero dm" id="dm" aria-roledescription="carousel" aria-labelledby="todayH">${dailyHTML(dm)}</section>
     ${last ? `<a class="cont" href="${esc(last.v > 1 ? `${last.href}${last.href.includes('?') ? '&' : '?'}v=${last.v}` : last.href)}">
       <svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" class="ring-bg"/><circle cx="24" cy="24" r="20" class="ring" stroke-dasharray="${(pct * 125.7).toFixed(1)} 126" transform="rotate(-90 24 24)"/></svg>
       <span class="cont-t"><small>${T('Continue chanting', 'पाठम् अनुवर्तय')}</small><b>${SA() && last.whereSa ? `<span lang="sa">${esc(last.whereSa)}</span>` : esc(last.where)}</b><small>${SA() && last.textSa ? `<span lang="sa">${esc(last.textSa)}</span>` : esc(last.text)}${last.of ? ` · ${SA() ? `<span lang="sa">${dg(last.v)} / ${dg(last.of)}</span>` : `${last.v} of ${last.of}`}` : ''}</small></span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>` : ''}
-    <a class="my-btn" href="#/my"><span class="my-ic">${STAR(true)}</span><span class="my-t">${T('My sūktas', 'मम सूक्तानि')}</span><span class="my-n">${F(my.saved.length)}</span>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
-    ${suk.length ? `<div class="sec-h"><h2>${T('Sūktas', 'सूक्तानि')}</h2><a href="#/suktas">${SA() ? `<span lang="sa">सर्वाणि ${dg(suk.length)}</span>` : `All ${suk.length}`}</a></div>
-    ${sukVedaButtons(cat, suk, homeSkOpen, 'button')}
-    <div class="schips" id="homeSk"${homeSkOpen ? '' : ' hidden'}>${homeSkOpen ? sukChips(suk, homeSkOpen) : ''}</div>` : ''}
+    <section class="hero dm" id="dm" aria-roledescription="carousel" aria-labelledby="todayH">${dailyHTML(dm)}</section>
     <div class="sec-h"><h2>${T('The Vedas', 'वेदाः')}</h2><a href="#/library">${T('Library', MENU_SA.library)}</a></div>
     <div class="vtiles">${cat.vedas.map((v) => {
     const s = v.layers.samhita.map((i) => byId[i]).find((x) => x.has.svara || x.has.roman) || byId[v.layers.samhita[0]];
@@ -1247,6 +1243,11 @@ async function viewHome() {
         ${VEDA_ICON[v.id] ? vedaIcon(v.id, 'vt-i') + vedaIcon(v.id, 'vt-w') : `<span class="vt-g" lang="sa">${esc(VEDA_GLYPH[v.id] || v.deva[0])}</span>`}
         <span class="vt-n"><b>${T(v.name, VEDA_SA[v.id])}</b><small>${s ? `${F(s.verses)} ${unitHTML(s)}` : ''}</small></span></a>`;
   }).join('')}</div>
+    ${suk.length ? `<div class="sec-h"><h2>${T('Sūktas', 'सूक्तानि')}</h2><a href="#/suktas">${SA() ? `<span lang="sa">सर्वाणि ${dg(suk.length)}</span>` : `All ${suk.length}`}</a></div>
+    ${sukVedaButtons(cat, suk, homeSkOpen, 'button')}
+    <div class="schips" id="homeSk"${homeSkOpen ? '' : ' hidden'}>${homeSkOpen ? sukChips(suk, homeSkOpen) : ''}</div>` : ''}
+    <a class="my-btn" href="#/my"><span class="my-ic">${STAR(true)}</span><span class="my-t">${T('My sūktas', 'मम सूक्तानि')}</span><span class="my-n">${F(my.saved.length)}</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
     <p class="lede home-foot">Every text comes from an openly published digital edition.</p>
   </div>`;
   renderPanchanga();
@@ -2687,20 +2688,34 @@ function renderChrome(r, path) {
 }
 
 // ---------- library, search, settings ----------
+let libPick = 'rv';   // the Veda (or 'kosha') chosen in the Library this visit
 async function viewLibrary() {
   setTitle('Library');
   const cat = await catalog();
   const byId = Object.fromEntries(cat.texts.map((t) => [t.id, t]));
-  main.innerHTML = `<div class="col">
-    <h1>Library</h1>
-    <p class="lede">Every text, by Veda and layer.</p>
-    ${cat.vedas.map((v) => `<section class="lib-veda">
+  const pick = libPick === 'kosha' || cat.vedas.some((v) => v.id === libPick) ? libPick : cat.vedas[0].id;
+  const nTexts = (v) => cat.layers.reduce((n, l) => n + v.layers[l].length, 0);
+  const chip = (id, name, sub, icon) => `<button type="button" class="skv-b" style="--vc: var(--v-${id})" data-lib="${id}" aria-pressed="${String(id === pick)}">${icon}<span class="skv-n"><b>${name}</b><small>${sub}</small></span></button>`;
+  const body = (p) => {
+    if (p === 'kosha') return `<section class="lib-veda"><a class="lib-head" href="#/kosha"><span class="dv" lang="sa">शब्दार्थकौस्तुभः</span><span class="nm">Dictionary</span></a><p class="lib-note">Sanskrit words with Kannada meanings.</p><a class="lib-open" href="#/kosha">Open the Dictionary</a></section>`;
+    const v = cat.vedas.find((x) => x.id === p);
+    return `<section class="lib-veda">
       <a class="lib-head" href="#/veda/${v.id}"><span class="dv" lang="sa">${esc(v.deva)}</span><span class="nm">${esc(v.name)}</span></a>
       ${cat.layers.map((l) => `<div class="lib-layer"><a class="lib-l" href="#/veda/${v.id}/${l}">${LAYERS[l].label}</a>
         <div class="lib-texts">${v.layers[l].length ? v.layers[l].map((t) => `<a href="#/v/${t}"><span>${esc(byId[t].name)}</span><small>${fmt(byId[t].verses)}</small></a>`).join('') : `<span class="none">${esc(v.absent?.[l] ? 'None' : 'Not available yet')}</span>`}</div></div>`).join('')}
-    </section>`).join('')}
-    <section class="lib-veda"><a class="lib-head" href="#/kosha"><span class="dv" lang="sa">शब्दार्थकौस्तुभः</span><span class="nm">Dictionary</span></a><p class="lib-note">Sanskrit words with Kannada meanings.</p></section>
+    </section>`;
+  };
+  main.innerHTML = `<div class="col">
+    <h1>Library</h1>
+    <p class="lede">Pick a Veda, then a text.</p>
+    <div class="skv" role="group" aria-label="Veda">${cat.vedas.map((v) => chip(v.id, T(v.name, VEDA_SA[v.id]), `${F(nTexts(v))} ${T('texts', 'ग्रन्थाः')}`, VEDA_ICON[v.id] ? vedaIcon(v.id, 'skv-i') : '')).join('')}${chip('kosha', T('Dictionary', 'कोशः'), 'Kosha', `<svg class="skv-i" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12v16H6zM9 8h6M9 12h6"/></svg>`)}</div>
+    <div id="libBody">${body(pick)}</div>
   </div>`;
+  main.querySelectorAll('[data-lib]').forEach((b) => b.addEventListener('click', () => {
+    libPick = b.dataset.lib;
+    main.querySelectorAll('[data-lib]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    $('#libBody').innerHTML = body(libPick);
+  }));
 }
 
 // ---------- dictionary: Śabdārtha Kaustubha, Sanskrit → Kannada (the screens are in kosha-ui.js, shared with the standalone app) ----------
