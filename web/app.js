@@ -306,6 +306,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.34.3', '2026-11-06', ['The i button now opens a short summary of what the app does. The version history, sources and licences, and update check stay under Settings → About.']],
   ['1.34.2', '2026-11-06', ['Fixed: the app did not open without a network, since 1.31.0. Two newer files were missing from the offline copy. Open the app once online to get the fix.']],
   ['1.34.1', '2026-11-06', ['The one-line pañcāṅga shows the date again, before the tithi.']],
   ['1.34.0', '2026-11-06', ['Home: The Vedas now follow the daily card, then Sūktas and My sūktas. The pañcāṅga is one line until opened, and Continue chanting sits above the daily card.', 'Library opens on Veda chips (the Dictionary is the last chip) with the chosen Veda’s texts below.']],
@@ -2229,6 +2230,29 @@ const SOURCES = {
   gretil: 'GRETIL, Göttingen (reference and research use)',
   wikisource: 'Sāyaṇa bhāṣya: Sanskrit Wikisource volunteers (CC BY-SA 4.0), via Project Vyasa',
 };
+// The i button: what the app is and does, in brief. The version history, sources and licences are under Settings → About.
+function viewInfo() {
+  setTitle('About');
+  main.innerHTML = `<div class="prose about">
+    <section class="app-card">
+      <img src="icons/icon.svg" alt="" width="72" height="72">
+      <div class="app-id"><h1>Vedāvalokanam</h1><p class="app-v">Version <b>${esc(APP.version)}</b></p></div>
+    </section>
+    <p class="lede">A non-commercial browser for the Vedas, built from openly published digital texts.</p>
+    <ul class="feat">
+      <li><b>Every Veda, by layer.</b> Saṃhitās, Brāhmaṇas, Āraṇyakas and Upaniṣads, with svara marks, in Devanagari, Kannada or Roman.</li>
+      <li><b>Today’s mantra and pañcāṅga</b> on the home page, with the day’s tithi, nakṣatra and sun times.</li>
+      <li><b>Sūktas</b> gathered from many places and opened as one piece, with devatā, ṛṣi and chandas.</li>
+      <li><b>Ṛgveda padapāṭha</b> with a tap on any word for its grammar and meaning.</li>
+      <li><b>Dictionary:</b> Śabdārtha Kaustubha, Sanskrit to Kannada.</li>
+      <li><b>Search</b> by reference, name, or the opening words of a mantra, in any script.</li>
+      <li><b>My sūktas, continue chanting and offline use</b>, kept on your device.</li>
+    </ul>
+    <a class="about-link" href="#/about"><span><b>Version history, sources and licences</b><small>What’s new, where each text comes from, known gaps</small></span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+  </div>`;
+}
+
 async function viewAbout() {
   setTitle('About');
   const cat = await catalog();
@@ -2661,7 +2685,7 @@ function renderChrome(r, path) {
   // back: the previous view; on the first view of a visit, the parent page
   const page = r.parts[0] || '';
   const topLevel = ['', 'library', 'suktas', 'my', 'search', 'settings'].includes(page) || (page === 'kosha' && !r.parts[1]);
-  const parentHref = topLevel ? null : path.length >= 2 ? path[path.length - 2].href : page === 'about' ? '#/settings' : page === 'devatas' ? (r.parts[1] ? '#/devatas' : '#/suktas?veda=rv') : page === 's' ? (r.params.get('from') === 'my' ? '#/my' : '#/suktas') : page === 'kosha' && r.parts[1] ? '#/kosha' : '#/library';
+  const parentHref = topLevel ? null : path.length >= 2 ? path[path.length - 2].href : page === 'about' ? '#/settings' : page === 'info' ? '#/' : page === 'devatas' ? (r.parts[1] ? '#/devatas' : '#/suktas?veda=rv') : page === 's' ? (r.params.get('from') === 'my' ? '#/my' : '#/suktas') : page === 'kosha' && r.parts[1] ? '#/kosha' : '#/library';
   const back = $('#backBtn');
   back.hidden = !parentHref;
   if (parentHref) back.setAttribute('href', parentHref);
@@ -2669,11 +2693,11 @@ function renderChrome(r, path) {
   // each tab remembers where you were in it
   const tabNow = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 's' ? 'suktas' : page);
   if (tabNow === 'library' || tabNow === 'suktas' || tabNow === 'my' || tabNow === 'kosha') { tabLast[tabNow] = getHash(); try { sessionStorage.setItem('vedalokana.tabs', JSON.stringify(tabLast)); } catch { /* storage unavailable */ } }
-  const named = { library: 'Library', kosha: 'Dictionary', suktas: 'Sūktas', s: 'Sūktas', search: 'Search', settings: 'Settings', about: 'About', devatas: 'By devatā' }[page];
+  const named = { library: 'Library', kosha: 'Dictionary', suktas: 'Sūktas', s: 'Sūktas', search: 'Search', settings: 'Settings', about: 'About', info: 'About', devatas: 'By devatā' }[page];
   const lastC = path[path.length - 1];
   $('#topTitle').textContent = lastC ? Tp(lastC.label, lastC.deva) : (named ? Tp(named, MENU_SA[page === 's' ? 'suktas' : page]) : '');
   // tabs
-  const tab = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 'about' ? 'settings' : page === 's' ? (r.params.get('from') === 'my' ? 'my' : '') : page === 'suktas' ? '' : page);
+  const tab = !page ? 'home' : (page === 'veda' || page === 'v' ? 'library' : page === 'about' ? 'settings' : page === 'info' ? '' : page === 's' ? (r.params.get('from') === 'my' ? 'my' : '') : page === 'suktas' ? '' : page);
   $('#tabbar').querySelectorAll('[data-tab]').forEach((a) => (a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
   // inside the dictionary its own bar replaces the app's tabs (on phones)
   document.body.classList.toggle('in-kosha', page === 'kosha');
@@ -2974,7 +2998,7 @@ async function viewSettings() {
       <p class="pc-note" id="myMsg" aria-live="polite"></p></section>
     <section class="set" id="offline"><h2>Offline</h2><p>Once installed, the app opens without a connection, and every text you have read stays available. Download a whole Veda to have all of it ready.</p>
       <div class="off" id="offList"><p class="loading">Checking what is stored…</p></div></section>
-    <section class="set"><h2>About</h2><a class="about-link" href="#/about"><img src="icons/icon.svg" alt="" width="40" height="40"><span><b>Vedāvalokanam</b><small>Version ${esc(APP.version)} · sources, licences, what’s new</small></span>
+    <section class="set"><h2>About</h2><a class="about-link" href="#/about"><img src="icons/icon.svg" alt="" width="40" height="40"><span><b>Vedāvalokanam</b><small>Version ${esc(APP.version)} · what’s new, sources, licences, updates</small></span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a></section>
   </div>`;
   const goOff = () => { if (parse().params.get('s') === 'offline') document.getElementById('offline')?.scrollIntoView(); };
@@ -3032,6 +3056,7 @@ async function route() {
     await renderRail(r);
     const [a, id, sub, p1, p2] = r.parts;
     if (!a) await viewHome();
+    else if (a === 'info') viewInfo();
     else if (a === 'about') await viewAbout();
     else if (a === 'library') await viewLibrary();
     else if (a === 'kosha') await viewKosha(id ? decodeURIComponent(id) : null, r.params);
