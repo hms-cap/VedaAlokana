@@ -306,6 +306,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.34.1', '2026-11-06', ['The one-line pañcāṅga shows the date again, before the tithi.']],
   ['1.34.0', '2026-11-06', ['Home: The Vedas now follow the daily card, then Sūktas and My sūktas. The pañcāṅga is one line until opened, and Continue chanting sits above the daily card.', 'Library opens on Veda chips (the Dictionary is the last chip) with the chosen Veda’s texts below.']],
   ['1.33.0', '2026-11-05', ['Ṛgveda word sheet: the grammar is given in Sanskrit terms (लट्, शतृ, प्रथमा, एकवचनम्, उपसर्गः …), with the English beneath it.']],
   ['1.32.3', '2026-11-05', ['Ṛgveda word sheet ends with the meanings; the VedaWeb credit is on the About page.']],
@@ -1640,7 +1641,7 @@ async function renderPanchanga() {
   el.innerHTML = `<div class="pc-top">
       <span class="pc-date">${SA()
     ? `<span lang="sa">${esc(dg(new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric' }).replace(/\//g, '-')))}</span>`
-    : esc(new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' }))}</span>
+    : esc(new Date().toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' }))}</span>
       <button class="pc-loc" type="button" aria-label="Pañcāṅga place: ${esc(pl.name)}. Use my location">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/></svg>
         <span>${esc(pl.name)}</span></button>
