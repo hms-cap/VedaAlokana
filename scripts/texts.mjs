@@ -183,9 +183,19 @@ function restartingSections(text, { boldOnly = false } = {}) {
 // matter, headings with the edition's serial number (॥२८॥, ॥२९॥), the commentator's maṅgala verse, the
 // colophons and, in the Pūrva file, the opening of the Uttara text that follows the "————" rule.
 // The opening śānti stays at the top of the first unit, as it does in Kena and Muṇḍaka.
+// Scanning errors in the e-text, corrected against the usual readings (each must occur exactly once).
+const TAP_FIX = {
+  'nRsiMhapUrvatApanIyopaniShat.md': [['ॐ भद्रं कर्णोभिः', 'ॐ भद्रं कर्णेभिः'], ['समवर्ततेद॑ सृजेयमिति', 'समवर्ततेदं सृजेयमिति'],
+    ['प्रथमं पाद॑ ', 'प्रथमं पादं '], ['प्रणवादिकासत॑ प्रणवं', 'प्रणवादिकास्तं प्रणवं']],
+  'nRsiMhottaratApanIyopaniShat.md': [['ॐ भर्दं', 'ॐ भद्रं']],
+};
 function tapaniyaBlocks(file) {
   const blocks = [];
-  const t = rawText(file).replace(/\u200c/g, '').replace(/\*\*/g, '').replace(/\\[\[\]]/g, '').replace(/\t/g, ' ').replace(/--/g, '—');
+  let t = rawText(file).replace(/\u200c/g, '').replace(/\*\*/g, '').replace(/\\[\[\]]/g, '').replace(/\t/g, ' ').replace(/--/g, '—');
+  for (const [from, to] of TAP_FIX[path.basename(file)] || []) {
+    if (t.split(from).length !== 2) throw new Error(`tāpanīya fix not found exactly once: ${from}`);
+    t = t.replace(from, to);
+  }
   for (const b of t.split(/\n\s*\n/)) {
     const lines = b.split('\n').map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
     if (!lines.length || lines.some((l) => /Source:/.test(l))) continue;
@@ -197,7 +207,11 @@ function tapaniyaBlocks(file) {
 }
 // "…॥१॥ स्वस्ति…॥२॥" -> one line per half-verse, the verse numbers dropped
 const shantiLines = (lines) => lines.flatMap((l) => l.replace(/॥\s*[०-९]+\s*॥\s*/g, '॥\n').split('\n')).map((l) => l.trim()).filter(Boolean);
-const tapUnit = (lines) => ({ deva: lines, roman: lines.map(devaToIast), romanAuto: true });
+// Long prose paragraphs are shown one sentence (to the next । or ॥) per line, so they can be followed when chanting.
+const tapUnit = (lines) => {
+  const deva = lines.flatMap((l) => l.split(/(?<=[।॥])\s+/)).map((l) => l.trim()).filter(Boolean);
+  return { deva, roman: deva.map(devaToIast), romanAuto: true };
+};
 // Paragraphs end "॥n॥". A numeral only counts when it is the next one in the count: the fourth Pūrva
 // upaniṣad has a list of mantras, the last of them "…नमो नमः॥३२॥", inside its third paragraph. A numeral that
 // ends the block closes it whatever it says; text after the last numeral is a paragraph of its own.

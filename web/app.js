@@ -306,6 +306,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.36.1', '2026-11-14', ['Nṛsiṃha Tāpanīya Upaniṣads: long paragraphs now show one sentence per line, and five scanning errors in the e-text are corrected (कर्णेभिः, भद्रं, इदं, पादं, प्रणवादिकास्तं).']],
   ['1.36.0', '2026-11-14', ['Two more Atharvaveda upaniṣads, the Nṛsiṃha Pūrvatāpanīya (five upaniṣads) and the Nṛsiṃha Uttaratāpanīya (nine khaṇḍas), in Sanskrit only, under Upaniṣads.']],
   ['1.35.0', '2026-11-06', ['Home: the Vedas now stand around the yajña-kuṇḍa. Tap a Veda for its Saṃhitā, Brāhmaṇa, Āraṇyaka and Upaniṣad texts, tap its sruk (ladle) for its sūktas, and tap the agni for all the sūktas. This replaces the Veda tiles and the Sūktas row.']],
   ['1.34.4', '2026-11-06', ['The i summary now lists views, translation and bhāṣya. The one-line pañcāṅga is a little taller with a round button that shows there is more. Continue chanting takes two lines instead of three. Check for updates and Offline downloads are on the i page too.']],
