@@ -359,7 +359,7 @@ function buildSamaveda() {
 // ---- Brāhmaṇas, Āraṇyakas, Upaniṣads and extra Saṃhitās ----------------
 const REF = {
   ab: 'AB', kb: 'KB', aa: 'AĀ', sa: 'ŚĀ', aiu: 'AiU', sb: 'ŚB', isu: 'ĪU', bu: 'BĀU', ts: 'TS', tb: 'TB', ta: 'TĀ', tu: 'TU',
-  kathu: 'KaU', svu: 'ŚvU', svs: 'SV', pb: 'PB', jub: 'JUB', chu: 'ChU', keu: 'KeU', gb: 'GB', mu: 'MuU', mau: 'MāU', pru: 'PrU',
+  kathu: 'KaU', svu: 'ŚvU', svs: 'SV', pb: 'PB', jub: 'JUB', chu: 'ChU', keu: 'KeU', gb: 'GB', mu: 'MuU', mau: 'MāU', pru: 'PrU', npu: 'NPTU', nuu: 'NUTU',
 };
 function buildExtra(def) {
   const V = makeVeda();
@@ -402,7 +402,8 @@ for (const def of extraTexts({ raw: args.raw, gretil: args.gretil || '' })) {
 }
 if (ONLY) {   // keep the catalogue's own order
   const order = JSON.parse(fs.readFileSync(path.join(OUT, 'catalog.json'), 'utf8')).texts.map((t) => t.id);
-  texts.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+  const at = (id) => (order.includes(id) ? order.indexOf(id) : order.length);   // texts new to the catalogue go last
+  texts.sort((a, b) => at(a.id) - at(b.id));
 }
 // the Sanskrit Sāmaveda first, its translation after
 texts.sort((a, b) => (a.id === 'sv' && b.id === 'svs' ? 1 : a.id === 'svs' && b.id === 'sv' ? -1 : 0));

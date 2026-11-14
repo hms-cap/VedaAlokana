@@ -1,5 +1,5 @@
 {
- "built": "2026-11-03",
+ "built": "2026-11-14",
  "layers": [
   "samhita",
   "brahmana",
@@ -109,7 +109,9 @@
     "upanishad": [
      "mu",
      "mau",
-     "pru"
+     "pru",
+     "npu",
+     "nuu"
     ]
    }
   }
@@ -1047,6 +1049,74 @@
    "id": "pru",
    "containers": 6,
    "verses": 67,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "av",
+   "layer": "upanishad",
+   "name": "Nṛsiṃha Pūrvatāpanīya Upaniṣad",
+   "deva": "नृसिंहपूर्वतापनीय उपनिषद्",
+   "shakha": null,
+   "levels": [
+    "",
+    "Upaniṣad",
+    "Paragraph"
+   ],
+   "ref": "NPTU",
+   "refFmt": "d2.v",
+   "has": {
+    "svara": false,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": "Five upaniṣads; the fifth has eight adhyāyas, shown as labels above its paragraphs. The paragraph numbers are those of the printed text; the fourth upaniṣad’s list of 32 mantras sits inside its third paragraph.",
+   "sources": [
+    "raw"
+   ],
+   "id": "npu",
+   "containers": 5,
+   "verses": 25,
+   "facets": [],
+   "facetCounts": {
+    "rishi": 0,
+    "devata": 0,
+    "chandas": 0
+   }
+  },
+  {
+   "veda": "av",
+   "layer": "upanishad",
+   "name": "Nṛsiṃha Uttaratāpanīya Upaniṣad",
+   "deva": "नृसिंहोत्तरतापनीय उपनिषद्",
+   "shakha": null,
+   "levels": [
+    "",
+    "Khaṇḍa",
+    "Paragraph"
+   ],
+   "ref": "NUTU",
+   "refFmt": "d2.v",
+   "has": {
+    "svara": false,
+    "roman": true,
+    "pada": false,
+    "translation": null
+   },
+   "tagLevel": null,
+   "note": "Nine khaṇḍas, each a single paragraph in the source.",
+   "sources": [
+    "raw"
+   ],
+   "id": "nuu",
+   "containers": 9,
+   "verses": 9,
    "facets": [],
    "facetCounts": {
     "rishi": 0,
