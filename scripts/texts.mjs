@@ -178,6 +178,108 @@ function restartingSections(text, { boldOnly = false } = {}) {
   return out;
 }
 
+// Nṛsiṃha Pūrva- and Uttaratāpanīya Upaniṣad (eBhāratī Sampat, Pune). One source block per paragraph,
+// colophons ("इत्याथर्वणीय… समाप्ता॥n॥") close the sections. Editorial matter is left out: the front
+// matter, headings with the edition's serial number (॥२८॥, ॥२९॥), the commentator's maṅgala verse, the
+// colophons and, in the Pūrva file, the opening of the Uttara text that follows the "————" rule.
+// The opening śānti stays at the top of the first unit, as it does in Kena and Muṇḍaka.
+function tapaniyaBlocks(file) {
+  const blocks = [];
+  const t = rawText(file).replace(/\u200c/g, '').replace(/\*\*/g, '').replace(/\\[\[\]]/g, '').replace(/\t/g, ' ').replace(/--/g, '—');
+  for (const b of t.split(/\n\s*\n/)) {
+    const lines = b.split('\n').map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
+    if (!lines.length || lines.some((l) => /Source:/.test(l))) continue;
+    const rule = lines.findIndex((l) => /^[—–-]{4,}$/.test(l));                    // the "————" rule ends the text
+    if (rule >= 0) { if (rule) blocks.push(lines.slice(0, rule)); break; }
+    blocks.push(lines);
+  }
+  return blocks;
+}
+// "…॥१॥ स्वस्ति…॥२॥" -> one line per half-verse, the verse numbers dropped
+const shantiLines = (lines) => lines.flatMap((l) => l.replace(/॥\s*[०-९]+\s*॥\s*/g, '॥\n').split('\n')).map((l) => l.trim()).filter(Boolean);
+const tapUnit = (lines) => ({ deva: lines, roman: lines.map(devaToIast), romanAuto: true });
+// Paragraphs end "॥n॥". A numeral only counts when it is the next one in the count: the fourth Pūrva
+// upaniṣad has a list of mantras, the last of them "…नमो नमः॥३२॥", inside its third paragraph. A numeral that
+// ends the block closes it whatever it says; text after the last numeral is a paragraph of its own.
+function numberedParas(text) {
+  const re = /॥\s*([०-९]+)\s*॥/g; const out = []; let last = 0; let prev = 0; let m;
+  while ((m = re.exec(text))) {
+    const n = num(m[1]);
+    const atEnd = !text.slice(re.lastIndex).trim();
+    if (n !== prev + 1 && !atEnd) continue;
+    out.push(text.slice(last, m.index)); last = re.lastIndex; prev = n;
+  }
+  out.push(text.slice(last));
+  return out.map((p) => p.replace(/\s*॥\s*$/, '').trim()).filter((p) => p.replace(/[\s।॥]/g, ''));
+}
+function nrsimhaPurva(file) {
+  const out = []; let sec = 1; let adh = 0; let pending = null; let shanti = null;
+  const flush = (label) => {
+    if (pending === null) throw new Error('NPU: colophon without text');
+    numberedParas(pending).forEach((p, i) => {
+      const lines = [p];
+      if (shanti && !out.length && !i) lines.unshift(...shanti);
+      out.push({ d1: 1, d2: sec, v: out.filter((u) => u.d2 === sec).length + 1, ...(label ? { label } : {}), ...tapUnit(lines) });
+    });
+    pending = null;
+  };
+  for (const lines of tapaniyaBlocks(file)) {
+    const t = lines.join(' ');
+    if (/^नृसिंहपूर्वतापनीयोपनिषत्\s*॥\s*[०-९]+\s*॥$/.test(t)) continue;      // heading with the edition's serial number
+    if (/^यत्तुर्योङ्कारा/.test(t)) continue;                                  // commentator's maṅgala verse
+    if (/^ॐ भद्रं/.test(t) && !out.length && pending === null) { shanti = shantiLines(lines); continue; }
+    const col = t.match(/^इत्याथर्वणीय\S+\s*(?:\S*ध्यायः|\S*समाप्ता)\s*॥\s*([०-९]+)\s*॥$/);
+    if (!col) { if (pending !== null) throw new Error('NPU: two text blocks without a colophon'); pending = t; continue; }
+    const n = num(col[1]);
+    if (/ध्यायः/.test(t)) {
+      if (sec !== 5 || n !== adh + 1) throw new Error(`NPU: adhyāya colophon ${n} after ${adh} in upaniṣad ${sec}`);
+      adh = n; flush(`Adhyāya ${n}`);
+    } else {
+      if (n !== sec) throw new Error(`NPU: upaniṣad colophon ${n}, expected ${sec}`);
+      if (sec === 5) { if (pending !== null || adh !== 8) throw new Error('NPU: upaniṣad 5 should end after adhyāya 8'); } else flush();
+      sec += 1;
+    }
+  }
+  if (sec !== 6) throw new Error(`NPU: ${sec - 1} upaniṣads found, expected 5`);
+  const counts = [1, 2, 3, 4, 5].map((s) => out.filter((u) => u.d2 === s).length).join(',');
+  if (counts !== '7,4,1,3,10') throw new Error(`NPU: paragraph counts ${counts}, expected 7,4,1,3,10`);
+  return out;
+}
+// Nine khaṇḍas, one paragraph each. The e-text is cut at page ends, with a hyphen or with no space.
+const TAP_JOIN_NOSPACE = new Set(['आनन्द|भोगाच्च']);
+function nrsimhaUttara(file) {
+  const out = []; let chunks = []; let shanti = []; let closing = null;
+  for (const lines of tapaniyaBlocks(file)) {
+    const t = lines.join(' ');
+    if (/^नृसिंहोत्तरतापनीयोपनिषत्\s*॥\s*[०-९]+\s*॥$/.test(t)) continue;      // heading with the edition's serial number
+    if (/^ॐ/.test(t)) {                                                         // śānti: before the text, and again at its end
+      if (!chunks.length && !out.length) shanti.push(...shantiLines(lines));
+      else if (chunks.length && !closing) closing = shantiLines(lines).join(' ');
+      else throw new Error('NUU: unexpected śānti');
+      continue;
+    }
+    const col = t.match(/^इत्याथर्वणीय[^॥]*?(?:खण्डः\s*॥\s*([०-९]+)\s*॥|समाप्ता\s*॥?)$/);
+    if (!col) { if (closing) throw new Error('NUU: text after the closing śānti'); chunks.push(t); continue; }
+    if (!col[1]) continue;                                                      // final colophon
+    const n = num(col[1]);
+    if (n !== out.length + 1) throw new Error(`NUU: khaṇḍa colophon ${n}, expected ${out.length + 1}`);
+    let text = '';
+    for (const c of chunks) {
+      if (!text) text = c;
+      else if (text.endsWith('-')) text = text.slice(0, -1) + c;
+      else text += (TAP_JOIN_NOSPACE.has(`${text.split(' ').at(-1)}|${c.split(' ')[0]}`) ? '' : ' ') + c;
+    }
+    text = text.replace(/\s*॥\s*(?:[०-९]+\s*॥)?\s*$/, '').replace(/\s+/g, ' ').trim();
+    const ul = [text];
+    if (n === 1) ul.unshift(...shanti);
+    if (closing) { ul.push(closing); closing = null; }
+    out.push({ d1: 1, d2: n, v: 1, ...tapUnit(ul) });
+    chunks = [];
+  }
+  if (out.length !== 9 || chunks.length) throw new Error(`NUU: ${out.length} khaṇḍas found, expected 9`);
+  return out;
+}
+
 // Gopatha Brāhmaṇa: "(१,१.१अ) text" lines
 function gopatha(file) {
   const out = []; let cur = null;
@@ -326,5 +428,11 @@ export function extraTexts({ raw, gretil }) {
       units: () => gretilSuffix(G('4_upa/mandup_u.htm'), 'MandUp', T1) },
     { id: 'pru', veda: 'av', layer: 'upanishad', name: 'Praśna Upaniṣad', deva: 'प्रश्न उपनिषद्', levels: ['', 'Praśna', 'Mantra'], src: gr,
       units: () => gretilSuffix(G('4_upa/prasup_u.htm'), 'PrUp', T) },
+    { id: 'npu', veda: 'av', layer: 'upanishad', name: 'Nṛsiṃha Pūrvatāpanīya Upaniṣad', deva: 'नृसिंहपूर्वतापनीय उपनिषद्', levels: ['', 'Upaniṣad', 'Paragraph'], src: rw,
+      note: 'Five upaniṣads; the fifth has eight adhyāyas, shown as labels above its paragraphs. The paragraph numbers are those of the printed text; the fourth upaniṣad’s list of 32 mantras sits inside its third paragraph.',
+      units: () => nrsimhaPurva(R('mixed/ebhAratI-sampat/upaniShadaH/anyAH_upaniShadaH/nRsiMhapUrvatApanIyopaniShat.md')) },
+    { id: 'nuu', veda: 'av', layer: 'upanishad', name: 'Nṛsiṃha Uttaratāpanīya Upaniṣad', deva: 'नृसिंहोत्तरतापनीय उपनिषद्', levels: ['', 'Khaṇḍa', 'Paragraph'], src: rw,
+      note: 'Nine khaṇḍas, each a single paragraph in the source.',
+      units: () => nrsimhaUttara(R('mixed/ebhAratI-sampat/upaniShadaH/anyAH_upaniShadaH/nRsiMhottaratApanIyopaniShat.md')) },
   ];
 }

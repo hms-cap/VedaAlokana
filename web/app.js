@@ -19,7 +19,7 @@ import { looseKey } from './search-key.js';
 const COL = { d1: 0, d2: 1, v: 2, rishi: 3, devata: 4, chandas: 5 };
 const LEVEL_DEVA = {
   Maṇḍala: 'मण्डल', Kāṇḍa: 'काण्ड', Adhyāya: 'अध्याय', Ārcika: 'आर्चिक', Pañcikā: 'पञ्चिका', Āraṇyaka: 'आरण्यक',
-  Prapāṭhaka: 'प्रपाठक', Bhāga: 'भाग', Vallī: 'वल्ली', Khaṇḍa: 'खण्ड', Praśna: 'प्रश्न', Brāhmaṇa: 'ब्राह्मण', Book: 'पुस्तक',
+  Prapāṭhaka: 'प्रपाठक', Bhāga: 'भाग', Vallī: 'वल्ली', Khaṇḍa: 'खण्ड', Praśna: 'प्रश्न', Upaniṣad: 'उपनिषद्', Brāhmaṇa: 'ब्राह्मण', Book: 'पुस्तक',
 };
 
 // Labels in the reading script: the Sanskrit names of the levels (singular, plural), used when menus
@@ -30,14 +30,14 @@ const LEVEL_SA = {
   Verses: ['मन्त्राः', 'मन्त्राः'], Kāṇḍa: ['काण्डम्', 'काण्डानि'], Pañcikā: ['पञ्चिका', 'पञ्चिकाः'], Khaṇḍa: ['खण्डः', 'खण्डाः'],
   Āraṇyaka: ['आरण्यकम्', 'आरण्यकानि'], Brāhmaṇa: ['ब्राह्मणम्', 'ब्राह्मणानि'], Kaṇḍikā: ['कण्डिका', 'कण्डिकाः'],
   Prapāṭhaka: ['प्रपाठकः', 'प्रपाठकाः'], Pañcāśat: ['पञ्चाशत्', 'पञ्चाशतः'], Section: ['भागः', 'भागाः'], Vallī: ['वल्ली', 'वल्ल्यः'],
-  Anuvāka: ['अनुवाकः', 'अनुवाकाः'], Bhāga: ['भागः', 'भागाः'], Praśna: ['प्रश्नः', 'प्रश्नाः'],
+  Anuvāka: ['अनुवाकः', 'अनुवाकाः'], Bhāga: ['भागः', 'भागाः'], Praśna: ['प्रश्नः', 'प्रश्नाः'], Upaniṣad: ['उपनिषत्', 'उपनिषदः'], Paragraph: ['अनुच्छेदः', 'अनुच्छेदाः'],
 };
 const GROUP_SA = { Pūrvārcika: 'पूर्वार्चिकम्', Uttarārcika: 'उत्तरार्चिकम्', Pūrvabhāga: 'पूर्वभागः', Uttarabhāga: 'उत्तरभागः' };
 // Traditional short references (ऋ. १०.९०) for the English ones (RV 10.90).
 const REF_SA = {
   rv: 'ऋ.', yv: 'वा.सं.', sv: 'सा.', svs: 'सा.', av: 'अ.', ts: 'तै.सं.', tb: 'तै.ब्रा.', ta: 'तै.आ.', sb: 'श.ब्रा.', ab: 'ऐ.ब्रा.',
   kb: 'कौ.ब्रा.', aa: 'ऐ.आ.', sa: 'शां.आ.', aiu: 'ऐ.उ.', isu: 'ई.उ.', bu: 'बृ.उ.', tu: 'तै.उ.', kathu: 'क.उ.', svu: 'श्वे.उ.',
-  pb: 'प.ब्रा.', jub: 'जै.उ.ब्रा.', chu: 'छा.उ.', keu: 'के.उ.', gb: 'गो.ब्रा.', mu: 'मु.उ.', mau: 'मा.उ.', pru: 'प्र.उ.',
+  pb: 'प.ब्रा.', jub: 'जै.उ.ब्रा.', chu: 'छा.उ.', keu: 'के.उ.', gb: 'गो.ब्रा.', mu: 'मु.उ.', mau: 'मा.उ.', pru: 'प्र.उ.', npu: 'नृ.पू.ता.उ.', nuu: 'नृ.उ.ता.उ.',
 };
 const FACET_SA = { rishi: 'ऋषिः', devata: 'देवता', chandas: 'छन्दः' };
 const VEDA_SA = { rv: 'ऋग्वेदः', syv: 'शुक्लयजुर्वेदः', kyv: 'कृष्णयजुर्वेदः', sv: 'सामवेदः', av: 'अथर्ववेदः' };
@@ -306,6 +306,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.36.0', '2026-11-14', ['Two more Atharvaveda upaniṣads, the Nṛsiṃha Pūrvatāpanīya (five upaniṣads) and the Nṛsiṃha Uttaratāpanīya (nine khaṇḍas), in Sanskrit only, under Upaniṣads.']],
   ['1.35.0', '2026-11-06', ['Home: the Vedas now stand around the yajña-kuṇḍa. Tap a Veda for its Saṃhitā, Brāhmaṇa, Āraṇyaka and Upaniṣad texts, tap its sruk (ladle) for its sūktas, and tap the agni for all the sūktas. This replaces the Veda tiles and the Sūktas row.']],
   ['1.34.4', '2026-11-06', ['The i summary now lists views, translation and bhāṣya. The one-line pañcāṅga is a little taller with a round button that shows there is more. Continue chanting takes two lines instead of three. Check for updates and Offline downloads are on the i page too.']],
   ['1.34.3', '2026-11-06', ['The i button now opens a short summary of what the app does. The version history, sources and licences, and update check stay under Settings → About.']],
