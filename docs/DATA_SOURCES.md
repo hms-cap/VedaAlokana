@@ -92,6 +92,12 @@ Not part of any text above; kept in `scripts/sources/sri-sukta.json` and shown a
 - Its Śrī Sūkta ṛks are the app's South Indian pāṭha (above), and its Ṛgveda mantras (Puruṣa Sūkta and others) are the app's Dākṣiṇātya pāṭha, in Kannada with svaras. Mantras the app does not have (sitāsite, the pañcabrahma mantras, tacchaṃyoḥ, yajñopavītam, rājādhirājāya) keep the booklet's wording.
 - A static page with its own print layout (A4); it uses the app's Kannada fonts and is cached for offline use.
 
+## Appendix: Ṛgvedīya Puruṣa Sūkta Pūjā
+
+- `web/appendix/purusha-sukta-puja.html`: a shortened pūjā drawn from the Devatārcanam above (built from the same plain-text copy). It keeps the saṅkalpa, a short kalaśa and ātma pūjā, the five pañcāyatana dhyānas, the sixteen upacāras on the sixteen Puruṣa Sūkta ṛks, the optional pañcāmṛta abhiṣeka, twelve names per devatā (nine Ambikā names, as in the booklet), prārthanā, samarpaṇa and nāmatraya.
+- Added at the owner's request: the Gaṇapati ṛk (RV 2.23.1), the Vāgdevī ṛk (RV 6.61.4) and the guru śloka “ಗುರುರ್ಬ್ರಹ್ಮಾ…”. All Ṛgveda ṛks are the app's Dākṣiṇātya pāṭha in Kannada.
+- The page has a chooser: the pañcāyatana (any of the five at the centre) or one devatā, where only the name forms change (ಶ್ರೀ ಸಾಂಬಸದಾಶಿವಾಯ, ಶ್ರೀ ಮಹಾವಿಷ್ಣವೇ, ಶ್ರೀ ಸೂರ್ಯನಾರಾಯಣಾಯ, ಶ್ರೀ ಮಹಾಗಣಪತಯೇ, ಶ್ರೀ ದುರ್ಗಾಪರಮೇಶ್ವರ್ಯೈ ನಮಃ). The choice is kept in the browser and printing follows it.
+
 ## Daily mantra cards
 
 365 mantras, one a day through the year (`scripts/daily/*.mjs`, built by `scripts/build-daily.mjs` into `web/data/daily/`): 197 from the Ṛgveda, 33 from the Atharvaveda, 53 from the Yajurveda (Vājasaneyi, Taittirīya Saṃhitā and Āraṇyaka), 2 from the Sāmaveda, 63 from the Upaniṣads and 17 from the Śrī Sūkta, Gaṇeśa Atharvaśīrṣa, Medhā Sūkta and Pavamāna Pariśiṣṭa as given in Aithal's Saswara Ṛgveda.
