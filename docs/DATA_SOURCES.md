@@ -85,6 +85,13 @@ Not part of any text above; kept in `scripts/sources/sri-sukta.json` and shown a
 - Khila pāṭha: Ṛgveda Khila 2.6 after J. Scheftelowitz, *Die Apokryphen des Ṛgveda* (Breslau 1906), GRETIL input by Muneo Tokunaga (1995), via sanskrit/raw_etexts. Unaccented, words divided as in the edition.
 - The marked variants are found by program (verse matching and letter-level comparison); one-letter differences that sandhi explains are not marked.
 
+## Appendix: Ṛgvedīya Devatārcanam
+
+- `web/appendix/devatarchanam.html`: “ಋಗ್ವೇದೀಯ ದೇವತಾರ್ಚನಂ”, edited by Śrī Śrī Svāmījī, Śrīmaṭha, Hariharapura (Śrīmaṭhīya Śiṣya Maṇḍali, 1979), in Kannada. Published here with the owner's agreement; credit the Śrīmaṭha, Hariharapura.
+- The Kannada text was taken from a digital re-typeset of the booklet supplied by the project owner (PDF text and a plain-text copy), not retyped.
+- Its Śrī Sūkta ṛks are the app's South Indian pāṭha (above), and its Ṛgveda mantras (Puruṣa Sūkta and others) are the app's Dākṣiṇātya pāṭha, in Kannada with svaras. Mantras the app does not have (sitāsite, the pañcabrahma mantras, tacchaṃyoḥ, yajñopavītam, rājādhirājāya) keep the booklet's wording.
+- A static page with its own print layout (A4); it uses the app's Kannada fonts and is cached for offline use.
+
 ## Daily mantra cards
 
 365 mantras, one a day through the year (`scripts/daily/*.mjs`, built by `scripts/build-daily.mjs` into `web/data/daily/`): 197 from the Ṛgveda, 33 from the Atharvaveda, 53 from the Yajurveda (Vājasaneyi, Taittirīya Saṃhitā and Āraṇyaka), 2 from the Sāmaveda, 63 from the Upaniṣads and 17 from the Śrī Sūkta, Gaṇeśa Atharvaśīrṣa, Medhā Sūkta and Pavamāna Pariśiṣṭa as given in Aithal's Saswara Ṛgveda.

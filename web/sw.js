@@ -16,6 +16,7 @@ const SHELL_FILES = [
   'fonts/NotoSerifDevanagari-Std.woff', 'fonts/NotoSerifKannada-Std.woff',
   'fonts/Shobhika-Vedic.woff', 'fonts/Shobhika-Std.woff',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/apple-touch-icon.png',
+  'appendix/devatarchanam.html',
 ];
 const DATA_CORE = ['data/catalog.json', 'data/suktas.json', 'data/devata.json', 'data/offline.json', 'data/search/names.json', 'data/search-aliases.json', 'data/search/pratika.tsv'];
 
@@ -54,7 +55,7 @@ self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
   const path = rel(url);
   if (path === null || path.startsWith('kosha/') || url.searchParams.has('fresh')) return;  // kosha/ is the standalone Dictionary app, with its own worker  // ?fresh: an update check, straight to the network
-  if (e.request.mode === 'navigate') {
+  if (e.request.mode === 'navigate' && !path.startsWith('appendix/')) {
     e.respondWith((async () => (await caches.match('index.html', { cacheName: SHELL })) || fetch(e.request))());
   } else if (path.startsWith('data/')) {
     e.respondWith(staleWhileRevalidate(e, DATA, path));

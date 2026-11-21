@@ -306,6 +306,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.37.0', '2026-11-21', ['Library: a new Appendix chip, with the Ṛgvedīya Devatārcanam (Śrīmaṭha, Hariharapura, 1979) in Kannada as a printable page. Its Śrī Sūkta and Ṛgveda mantras are taken from the app, with svaras.']],
   ['1.36.1', '2026-11-14', ['Nṛsiṃha Tāpanīya Upaniṣads: long paragraphs now show one sentence per line, and five scanning errors in the e-text are corrected (कर्णेभिः, भद्रं, इदं, पादं, प्रणवादिकास्तं).']],
   ['1.36.0', '2026-11-14', ['Two more Atharvaveda upaniṣads, the Nṛsiṃha Pūrvatāpanīya (five upaniṣads) and the Nṛsiṃha Uttaratāpanīya (nine khaṇḍas), in Sanskrit only, under Upaniṣads.']],
   ['1.35.0', '2026-11-06', ['Home: the Vedas now stand around the yajña-kuṇḍa. Tap a Veda for its Saṃhitā, Brāhmaṇa, Āraṇyaka and Upaniṣad texts, tap its sruk (ladle) for its sūktas, and tap the agni for all the sūktas. This replaces the Veda tiles and the Sūktas row.']],
@@ -2766,15 +2767,19 @@ function renderChrome(r, path) {
 }
 
 // ---------- library, search, settings ----------
-let libPick = 'rv';   // the Veda (or 'kosha') chosen in the Library this visit
+let libPick = 'rv';   // the Veda (or 'kosha', 'appendix') chosen in the Library this visit
+// Appendix: books kept as their own pages (web/appendix/), opened outside the reader
+const APPENDIX = [{ href: 'appendix/devatarchanam.html', name: 'Ṛgvedīya Devatārcanam', kn: 'ಋಗ್ವೇದೀಯ ದೇವತಾರ್ಚನಂ', note: 'Daily pūjā of the Śiva pañcāyatana with Puruṣa and Śrī Sūkta, in Kannada with svaras. Śrīmaṭha, Hariharapura, 1979.' }];
 async function viewLibrary() {
   setTitle('Library');
   const cat = await catalog();
   const byId = Object.fromEntries(cat.texts.map((t) => [t.id, t]));
-  const pick = libPick === 'kosha' || cat.vedas.some((v) => v.id === libPick) ? libPick : cat.vedas[0].id;
+  const pick = libPick === 'kosha' || libPick === 'appendix' || cat.vedas.some((v) => v.id === libPick) ? libPick : cat.vedas[0].id;
   const nTexts = (v) => cat.layers.reduce((n, l) => n + v.layers[l].length, 0);
   const chip = (id, name, sub, icon) => `<button type="button" class="skv-b" style="--vc: var(--v-${id})" data-lib="${id}" aria-pressed="${String(id === pick)}">${icon}<span class="skv-n"><b>${name}</b><small>${sub}</small></span></button>`;
   const body = (p) => {
+    if (p === 'appendix') return `<section class="lib-veda"><div class="lib-head"><span class="dv" lang="sa">परिशिष्टम्</span><span class="nm">Appendix</span></div>
+      <div class="lib-texts lib-app">${APPENDIX.map((b) => `<a href="${b.href}"><span><span lang="kn">${esc(b.kn)}</span><br><small>${esc(b.name)} · ${esc(b.note)}</small></span></a>`).join('')}</div></section>`;
     if (p === 'kosha') return `<section class="lib-veda"><a class="lib-head" href="#/kosha"><span class="dv" lang="sa">शब्दार्थकौस्तुभः</span><span class="nm">Dictionary</span></a><p class="lib-note">Sanskrit words with Kannada meanings.</p><a class="lib-open" href="#/kosha">Open the Dictionary</a></section>`;
     const v = cat.vedas.find((x) => x.id === p);
     return `<section class="lib-veda">
@@ -2786,7 +2791,7 @@ async function viewLibrary() {
   main.innerHTML = `<div class="col">
     <h1>Library</h1>
     <p class="lede">Pick a Veda, then a text.</p>
-    <div class="skv" role="group" aria-label="Veda">${cat.vedas.map((v) => chip(v.id, T(v.name, VEDA_SA[v.id]), `${F(nTexts(v))} ${T('texts', 'ग्रन्थाः')}`, VEDA_ICON[v.id] ? vedaIcon(v.id, 'skv-i') : '')).join('')}${chip('kosha', T('Dictionary', 'कोशः'), 'Kosha', `<svg class="skv-i" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12v16H6zM9 8h6M9 12h6"/></svg>`)}</div>
+    <div class="skv" role="group" aria-label="Veda">${cat.vedas.map((v) => chip(v.id, T(v.name, VEDA_SA[v.id]), `${F(nTexts(v))} ${T('texts', 'ग्रन्थाः')}`, VEDA_ICON[v.id] ? vedaIcon(v.id, 'skv-i') : '')).join('')}${chip('kosha', T('Dictionary', 'कोशः'), 'Kosha', `<svg class="skv-i" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12v16H6zM9 8h6M9 12h6"/></svg>`)}${chip('appendix', T('Appendix', 'परिशिष्टम्'), `${F(APPENDIX.length)} ${T('book', 'ग्रन्थः')}`, `<svg class="skv-i" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z"/></svg>`)}</div>
     <div id="libBody">${body(pick)}</div>
   </div>`;
   main.querySelectorAll('[data-lib]').forEach((b) => b.addEventListener('click', () => {
