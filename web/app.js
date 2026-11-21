@@ -306,6 +306,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.40.0', '2026-11-22', ['Appendix: a fourth book, the Ṛgvedīya Śrī Sūkta Vidhāna Devī Pūjā. Sixteen upacāras on the sixteen Śrī Sūkta ṛks (from the app, with svaras) for Śrī Lalitā, Śrī Durgā or Śrī Mahālakṣmī, with the Lalitā Aṣṭottaraśatanāmāvalī (108 names) or the Durgā Dvātriṃśannāmamālā (32 names) for the nāma pūjā, and optional pañcāmṛta.']],
   ['1.39.1', '2026-11-21', ['Appendix, both Puruṣa Sūkta pūjās: twelve names for every pañcāyatana devatā, checked against published lists (Śiva now the Mahādevādi twelve; Durgā the first twelve of her Aṣṭottara, in place of nine Ambikā names), and the source-book credit removed.']],
   ['1.39.0', '2026-11-21', ['Appendix: a third book, the Ṛgvedīya Puruṣa Sūkta and Śrī Sūkta Pūjā. It is the shorter pūjā with the matching Śrī Sūkta ṛk (from the app, with svaras) recited after each Puruṣa Sūkta ṛk, with the same devatā and pañcāmṛta choices.']],
   ['1.38.0', '2026-11-21', ['Appendix: a shorter Ṛgvedīya Puruṣa Sūkta Pūjā in Kannada, opening with Gaṇapati, Vāgdevī and guru prayers. Choose the Śiva pañcāyatana (with any devatā at the centre) or one devatā for special occasions, and turn the pañcāmṛta abhiṣeka on or off; printing follows your choices.']],
@@ -2775,7 +2776,8 @@ let libPick = 'rv';   // the Veda (or 'kosha', 'appendix') chosen in the Library
 // Appendix: books kept as their own pages (web/appendix/), opened outside the reader
 const APPENDIX = [{ href: 'appendix/devatarchanam.html', name: 'Ṛgvedīya Devatārcanam', kn: 'ಋಗ್ವೇದೀಯ ದೇವತಾರ್ಚನಂ', note: 'Daily pūjā of the Śiva pañcāyatana with Puruṣa and Śrī Sūkta, in Kannada with svaras. Śrīmaṭha, Hariharapura, 1979.' },
   { href: 'appendix/purusha-sukta-puja.html', name: 'Ṛgvedīya Puruṣa Sūkta Pūjā', kn: 'ಋಗ್ವೇದೀಯ ಪುರುಷಸೂಕ್ತ ಪೂಜಾ', note: 'A shorter pūjā with the sixteen upacāras on the Puruṣa Sūkta: pañcāyatana or one chosen devatā, pañcāmṛta optional.' },
-  { href: 'appendix/purusha-sri-sukta-puja.html', name: 'Ṛgvedīya Puruṣa Sūkta and Śrī Sūkta Pūjā', kn: 'ಋಗ್ವೇದೀಯ ಪುರುಷಸೂಕ್ತ ಶ್ರೀಸೂಕ್ತ ಪೂಜಾ', note: 'The same shorter pūjā with a Śrī Sūkta ṛk beside each Puruṣa Sūkta ṛk: pañcāyatana or one chosen devatā, pañcāmṛta optional.' }];
+  { href: 'appendix/purusha-sri-sukta-puja.html', name: 'Ṛgvedīya Puruṣa Sūkta and Śrī Sūkta Pūjā', kn: 'ಋಗ್ವೇದೀಯ ಪುರುಷಸೂಕ್ತ ಶ್ರೀಸೂಕ್ತ ಪೂಜಾ', note: 'The same shorter pūjā with a Śrī Sūkta ṛk beside each Puruṣa Sūkta ṛk: pañcāyatana or one chosen devatā, pañcāmṛta optional.' },
+  { href: 'appendix/sri-sukta-devi-puja.html', name: 'Ṛgvedīya Śrī Sūkta Vidhāna Devī Pūjā', kn: 'ಋಗ್ವೇದೀಯ ಶ್ರೀಸೂಕ್ತ ವಿಧಾನ ದೇವೀ ಪೂಜಾ', note: 'Sixteen upacāras on the sixteen Śrī Sūkta ṛks for Śrī Lalitā, Durgā or Mahālakṣmī, with the Lalitā 108 names or the Durgā 32 names; pañcāmṛta optional.' }];
 async function viewLibrary() {
   setTitle('Library');
   const cat = await catalog();

@@ -19,6 +19,7 @@ const SHELL_FILES = [
   'appendix/devatarchanam.html',
   'appendix/purusha-sukta-puja.html',
   'appendix/purusha-sri-sukta-puja.html',
+  'appendix/sri-sukta-devi-puja.html',
 ];
 const DATA_CORE = ['data/catalog.json', 'data/suktas.json', 'data/devata.json', 'data/offline.json', 'data/search/names.json', 'data/search-aliases.json', 'data/search/pratika.tsv'];
 

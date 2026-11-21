@@ -99,6 +99,14 @@ Not part of any text above; kept in `scripts/sources/sri-sukta.json` and shown a
 - Twelve names per devatā, checked against published lists by a separate review: Śiva, the Rudra/Mahādevādi dvādaśa nāma ("prathamaṃ tu mahādevaṃ…", sanskritdocuments.org rudradvAdashanAmastotram); Viṣṇu, Keśavādi; Sūrya, the twelve Sūrya-namaskāra names (Mitrādi); Gaṇapati, Sumukhādi ("…vighnarājo gaṇādhipaḥ, dhūmraketur gaṇādhyakṣo bhālacandro gajānanaḥ"); Durgā, no standalone dvādaśa-nāma stotra was found, so the first twelve names of the Durgā Aṣṭottaraśatanāma (Viśvasāra Tantra, "satī sādhvī bhavaprītā…", shlokam.org), labelled as such on the page.
 - A chooser: the pañcāyatana (any of the five at the centre) or one devatā, where only the name forms change (ಶ್ರೀ ಸಾಂಬಸದಾಶಿವಾಯ, ಶ್ರೀ ಮಹಾವಿಷ್ಣವೇ, ಶ್ರೀ ಸೂರ್ಯನಾರಾಯಣಾಯ, ಶ್ರೀ ಮಹಾಗಣಪತಯೇ, ಶ್ರೀ ದುರ್ಗಾಪರಮೇಶ್ವರ್ಯೈ ನಮಃ). The choice is kept in the browser and printing follows it.
 
+## Appendix: Ṛgvedīya Śrī Sūkta Vidhāna Devī Pūjā
+
+- `web/appendix/sri-sukta-devi-puja.html`: sixteen upacāras on the sixteen Śrī Sūkta ṛks (the fifteen ṛks and the first phalaśruti ṛk “yaḥ śuciḥ”), the Mahālakṣmī gāyatrī as mantrapuṣpa; the app's South Indian pāṭha. Other Ṛgveda ṛks (opening, pañcāmṛta) are the Dākṣiṇātya pāṭha. Non-mantra portions are the common pūjā wording; Devī forms of the namaskāra (Devī Māhātmya “namo devyai mahādevyai…”) and prārthanā ślokas.
+- Devatā chooser: Śrī Lalitā (dhyāna “sindūrāruṇavigrahāṃ…”), Śrī Durgā, Śrī Mahālakṣmī (“yā sā padmāsanasthā…”); only the name forms change. Nāma pūjā chooser (follows the devatā, can be changed):
+  - Śrī Lalitā Aṣṭottaraśatanāmāvalī (“rajatācalaśṛṅgāgramadhyasthāyai…”), from shlokam.org with its typing errors corrected, cross-checked by a separate review against hindupad.com, drikpanchang.com, hariome.com, aanmeegam.org and pomantra.com. Where sources differ, #44 kalaśodbhavadurvāsaḥpūjitāyai and #46 cakrarājamahāyantra… follow the majority; #60 tāpānāṃ, #83 parīmukhya, #96 mukti kept.
+  - Śrī Durgā Dvātriṃśannāmamālā (shlokam.org), the verses and the 32 names in the dative.
+- Names are kept in Devanagari in the generator and converted to Kannada script (anusvāra for homorganic nasals).
+
 ## Daily mantra cards
 
 365 mantras, one a day through the year (`scripts/daily/*.mjs`, built by `scripts/build-daily.mjs` into `web/data/daily/`): 197 from the Ṛgveda, 33 from the Atharvaveda, 53 from the Yajurveda (Vājasaneyi, Taittirīya Saṃhitā and Āraṇyaka), 2 from the Sāmaveda, 63 from the Upaniṣads and 17 from the Śrī Sūkta, Gaṇeśa Atharvaśīrṣa, Medhā Sūkta and Pavamāna Pariśiṣṭa as given in Aithal's Saswara Ṛgveda.
