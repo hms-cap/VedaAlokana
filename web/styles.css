@@ -1280,3 +1280,7 @@ a.mrow { display: block; }
 .lib-app a { display: block; padding: 12px 0; }
 .lib-app [lang=kn] { font-family: var(--deva); font-size: 18px; }
 .lib-app small { color: var(--muted); line-height: 1.5; }
+.lib-app-i { border-bottom: 1px solid var(--line-soft); padding-bottom: 10px; }
+.lib-print { display: inline-flex; align-items: center; height: 36px; padding: 0 14px; border-radius: 18px; border: 1.5px solid var(--v-appendix); color: var(--v-appendix); font-weight: 600; font-size: 14px; }
+.lib-print:hover { text-decoration: none; background: var(--surface-2, transparent); }
+.lib-texts.lib-app a.lib-print { display: inline-flex; width: auto; height: 34px; padding: 0 14px; margin: 2px 0 4px; color: var(--v-appendix); justify-content: flex-start; }
