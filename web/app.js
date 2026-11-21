@@ -306,7 +306,8 @@ function wireInstall() {
   };
 }
 const CHANGES = [
-  ['1.39.0', '2026-11-21', ['Appendix: a third book, the Ṛgvedīya Puruṣa Sūkta and Śrī Sūkta Pūjā. It is the shorter pūjā with the matching Śrī Sūkta ṛk (from the app, with svaras) recited after each Puruṣa Sūkta ṛk, as in the Devatārcanam; the same devatā and pañcāmṛta choices.']],
+  ['1.39.1', '2026-11-21', ['Appendix, both Puruṣa Sūkta pūjās: twelve names for every pañcāyatana devatā, checked against published lists (Śiva now the Mahādevādi twelve; Durgā the first twelve of her Aṣṭottara, in place of nine Ambikā names), and the source-book credit removed.']],
+  ['1.39.0', '2026-11-21', ['Appendix: a third book, the Ṛgvedīya Puruṣa Sūkta and Śrī Sūkta Pūjā. It is the shorter pūjā with the matching Śrī Sūkta ṛk (from the app, with svaras) recited after each Puruṣa Sūkta ṛk, with the same devatā and pañcāmṛta choices.']],
   ['1.38.0', '2026-11-21', ['Appendix: a shorter Ṛgvedīya Puruṣa Sūkta Pūjā in Kannada, opening with Gaṇapati, Vāgdevī and guru prayers. Choose the Śiva pañcāyatana (with any devatā at the centre) or one devatā for special occasions, and turn the pañcāmṛta abhiṣeka on or off; printing follows your choices.']],
   ['1.37.1', '2026-11-21', ['Appendix: a Print / PDF button on the Devatārcanam page, and a Print / PDF link beside it in the Library. Choose “Save as PDF” in the print dialog to keep it as a file.']],
   ['1.37.0', '2026-11-21', ['Library: a new Appendix chip, with the Ṛgvedīya Devatārcanam (Śrīmaṭha, Hariharapura, 1979) in Kannada as a printable page. Its Śrī Sūkta and Ṛgveda mantras are taken from the app, with svaras.']],
