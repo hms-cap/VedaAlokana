@@ -306,6 +306,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.39.0', '2026-11-21', ['Appendix: a third book, the Ṛgvedīya Puruṣa Sūkta and Śrī Sūkta Pūjā. It is the shorter pūjā with the matching Śrī Sūkta ṛk (from the app, with svaras) recited after each Puruṣa Sūkta ṛk, as in the Devatārcanam; the same devatā and pañcāmṛta choices.']],
   ['1.38.0', '2026-11-21', ['Appendix: a shorter Ṛgvedīya Puruṣa Sūkta Pūjā in Kannada, opening with Gaṇapati, Vāgdevī and guru prayers. Choose the Śiva pañcāyatana (with any devatā at the centre) or one devatā for special occasions, and turn the pañcāmṛta abhiṣeka on or off; printing follows your choices.']],
   ['1.37.1', '2026-11-21', ['Appendix: a Print / PDF button on the Devatārcanam page, and a Print / PDF link beside it in the Library. Choose “Save as PDF” in the print dialog to keep it as a file.']],
   ['1.37.0', '2026-11-21', ['Library: a new Appendix chip, with the Ṛgvedīya Devatārcanam (Śrīmaṭha, Hariharapura, 1979) in Kannada as a printable page. Its Śrī Sūkta and Ṛgveda mantras are taken from the app, with svaras.']],
@@ -2772,7 +2773,8 @@ function renderChrome(r, path) {
 let libPick = 'rv';   // the Veda (or 'kosha', 'appendix') chosen in the Library this visit
 // Appendix: books kept as their own pages (web/appendix/), opened outside the reader
 const APPENDIX = [{ href: 'appendix/devatarchanam.html', name: 'Ṛgvedīya Devatārcanam', kn: 'ಋಗ್ವೇದೀಯ ದೇವತಾರ್ಚನಂ', note: 'Daily pūjā of the Śiva pañcāyatana with Puruṣa and Śrī Sūkta, in Kannada with svaras. Śrīmaṭha, Hariharapura, 1979.' },
-  { href: 'appendix/purusha-sukta-puja.html', name: 'Ṛgvedīya Puruṣa Sūkta Pūjā', kn: 'ಋಗ್ವೇದೀಯ ಪುರುಷಸೂಕ್ತ ಪೂಜಾ', note: 'A shorter pūjā with the sixteen upacāras on the Puruṣa Sūkta: pañcāyatana or one chosen devatā, pañcāmṛta optional.' }];
+  { href: 'appendix/purusha-sukta-puja.html', name: 'Ṛgvedīya Puruṣa Sūkta Pūjā', kn: 'ಋಗ್ವೇದೀಯ ಪುರುಷಸೂಕ್ತ ಪೂಜಾ', note: 'A shorter pūjā with the sixteen upacāras on the Puruṣa Sūkta: pañcāyatana or one chosen devatā, pañcāmṛta optional.' },
+  { href: 'appendix/purusha-sri-sukta-puja.html', name: 'Ṛgvedīya Puruṣa Sūkta and Śrī Sūkta Pūjā', kn: 'ಋಗ್ವೇದೀಯ ಪುರುಷಸೂಕ್ತ ಶ್ರೀಸೂಕ್ತ ಪೂಜಾ', note: 'The same shorter pūjā with a Śrī Sūkta ṛk beside each Puruṣa Sūkta ṛk: pañcāyatana or one chosen devatā, pañcāmṛta optional.' }];
 async function viewLibrary() {
   setTitle('Library');
   const cat = await catalog();
@@ -2794,7 +2796,7 @@ async function viewLibrary() {
   main.innerHTML = `<div class="col">
     <h1>Library</h1>
     <p class="lede">Pick a Veda, then a text.</p>
-    <div class="skv" role="group" aria-label="Veda">${cat.vedas.map((v) => chip(v.id, T(v.name, VEDA_SA[v.id]), `${F(nTexts(v))} ${T('texts', 'ग्रन्थाः')}`, VEDA_ICON[v.id] ? vedaIcon(v.id, 'skv-i') : '')).join('')}${chip('kosha', T('Dictionary', 'कोशः'), 'Kosha', `<svg class="skv-i" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12v16H6zM9 8h6M9 12h6"/></svg>`)}${chip('appendix', T('Appendix', 'परिशिष्टम्'), `${F(APPENDIX.length)} ${APPENDIX.length === 1 ? T('book', 'ग्रन्थः') : T('books', 'ग्रन्थौ')}`, `<svg class="skv-i" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z"/></svg>`)}</div>
+    <div class="skv" role="group" aria-label="Veda">${cat.vedas.map((v) => chip(v.id, T(v.name, VEDA_SA[v.id]), `${F(nTexts(v))} ${T('texts', 'ग्रन्थाः')}`, VEDA_ICON[v.id] ? vedaIcon(v.id, 'skv-i') : '')).join('')}${chip('kosha', T('Dictionary', 'कोशः'), 'Kosha', `<svg class="skv-i" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12v16H6zM9 8h6M9 12h6"/></svg>`)}${chip('appendix', T('Appendix', 'परिशिष्टम्'), `${F(APPENDIX.length)} ${APPENDIX.length === 1 ? T('book', 'ग्रन्थः') : T('books', APPENDIX.length === 2 ? 'ग्रन्थौ' : 'ग्रन्थाः')}`, `<svg class="skv-i" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z"/></svg>`)}</div>
     <div id="libBody">${body(pick)}</div>
   </div>`;
   main.querySelectorAll('[data-lib]').forEach((b) => b.addEventListener('click', () => {
