@@ -27,6 +27,11 @@ const SHELL_FILES = [
   'appendix/kalpa-durgashtami.html',
   'appendix/kalpa-deepavali-lakshmi.html',
   'appendix/kalpa-mahashivaratri.html',
+  'appendix/kalpa-rama-navami.html',
+  'appendix/kalpa-krishna-janmashtami.html',
+  'appendix/kalpa-svarna-gauri.html',
+  'appendix/kalpa-ananta-chaturdashi.html',
+  'appendix/kalpa-sarasvati-puja.html',
 ];
 const DATA_CORE = ['data/catalog.json', 'data/suktas.json', 'data/devata.json', 'data/offline.json', 'data/search/names.json', 'data/search-aliases.json', 'data/search/pratika.tsv'];
 
