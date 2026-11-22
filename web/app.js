@@ -306,6 +306,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.42.0', '2026-11-22', ['Appendix: each book now has an Open button beside Print / PDF.', 'Pūjā books: a new devatā editor for “Other devatā”. Type the name in Roman, IAST, Devanagari or Kannada and review the Kannada, then check or edit the four case forms, add an optional dhyāna śloka and an optional list of names (with select all / unselect all). My devatās are saved on this device.']],
   ['1.41.0', '2026-11-22', ['Devī book: the second Durgā Aṣṭottara (“durgāyai, śivāyai, mahālakṣmyai…”) as another nāma pūjā option.', 'Pūjā books: choose “Other devatā” and type any name; the name forms are filled in and can be edited, with an optional dhyāna śloka.', 'Pūjā books: the saṅkalpa blanks are now fields, with a button to fill the pañcāṅga of today (or any date).']],
   ['1.40.1', '2026-11-22', ['Śrī Sūkta Vidhāna Devī Pūjā: the Mahālakṣmī Aṣṭottaraśatanāmāvalī (108 names, used for Mahālakṣmī) and the Durgā Aṣṭottaraśatanāmāvalī (108 names, from the Viśvasāra Tantra stotra) added to the nāma pūjā choices, beside the Lalitā 108 and Durgā 32.']],
   ['1.40.0', '2026-11-22', ['Appendix: a fourth book, the Ṛgvedīya Śrī Sūkta Vidhāna Devī Pūjā. Sixteen upacāras on the sixteen Śrī Sūkta ṛks (from the app, with svaras) for Śrī Lalitā, Śrī Durgā or Śrī Mahālakṣmī, with the Lalitā Aṣṭottaraśatanāmāvalī (108 names) or the Durgā Dvātriṃśannāmamālā (32 names) for the nāma pūjā, and optional pañcāmṛta.']],
@@ -2789,7 +2790,7 @@ async function viewLibrary() {
   const chip = (id, name, sub, icon) => `<button type="button" class="skv-b" style="--vc: var(--v-${id})" data-lib="${id}" aria-pressed="${String(id === pick)}">${icon}<span class="skv-n"><b>${name}</b><small>${sub}</small></span></button>`;
   const body = (p) => {
     if (p === 'appendix') return `<section class="lib-veda"><div class="lib-head"><span class="dv" lang="sa">परिशिष्टम्</span><span class="nm">Appendix</span></div>
-      <div class="lib-texts lib-app">${APPENDIX.map((b) => `<div class="lib-app-i"><a href="${b.href}"><span><span lang="kn">${esc(b.kn)}</span><br><small>${esc(b.name)} · ${esc(b.note)}</small></span></a><a class="lib-print" href="${b.href}#print">${T('Print / PDF', 'मुद्रणम् / PDF')}</a></div>`).join('')}</div></section>`;
+      <div class="lib-texts lib-app">${APPENDIX.map((b) => `<div class="lib-app-i"><a href="${b.href}"><span><span lang="kn">${esc(b.kn)}</span><br><small>${esc(b.name)} · ${esc(b.note)}</small></span></a><span class="lib-btns"><a class="lib-open" href="${b.href}">${T('Open', 'उद्घाटय')}</a><a class="lib-print" href="${b.href}#print">${T('Print / PDF', 'मुद्रणम् / PDF')}</a></span></div>`).join('')}</div></section>`;
     if (p === 'kosha') return `<section class="lib-veda"><a class="lib-head" href="#/kosha"><span class="dv" lang="sa">शब्दार्थकौस्तुभः</span><span class="nm">Dictionary</span></a><p class="lib-note">Sanskrit words with Kannada meanings.</p><a class="lib-open" href="#/kosha">Open the Dictionary</a></section>`;
     const v = cat.vedas.find((x) => x.id === p);
     return `<section class="lib-veda">

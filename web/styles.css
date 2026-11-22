@@ -1282,5 +1282,9 @@ a.mrow { display: block; }
 .lib-app small { color: var(--muted); line-height: 1.5; }
 .lib-app-i { border-bottom: 1px solid var(--line-soft); padding-bottom: 10px; }
 .lib-print { display: inline-flex; align-items: center; height: 36px; padding: 0 14px; border-radius: 18px; border: 1.5px solid var(--v-appendix); color: var(--v-appendix); font-weight: 600; font-size: 14px; }
+.lib-btns { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 4px 0 4px; }
+.lib-texts.lib-app a.lib-open { display: inline-flex; align-items: center; width: auto; height: 40px; margin: 0; padding: 0 18px; border-radius: 20px; background: var(--v-appendix); color: #FFFFFF; font-weight: 600; font-size: 14px; }
+.lib-texts.lib-app .lib-btns a.lib-print { height: 40px; margin: 0; }
+.lib-open:hover { text-decoration: none; filter: brightness(1.1); }
 .lib-print:hover { text-decoration: none; background: var(--surface-2, transparent); }
 .lib-texts.lib-app a.lib-print { display: inline-flex; width: auto; height: 34px; padding: 0 14px; margin: 2px 0 4px; color: var(--v-appendix); justify-content: flex-start; }

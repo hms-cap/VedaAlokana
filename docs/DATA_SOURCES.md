@@ -110,7 +110,7 @@ Not part of any text above; kept in `scripts/sources/sri-sukta.json` and shown a
   - Śrī Durgā Aṣṭottaraśatanāmāvalī, the “durgāyai, śivāyai, mahālakṣmyai, mahāgauryai, caṇḍikāyai…” list (108; ends “…sarvābhīṣṭapradāyinyai”), compared from the Chinmaya Mission Columbus PDF and madhwasakha.com. Where they differ, madhwasakha is followed: #54 śāstryai (Chinmaya: śāstrāyai) and #89–92. “nirguṇāyai” occurs twice in the source lists and is kept to make 108.
 - Names are kept in Devanagari in the generator and converted to Kannada script (anusvāra for homorganic nasals).
 
-- Saṅkalpa blanks (saṃvatsara … vāsara) are inputs; “Pañcāṅga tumbi” fills them from the app's own panchanga.js (Lahiri ayanāṃśa, sunrise-based, saved place or Bengaluru) with locative tithi forms; it is an approximation to be checked against a printed pañcāṅga. The “other devatā” option derives the name forms for a- and ā-stems; all forms are editable.
+- Saṅkalpa blanks (saṃvatsara … vāsara) are inputs; “Pañcāṅga tumbi” fills them from the app's own panchanga.js (Lahiri ayanāṃśa, sunrise-based, saved place or Bengaluru) with locative tithi forms; it is an approximation to be checked against a printed pañcāṅga. The “Other devatā” editor (web/appendix/editor.js) reads Roman (casual ITRANS-style), IAST, Devanagari or Kannada through the app's own translit.js and lipi.js, derives the name forms for a- and ā-stems, and keeps everything editable; saved devatās live in localStorage on the device.
 
 ## Daily mantra cards
 
