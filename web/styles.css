@@ -1025,6 +1025,9 @@ mark.pv { background: color-mix(in srgb, var(--fire, #D9822B) 22%, transparent);
 .my-t { flex: 1; }
 .my-n { color: var(--muted); font-weight: 500; font-size: 14px; }
 .my-btn svg:last-child { color: var(--muted); }
+.ap-btn { margin-top: 10px; }
+.ap-ic { color: var(--v-appendix); }
+.ap-sub { display: block; font-weight: 500; font-size: 13px; color: var(--muted); }
 .schips[hidden] { display: none; }
 .vtiles { grid-auto-columns: 150px; margin-top: 2px; }
 .vtile { height: 62px; flex-direction: row; align-items: center; justify-content: flex-start; gap: 10px; padding: 8px 12px; border-radius: 16px; }

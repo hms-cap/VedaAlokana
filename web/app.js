@@ -306,6 +306,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.45.1', '2026-11-22', ['Home: an Appendix button below My sūktas opens the Appendix books, including the Pūjā Kalpa, in the Library.']],
   ['1.45.0', '2026-11-22', ['Appendix books: a navigation bar at the bottom of every book (Home, Library, Pūjā Kalpa, Contents, Top) and a top bar that stays in view. Contents opens a list of the book’s sections with the current one marked; tap one to jump there.']],
   ['1.44.0', '2026-11-22', ['Pūjā Kalpa: five more pūjās with their next dates. Śrī Rāma Navamī (Rāma 108), Śrī Kṛṣṇa Janmāṣṭamī (Kṛṣṇa 108), Svarṇa Gaurī Vrata (Gaurī 108), Ananta Caturdaśī (Viṣṇu 108 and the fourteen granthi pūjā) and Sarasvatī Pūjā on Mūla nakṣatra (Sarasvatī 108 with the pāvakā naḥ sarasvatī ṛks).']],
   ['1.43.0', '2026-11-22', ['Appendix: a new book, Ṛgvedīya Pūjā Kalpa. It lists the year’s festival pūjās with their next dates for your place, and opens each as a printable pūjā with its devatā, dhyāna ślokas, nāmāvali and special items: Varamahālakṣmī, Gaṇeśa Caturthī (with the 21 patra pūjā), Navarātri Lalitā, Durgāṣṭamī, Dīpāvalī Lakṣmī and Mahāśivarātri (with bilvārpaṇa).', 'Each pūjā can follow the Puruṣa Sūkta, the Śrī Sūkta or both, and keeps the pañcāṅga fill, pañcāmṛta option and devatā editor.']],
@@ -1257,6 +1258,8 @@ async function viewHome() {
     <section class="hero dm" id="dm" aria-roledescription="carousel" aria-labelledby="todayH">${dailyHTML(dm)}</section>
     ${mandalaHTML(cat, suk)}
     <a class="my-btn" href="#/my"><span class="my-ic">${STAR(true)}</span><span class="my-t">${T('My sūktas', 'मम सूक्तानि')}</span><span class="my-n">${F(my.saved.length)}</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+    <a class="my-btn ap-btn" href="#/library?lib=appendix"><span class="my-ic ap-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z"/></svg></span><span class="my-t">${T('Appendix', 'परिशिष्टम्')}<small class="ap-sub">${T('Pūjā books and the Pūjā Kalpa', 'पूजाग्रन्थाः पूजाकल्पश्च')}</small></span><span class="my-n">${F(APPENDIX.length)}</span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
     <p class="lede home-foot">Every text comes from an openly published digital edition.</p>
   </div>`;
@@ -2785,8 +2788,9 @@ const APPENDIX = [{ href: 'appendix/devatarchanam.html', name: 'Ṛgvedīya Deva
   { href: 'appendix/purusha-sri-sukta-puja.html', name: 'Ṛgvedīya Puruṣa Sūkta and Śrī Sūkta Pūjā', kn: 'ಋಗ್ವೇದೀಯ ಪುರುಷಸೂಕ್ತ ಶ್ರೀಸೂಕ್ತ ಪೂಜಾ', note: 'The same shorter pūjā with a Śrī Sūkta ṛk beside each Puruṣa Sūkta ṛk: pañcāyatana or one chosen devatā, pañcāmṛta optional.' },
   { href: 'appendix/sri-sukta-devi-puja.html', name: 'Ṛgvedīya Śrī Sūkta Vidhāna Devī Pūjā', kn: 'ಋಗ್ವೇದೀಯ ಶ್ರೀಸೂಕ್ತ ವಿಧಾನ ದೇವೀ ಪೂಜಾ', note: 'Sixteen upacāras on the sixteen Śrī Sūkta ṛks for Śrī Lalitā, Durgā or Mahālakṣmī, with the Lalitā 108 names or the Durgā 32 names; pañcāmṛta optional.' },
   { href: 'appendix/puja-kalpa.html', name: 'Ṛgvedīya Pūjā Kalpa', kn: 'ಋಗ್ವೇದೀಯ ಪೂಜಾ ಕಲ್ಪ', note: 'Festival pūjās of the year (Smārta): Rāma Navamī, Varamahālakṣmī, Kṛṣṇa Janmāṣṭamī, Svarṇa Gaurī, Gaṇeśa Caturthī, Ananta Caturdaśī, Navarātri Lalitā, Sarasvatī, Durgāṣṭamī, Dīpāvalī Lakṣmī and Mahāśivarātri, each with its dhyāna, nāmāvali and next date; sixteen upacāras on Puruṣa Sūkta, Śrī Sūkta or both.' }];
-async function viewLibrary() {
+async function viewLibrary(params) {
   setTitle('Library');
+  if (params && params.get('lib')) libPick = params.get('lib');
   const cat = await catalog();
   const byId = Object.fromEntries(cat.texts.map((t) => [t.id, t]));
   const pick = libPick === 'kosha' || libPick === 'appendix' || cat.vedas.some((v) => v.id === libPick) ? libPick : cat.vedas[0].id;
@@ -3130,7 +3134,7 @@ async function route() {
     if (!a) await viewHome();
     else if (a === 'info') viewInfo();
     else if (a === 'about') await viewAbout();
-    else if (a === 'library') await viewLibrary();
+    else if (a === 'library') await viewLibrary(r.params);
     else if (a === 'kosha') await viewKosha(id ? decodeURIComponent(id) : null, r.params);
     else if (a === 'suktas') await viewSuktas(r.params);
     else if (a === 'devatas') await (id ? viewDevataList(id) : viewDevatas());
