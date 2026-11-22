@@ -306,6 +306,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.43.0', '2026-11-22', ['Appendix: a new book, Ṛgvedīya Pūjā Kalpa. It lists the year’s festival pūjās with their next dates for your place, and opens each as a printable pūjā with its devatā, dhyāna ślokas, nāmāvali and special items: Varamahālakṣmī, Gaṇeśa Caturthī (with the 21 patra pūjā), Navarātri Lalitā, Durgāṣṭamī, Dīpāvalī Lakṣmī and Mahāśivarātri (with bilvārpaṇa).', 'Each pūjā can follow the Puruṣa Sūkta, the Śrī Sūkta or both, and keeps the pañcāṅga fill, pañcāmṛta option and devatā editor.']],
   ['1.42.0', '2026-11-22', ['Appendix: each book now has an Open button beside Print / PDF.', 'Pūjā books: a new devatā editor for “Other devatā”. Type the name in Roman, IAST, Devanagari or Kannada and review the Kannada, then check or edit the four case forms, add an optional dhyāna śloka and an optional list of names (with select all / unselect all). My devatās are saved on this device.']],
   ['1.41.0', '2026-11-22', ['Devī book: the second Durgā Aṣṭottara (“durgāyai, śivāyai, mahālakṣmyai…”) as another nāma pūjā option.', 'Pūjā books: choose “Other devatā” and type any name; the name forms are filled in and can be edited, with an optional dhyāna śloka.', 'Pūjā books: the saṅkalpa blanks are now fields, with a button to fill the pañcāṅga of today (or any date).']],
   ['1.40.1', '2026-11-22', ['Śrī Sūkta Vidhāna Devī Pūjā: the Mahālakṣmī Aṣṭottaraśatanāmāvalī (108 names, used for Mahālakṣmī) and the Durgā Aṣṭottaraśatanāmāvalī (108 names, from the Viśvasāra Tantra stotra) added to the nāma pūjā choices, beside the Lalitā 108 and Durgā 32.']],
@@ -2780,7 +2781,8 @@ let libPick = 'rv';   // the Veda (or 'kosha', 'appendix') chosen in the Library
 const APPENDIX = [{ href: 'appendix/devatarchanam.html', name: 'Ṛgvedīya Devatārcanam', kn: 'ಋಗ್ವೇದೀಯ ದೇವತಾರ್ಚನಂ', note: 'Daily pūjā of the Śiva pañcāyatana with Puruṣa and Śrī Sūkta, in Kannada with svaras. Śrīmaṭha, Hariharapura, 1979.' },
   { href: 'appendix/purusha-sukta-puja.html', name: 'Ṛgvedīya Puruṣa Sūkta Pūjā', kn: 'ಋಗ್ವೇದೀಯ ಪುರುಷಸೂಕ್ತ ಪೂಜಾ', note: 'A shorter pūjā with the sixteen upacāras on the Puruṣa Sūkta: pañcāyatana or one chosen devatā, pañcāmṛta optional.' },
   { href: 'appendix/purusha-sri-sukta-puja.html', name: 'Ṛgvedīya Puruṣa Sūkta and Śrī Sūkta Pūjā', kn: 'ಋಗ್ವೇದೀಯ ಪುರುಷಸೂಕ್ತ ಶ್ರೀಸೂಕ್ತ ಪೂಜಾ', note: 'The same shorter pūjā with a Śrī Sūkta ṛk beside each Puruṣa Sūkta ṛk: pañcāyatana or one chosen devatā, pañcāmṛta optional.' },
-  { href: 'appendix/sri-sukta-devi-puja.html', name: 'Ṛgvedīya Śrī Sūkta Vidhāna Devī Pūjā', kn: 'ಋಗ್ವೇದೀಯ ಶ್ರೀಸೂಕ್ತ ವಿಧಾನ ದೇವೀ ಪೂಜಾ', note: 'Sixteen upacāras on the sixteen Śrī Sūkta ṛks for Śrī Lalitā, Durgā or Mahālakṣmī, with the Lalitā 108 names or the Durgā 32 names; pañcāmṛta optional.' }];
+  { href: 'appendix/sri-sukta-devi-puja.html', name: 'Ṛgvedīya Śrī Sūkta Vidhāna Devī Pūjā', kn: 'ಋಗ್ವೇದೀಯ ಶ್ರೀಸೂಕ್ತ ವಿಧಾನ ದೇವೀ ಪೂಜಾ', note: 'Sixteen upacāras on the sixteen Śrī Sūkta ṛks for Śrī Lalitā, Durgā or Mahālakṣmī, with the Lalitā 108 names or the Durgā 32 names; pañcāmṛta optional.' },
+  { href: 'appendix/puja-kalpa.html', name: 'Ṛgvedīya Pūjā Kalpa', kn: 'ಋಗ್ವೇದೀಯ ಪೂಜಾ ಕಲ್ಪ', note: 'Festival pūjās of the year (Smārta): Varamahālakṣmī, Gaṇeśa Caturthī, Navarātri Lalitā, Durgāṣṭamī, Dīpāvalī Lakṣmī and Mahāśivarātri, each with its dhyāna, nāmāvali and next date; sixteen upacāras on Puruṣa Sūkta, Śrī Sūkta or both.' }];
 async function viewLibrary() {
   setTitle('Library');
   const cat = await catalog();

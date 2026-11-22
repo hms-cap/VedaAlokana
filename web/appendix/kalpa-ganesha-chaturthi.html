@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="kn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7C2D12">
+<title>ಪೂಜಾ ಕಲ್ಪ · ಶ್ರೀ ಗಣೇಶ ಚತುರ್ಥೀ</title>
+<link rel="icon" href="../icons/icon.svg">
+<style>/* A printed pūjā booklet: one reading column, A4 pages; Kannada set in the Vedāvalokanam fonts
+   (heavier svara marks, every anudātta at one depth). Deliberately one light "paper" look. */
+@font-face { font-family: 'VA Kannada'; src: url('../fonts/NotoSerifKannada-Vedic.woff') format('woff'); font-weight: 400; font-display: block; }
+@font-face { font-family: 'VA Kannada Text'; src: url('../fonts/NotoSerifKannada-Std.woff') format('woff'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'VA Devanagari'; src: url('../fonts/NotoSerifDevanagari-Vedic.woff') format('woff'); font-weight: 400; font-display: block; }
+:root {
+  --paper: #FFFFFF; --ink: #1F1A16; --soft: #5E5248; --maroon: #7C2D12; --saffron: #B45309;
+  --rule: #DCC7A8; --wash: #FBF6EE; --line: #E9DFD0;
+  --kn: 'VA Kannada Text', 'VA Kannada', 'Noto Sans Kannada', serif;
+  --ved: 'VA Kannada', 'VA Devanagari', 'Noto Serif Kannada', serif;
+  color-scheme: light;
+}
+html { background: #EFE9E1; }
+body { background: #EFE9E1; color: var(--ink); }
+main { font-family: var(--kn); font-size: 16px; line-height: 1.9; background: var(--paper); max-width: 820px; margin: 24px auto;
+  padding-block: 40px 56px; padding-left: max(16px, min(56px, 6vw), env(safe-area-inset-left, 0px)); padding-right: max(16px, min(56px, 6vw), env(safe-area-inset-right, 0px));
+  box-shadow: 0 1px 3px rgba(60, 40, 20, .12); }
+@media (max-width: 860px) { main { margin: 0; box-shadow: none; } }
+
+.cover { text-align: center; border: 3px double var(--maroon); padding: 36px 20px 28px; margin-bottom: 40px; }
+.cover .eyebrow { color: var(--saffron); font-weight: 700; font-size: 20px; letter-spacing: .3em; }
+.cover .big { color: var(--maroon); font-weight: 800; font-size: clamp(34px, 7vw, 48px); line-height: 1.5; margin: 4px 0 10px; }
+.cover .orn { color: var(--saffron); letter-spacing: .5em; margin-bottom: 18px; }
+.cover .ed { font-size: 17px; line-height: 2; }
+.cover .yr { color: var(--saffron); letter-spacing: .3em; font-size: 20px; margin: 18px 0; }
+.cover .pub { border-top: 1px solid var(--line); padding-top: 14px; font-size: 14px; color: var(--soft); }
+.cover .pub b { color: var(--ink); }
+.cover .edn { margin-top: 12px; font-size: 13px; color: var(--maroon); }
+
+h1 { color: var(--maroon); text-align: center; font-size: 25px; font-weight: 800; line-height: 1.6; margin: 40px 0 18px; padding-bottom: 10px;
+  border-bottom: 1.5px solid var(--rule); text-wrap: balance; break-after: avoid; }
+h2 { color: var(--saffron); font-size: 19px; font-weight: 700; margin: 26px 0 10px; padding-left: 12px; border-left: 4px solid var(--saffron); break-after: avoid; line-height: 1.6; }
+h3 { font-size: 16.5px; font-weight: 700; margin: 6px 0 2px; }
+p { margin: 0 0 12px; text-align: justify; }
+p.note { font-size: 14.5px; color: var(--soft); text-align: left; }
+p.sig { text-align: right; font-weight: 700; }
+.sl-c { text-align: center; margin: 6px 0 16px; }
+
+.box { border-left: 3px solid var(--rule); padding: 4px 0 4px 18px; margin: 14px 0 20px; }
+.box > * + * { margin-top: 6px; }
+.box p { text-align: left; margin: 0; }
+.vin { font-size: 14.5px; color: var(--soft); line-height: 1.8; }
+.sl { font-size: 17px; line-height: 1.9; }
+.up { color: var(--maroon); font-weight: 700; padding: 6px 0 2px 8px; }
+.mn, .key em.v { font-family: var(--ved); }
+.mn { font-size: 19.5px; line-height: 2.45; break-inside: avoid; }
+.mn + .mn { margin-top: 10px; }
+.mn > div { padding-left: 1.6em; text-indent: -1.6em; }
+
+.key { border: 1px dashed var(--rule); background: var(--wash); border-radius: 6px; padding: 12px 16px; font-size: 14.5px; line-height: 2.1; margin: 0 0 22px; }
+.key span { display: inline-block; margin-right: 18px; }
+.key em.v { font-style: normal; font-size: 19px; }
+.key p { margin: 6px 0 0; font-size: 13.5px; color: var(--maroon); }
+
+.names { list-style: none; padding: 0; margin: 6px 0 16px; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(230px, 100%), 1fr)); column-gap: 18px; }
+.names li { border-bottom: 1px dotted var(--line); padding: 4px 2px; font-size: 15.5px; line-height: 1.8; min-width: 0; }
+.names.num li .n { display: inline-block; min-width: 2.6em; color: var(--soft); font-variant-numeric: tabular-nums; }
+
+.pa-wrap { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)); gap: 16px; margin: 16px 0 18px; }
+.pa { margin: 0; border: 1px solid var(--line); border-radius: 8px; padding: 12px; break-inside: avoid; }
+.pa figcaption { text-align: center; color: var(--maroon); font-weight: 700; font-size: 15px; margin-bottom: 8px; }
+.pa-g { display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: auto auto auto; gap: 6px; }
+.pa-g span, .pa-g b { text-align: center; padding: 6px 2px; border: 1px solid var(--line); border-radius: 4px; font-size: 15px; font-weight: 700; }
+.pa-g b { border-color: var(--saffron); color: var(--maroon); }
+.pa-g span:nth-of-type(1) { grid-area: 1 / 1; } .pa-g span:nth-of-type(2) { grid-area: 1 / 3; } .pa-g b { grid-area: 2 / 2; }
+.pa-g span:nth-of-type(3) { grid-area: 3 / 1; } .pa-g span:nth-of-type(4) { grid-area: 3 / 3; }
+.pa-g i { display: none; }
+.pa-e { text-align: center; font-size: 12.5px; color: var(--soft); border-top: 1px dashed var(--rule); margin-top: 8px; padding-top: 4px; }
+
+@page { size: A4; margin: 16mm 15mm 18mm; @bottom-center { content: counter(page); font-family: 'VA Kannada Text', serif; font-size: 10pt; color: #8A7B6C; } }
+@media print {
+  html, body { background: #FFFFFF; }
+  main { max-width: none; margin: 0; padding: 0; box-shadow: none; font-size: 12pt; }
+  .cover { break-after: page; margin: 30mm 0 0; }
+  h1.brk, .keep.brk { break-before: page; } h1.brk { margin-top: 0; }
+  .keep { break-inside: avoid; }
+  .keep > h1:first-child { margin-top: 0; }
+  p { orphans: 3; widows: 3; }
+  .up { break-before: avoid; }
+  .box { margin: 8px 0 12px; }
+  .mn { line-height: 2.2; }
+  .mn + .mn { margin-top: 4px; }
+  .pa-wrap { grid-template-columns: repeat(3, 1fr); gap: 10px; break-inside: avoid; }
+  .pa { padding: 8px; }
+  .pa-g span, .pa-g b { padding: 3px 2px; font-size: 12pt; }
+  .names { grid-template-columns: repeat(3, 1fr); column-gap: 12px; }
+  .names li { font-size: 11pt; padding: 2px; }
+  .names.num li .n { min-width: 2.2em; }
+  h1, h2, h3, .vin { break-after: avoid; }
+  .mn, .up, .sl, .key, .names li { break-inside: avoid; }
+  .mn { font-size: 14.5pt; }
+  .sl { font-size: 12.5pt; }
+}
+
+p.end { text-align: center; color: var(--maroon); font-weight: 700; font-size: 18px; margin-top: 28px; }
+
+.topnav { max-width: 820px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 12px max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); font-family: var(--kn); font-size: 15px; }
+.topnav a { color: var(--maroon); text-decoration: none; font-weight: 700; } .topnav span { color: var(--soft); }
+.credit { margin-top: 36px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 13px; color: var(--soft); }
+.pbtn { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 18px; border: 1.5px solid var(--maroon); background: var(--paper); color: var(--maroon); font: 700 14px var(--kn); cursor: pointer; }
+.pbtn:hover { background: var(--wash); } .pbtn:focus-visible { outline: 2px solid var(--saffron); outline-offset: 2px; }
+.ptip { max-width: 820px; margin: 6px auto 0; padding: 0 16px; font-size: 13px; color: var(--soft); font-family: var(--kn); text-align: right; }
+@media print { .topnav, .ptip { display: none; } }
+
+.pf { font: inherit; color: var(--maroon); border: 0; border-bottom: 1.5px dotted var(--soft); border-radius: 0; background: transparent; padding: 0 2px; text-align: center; min-width: 5.5em; }
+.pf:focus-visible { outline: 2px solid var(--saffron); background: var(--wash); }
+.act { height: 34px; padding: 0 14px; border-radius: 17px; border: 1.5px solid var(--maroon); background: var(--maroon); color: #FFFFFF; font: 600 14px var(--kn); cursor: pointer; }
+.act.sec { background: var(--paper); color: var(--maroon); }
+#pdate { height: 34px; border: 1.5px solid var(--rule); border-radius: 8px; padding: 0 8px; background: var(--paper); color: var(--ink); font: 14px var(--kn); }
+.cu { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.cu[hidden] { display: none; }
+#cuSum { font-weight: 700; color: var(--maroon); }
+#cuNames .names.num { display: block; columns: 2 300px; column-gap: 22px; list-style: none; padding: 0; }
+#cuNames .names.num li { font-size: 15px; break-inside: avoid; }
+@media print { #cuNames .names.num { columns: 2; } #cuNames .names.num li { font-size: 10.5pt; } }
+@media print { .pf { border-bottom: 1px dotted #444; } }
+
+.controls { border: 1px solid var(--rule); background: var(--wash); border-radius: 10px; padding: 12px 14px; margin: 0 0 22px; display: grid; gap: 10px; font-size: 15px; }
+.ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.cl { font-weight: 700; color: var(--maroon); min-width: 7em; }
+.ctl label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.ctl input { accent-color: var(--maroon); width: 18px; height: 18px; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg button { height: 34px; padding: 0 12px; border-radius: 17px; border: 1.5px solid var(--rule); background: var(--paper); color: var(--ink); font: 600 14px var(--kn); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--maroon); border-color: var(--maroon); color: #FFFFFF; }
+.seg button:focus-visible, .ctl input:focus-visible { outline: 2px solid var(--saffron); outline-offset: 2px; }
+.ctl-n { margin: 0; font-size: 12.5px; color: var(--soft); }
+.dh + .dh { margin-top: 10px; }
+.nameset { display: grid; gap: 6px 18px; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); margin: 4px 0 8px; }
+.nameset h3 { color: var(--maroon); font-size: 15px; margin: 6px 0 0; }
+.nameset h3 small { font-weight: 400; color: var(--soft); font-size: 12.5px; }
+.nameset .names { grid-template-columns: 1fr; margin: 2px 0; }
+h3.nh { color: var(--saffron); font-size: 16.5px; margin: 14px 0 4px; }
+.pm { border: 1px dashed var(--rule); border-radius: 8px; padding: 6px 12px; margin: 6px 0 12px; }
+.pm > .note { margin: 4px 0; color: var(--maroon); font-weight: 700; }
+.mn.sri { margin-top: 10px; }
+@media print { .controls { display: none; } .nameset { grid-template-columns: repeat(3, 1fr); } .nameset .names li { font-size: 10.5pt; } }
+
+.nl .names.num { display: block; columns: 2 300px; column-gap: 22px; }
+.nl .names.num li { font-size: 15px; break-inside: avoid; }
+@media print { .nl .names.num { columns: 2; } .nl .names.num li { font-size: 10.5pt; } }
+
+.vin.vp, .vin.vs { margin: 4px 0; }
+body.vd-p .vs, body.vd-s .vp { display: none; }
+body.vd-ps .vs .mn { margin-top: 10px; }
+.names.patra li { font-size: 15px; }
+.kl { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.kl li { border: 1px solid var(--rule); border-radius: 10px; padding: 12px 14px; background: var(--paper); }
+.kl .kt { font-weight: 700; color: var(--maroon); font-size: 18px; line-height: 1.5; }
+.kl .ki { color: var(--soft); font-size: 14px; }
+.kl .kw { font-size: 14.5px; margin-top: 4px; }
+.kl .kd { font-weight: 700; }
+.kl .kf { font-size: 13px; color: var(--saffron); }
+.kb { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.kb a { display: inline-flex; align-items: center; height: 40px; padding: 0 18px; border-radius: 20px; font: 600 14px var(--kn); text-decoration: none; border: 1.5px solid var(--maroon); }
+.kb a.o { background: var(--maroon); color: #FFFFFF; } .kb a.p { color: var(--maroon); background: var(--paper); }
+h2.km { margin-top: 26px; }
+@media print { .kb, #kplace { display: none; } }
+</style>
+</head>
+<body class="vd-p">
+<nav class="topnav"><a href="puja-kalpa.html">← ಪೂಜಾ ಕಲ್ಪ</a><button type="button" id="printBtn" class="pbtn" aria-label="Print or save as PDF"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z"/></svg>ಮುದ್ರಿಸಿ / PDF</button></nav>
+<p class="ptip">ಮುದ್ರಣ ಪರದೆಯಲ್ಲಿ “Save as PDF” ಆರಿಸಿದರೆ PDF ಆಗಿ ಉಳಿಸಬಹುದು.</p>
+<main lang="kn">
+<header class="cover"><div class="eyebrow">ಪೂಜಾ ಕಲ್ಪ · ಋಗ್ವೇದೀಯ</div><div class="big">ಶ್ರೀ ಗಣೇಶ ಚತುರ್ಥೀ</div>
+<div class="orn">✦ ✦ ✦</div><div class="ed">ಶ್ರೀ ಸಿದ್ಧಿವಿನಾಯಕ · ಭಾದ್ರಪದ ಶುಕ್ಲ ಚತುರ್ಥೀ</div>
+<div class="pub">ಪುರುಷಸೂಕ್ತ / ಶ್ರೀಸೂಕ್ತ / ಎರಡರಿಂದಲೂ ಹದಿನಾರು ಉಪಚಾರಗಳು (ಕೆಳಗೆ ಆರಿಸಬಹುದು). ಋಗ್ವೇದ ಮಂತ್ರಗಳು ವೇದಾವಲೋಕನದ ದಾಕ್ಷಿಣಾತ್ಯ ಪಾಠದಿಂದ; ಶ್ರೀಸೂಕ್ತ ದಕ್ಷಿಣ ಭಾರತೀಯ ಪಾಠದಿಂದ.</div></header><div class="controls" role="group" aria-label="ಪೂಜಾ ಆಯ್ಕೆಗಳು">
+<div class="ctl"><span class="cl">ದೇವತೆ</span><div class="seg" id="devSeg"><button type="button" data-dev="main">ಶ್ರೀ ಸಿದ್ಧಿವಿನಾಯಕ</button><button type="button" data-dev="custom">ಬೇರೆ ದೇವತೆ…</button></div></div>
+<div class="ctl cu" id="cuBox" hidden><span class="cl">ಬೇರೆ ದೇವತೆ</span><span id="cuSum" lang="kn"></span><button type="button" class="act sec" id="cuEdit">ತಿದ್ದಿ…</button></div>
+<div class="ctl"><span class="cl">ವಿಧಾನ</span><div class="seg" id="vidSeg"><button type="button" data-vid="p">ಪುರುಷಸೂಕ್ತ</button><button type="button" data-vid="s">ಶ್ರೀಸೂಕ್ತ</button><button type="button" data-vid="ps">ಎರಡೂ</button></div></div>
+<div class="ctl"><span class="cl">ನಾಮಪೂಜೆ</span><div class="seg" id="nameSeg"><button type="button" data-names="ganesha108">ವಿನಾಯಕ ೧೦೮</button><button type="button" data-names="ganesha12">ದ್ವಾದಶ ನಾಮ</button><button type="button" id="cuNameBtn" data-names="custom" hidden>ನನ್ನ ನಾಮಗಳು</button></div></div>
+<div class="ctl"><label><input type="checkbox" id="patraOn"> ಏಕವಿಂಶತಿ ಪತ್ರ ಪೂಜೆ</label><label><input type="checkbox" id="pmOn"> ಪಂಚಾಮೃತ ಅಭಿಷೇಕ ಸೇರಿಸಿ</label></div>
+<div class="ctl"><span class="cl">ಸಂಕಲ್ಪ</span>
+<input type="date" id="pdate" aria-label="ದಿನಾಂಕ"><button type="button" class="act" id="pfill">ಪಂಚಾಂಗ ತುಂಬಿ</button><button type="button" class="act sec" id="pclear">ತೆರವು</button></div>
+<p class="ctl-n" id="pstat">ಸಂಕಲ್ಪದ ಖಾಲಿ ಜಾಗಗಳನ್ನು ಆ ದಿನದ ಪಂಚಾಂಗದಿಂದ ತುಂಬುತ್ತದೆ; ಯಾವುದನ್ನಾದರೂ ನೇರವಾಗಿ ತಿದ್ದಬಹುದು.</p>
+<p class="ctl-n">ಮುದ್ರಿಸುವಾಗ ಇಲ್ಲಿ ಆರಿಸಿದಂತೆಯೇ ಪುಟಗಳು ಬರುತ್ತವೆ.</p></div><aside class="key"><b>ಸ್ವರ ಸೂಚಿ :</b>
+<span>ಅಕ್ಷರದ ಕೆಳಗೆ ಅಡ್ಡಗೆರೆ (<em class="v">ಅ॒</em>) = ಅನುದಾತ್ತ</span>
+<span>ಅಕ್ಷರದ ಮೇಲೆ ಉದ್ದಗೆರೆ (<em class="v">ಅ॑</em>) = ಸ್ವರಿತ</span>
+<span>ಎರಡು ಉದ್ದಗೆರೆ (<em class="v">ಅ᳚</em>) = ದೀರ್ಘಸ್ವರಿತ</span>
+<span>ಗುರುತಿಲ್ಲದ ಅಕ್ಷರ = ಉದಾತ್ತ / ಪ್ರಚಯ.</span></aside><h1>ಪ್ರಾರಂಭ</h1><h2>ಗಣಪತಿ ಸ್ಮರಣ</h2><section class="box"><p class="vin">ಗಣಾನಾಂ ತ್ವಾ ಇತ್ಯಸ್ಯ ಗೃತ್ಸಮದೋ ಗಣಪತಿಃ ಜಗತೀ ॥</p><div class="mn"><div>ಓಂ ಗ॒ಣಾನಾಂ᳚ ತ್ವಾ ಗ॒ಣಪ॑ತಿಂ ಹವಾಮಹೇ ಕ॒ವಿಂ ಕ॑ವೀ॒ನಾಮು॑ಪ॒ಮಶ್ರ॑ವಸ್ತಮಮ್ ।</div><div>ಜ್ಯೇ॒ಷ್ಠ॒ರಾಜಂ॒ ಬ್ರಹ್ಮ॑ಣಾಂ ಬ್ರಹ್ಮಣಸ್ಪತ॒ ಆ ನಃ॑ ಶೃ॒ಣ್ವನ್ನೂ॒ತಿಭಿಃ॑ ಸೀದ॒ ಸಾದ॑ನಮ್ ॥</div></div></section><h2>ವಾಗ್ದೇವೀ ಸ್ಮರಣ</h2><section class="box"><p class="vin">ಪ್ರ ಣೋ ದೇವೀತ್ಯಸ್ಯ ಬಾರ್ಹಸ್ಪತ್ಯೋ ಭರದ್ವಾಜಃ ಸರಸ್ವತೀ ಗಾಯತ್ರೀ ॥</p><div class="mn"><div>ಓಂ ಪ್ರ ಣೋ᳚ ದೇ॒ವೀ ಸರ॑ಸ್ವತೀ॒ ವಾಜೇ᳚ಭಿರ್ವಾ॒ಜಿನೀ᳚ವತೀ ।</div><div>ಧೀ॒ನಾಮ॑ವಿ॒ತ್ರ್ಯ॑ವತು ॥</div></div></section><h2>ಗುರು ಪ್ರಾರ್ಥನೆ</h2><section class="box"><p class="sl">ಗುರುರ್ಬ್ರಹ್ಮಾ ಗುರುರ್ವಿಷ್ಣುಃ ಗುರುರ್ದೇವೋ ಮಹೇಶ್ವರಃ ।</p><p class="sl">ಗುರುಃ ಸಾಕ್ಷಾತ್ ಪರಬ್ರಹ್ಮ ತಸ್ಮೈ ಶ್ರೀಗುರವೇ ನಮಃ ॥</p></section><h2>ಘಂಟಾನಾದ</h2><section class="box"><p class="sl">ಆಗಮಾರ್ಥಂ ತು ದೇವಾನಾಂ ಗಮನಾರ್ಥಂ ತು ರಕ್ಷಸಾಂ ।</p><p class="sl">ಕುರ್ವೇ ಘಂಟಾರವಂ ರಮ್ಯಂ ದೇವತಾಹ್ವಾನಲಾಂಛನಂ ॥</p></section><h2>ಪ್ರಾಣಾಯಾಮ ಮತ್ತು ಸಂಕಲ್ಪ</h2><section class="box"><p class="vin">ಪ್ರಾಣಾನಾಯಮ್ಯ ಸಂಕಲ್ಪಃ —</p><p class="sl">ಶುಭೇ ಶೋಭನೇ ಮುಹೂರ್ತೇ ಅದ್ಯ ಬ್ರಹ್ಮಣಃ ದ್ವಿತೀಯ ಪರಾರ್ಧೇ ಶ್ವೇತವರಾಹ ಕಲ್ಪೇ ವೈವಸ್ವತ ಮನ್ವಂತರೇ ಕಲಿಯುಗೇ ಪ್ರಥಮ ಪಾದೇ ಭಾರತವರ್ಷೇ ಭರತಖಂಡೇ ಜಂಬೂದ್ವೀಪೇ ದಂಡಕಾರಣ್ಯೇ ಗೋದಾವರ್ಯಾಃ ದಕ್ಷಿಣೇ ತೀರೇ ಶಾಲಿವಾಹನ ಶಕವರ್ಷೇ ಬೌದ್ಧಾವತಾರೇ ರಾಮಕ್ಷೇತ್ರೇ ಅಸ್ಮಿನ್ ವರ್ತಮಾನೇ ವ್ಯಾವಹಾರಿಕೇ <input class="pf" data-f="samv" aria-label="ಸಂವತ್ಸರ" size="7" autocomplete="off"> ನಾಮ ಸಂವತ್ಸರಸ್ಯ <input class="pf" data-f="ayana" aria-label="ಅಯನ" size="7" autocomplete="off"> ಅಯನೇ <input class="pf" data-f="rtu" aria-label="ಋತು" size="7" autocomplete="off"> ಋತೌ <input class="pf" data-f="masa" aria-label="ಮಾಸ" size="7" autocomplete="off"> ಮಾಸೇ <input class="pf" data-f="paksha" aria-label="ಪಕ್ಷ" size="7" autocomplete="off"> ಪಕ್ಷೇ <input class="pf" data-f="tithi" aria-label="ತಿಥಿ" size="7" autocomplete="off"> ತಿಥೌ <input class="pf" data-f="vara" aria-label="ವಾಸರ" size="7" autocomplete="off"> ವಾಸರೇ ಶುಭವಾರ ಶುಭನಕ್ಷತ್ರ ಶುಭಯೋಗ ಶುಭಕರಣಾದ್ಯೇವಂ ಗುಣವಿಶೇಷಣ ವಿಶಿಷ್ಟಾಯಾಂ ಶುಭತಿಥೌ ಅಸ್ಮಾಕಂ ಸಕುಟುಂಬಾನಾಂ ಕ್ಷೇಮ ಸ್ಥೈರ್ಯ ವೀರ್ಯ ವಿಜಯ ಅಭಯ ಆನಂದ ಆಯುಃ ಆರೋಗ್ಯಾಖ್ಯಾಷ್ಟೈಶ್ವರ್ಯಾಭಿವೃದ್ಧ್ಯರ್ಥಂ ಸಮಸ್ತ ದುರಿತೋಪಶಾಂತ್ಯರ್ಥಂ ಸಮಸ್ತ ಸನ್ಮಂಗಲಾವಾಪ್ತ್ಯರ್ಥಂ ಸಮಸ್ತಾಭ್ಯುದಯಾರ್ಥಂ ಚ ಧರ್ಮಾರ್ಥಕಾಮಮೋಕ್ಷ ಚತುರ್ವಿಧ ಫಲಪುರುಷಾರ್ಥ ಸಿದ್ಧ್ಯರ್ಥಂ <span data-t="prit"></span> <span data-t="vidh"></span> ಧ್ಯಾನಾವಾಹನಾದಿ ಷೋಡಶೋಪಚಾರ ಪೂಜಾಂ ಕರಿಷ್ಯೇ ॥</p></section><h2>ಕಲಶ ಮತ್ತು ಆತ್ಮ ಪೂಜೆ</h2><section class="box"><p class="sl">ಕಲಶಸ್ಯ ಮುಖೇ ವಿಷ್ಣುಃ ಕಂಠೇ ರುದ್ರಃ ಸಮಾಶ್ರಿತಃ ।</p><p class="sl">ಮೂಲೇ ತತ್ರ ಸ್ಥಿತೋ ಬ್ರಹ್ಮಾ ಮಧ್ಯೇ ಮಾತೃಗಣಾಃ ಸ್ಮೃತಾಃ ॥</p><p class="sl">ಗಂಗೇ ಚ ಯಮುನೇ ಚೈವ ಗೋದಾವರಿ ಸರಸ್ವತಿ ।</p><p class="sl">ನರ್ಮದೇ ಸಿಂಧೋ ಕಾವೇರಿ ಜಲೇಽಸ್ಮಿನ್ ಸನ್ನಿಧಿಂ ಕುರು ॥</p><p class="up">ಗಂಗಾದಿ ಸರ್ವತೀರ್ಥೇಭ್ಯೋ ನಮಃ ಕಲಶಪೂಜಾಂ ಸಮರ್ಪಯಾಮಿ ॥</p></section><section class="box"><p class="sl">ಹೃದಿ ಸ್ಥಿತಂ ಪಂಕಜಮಷ್ಟಪತ್ರಂ ಸಕೇಸರಂ ಕರ್ಣಿಕಮಧ್ಯನಾಳಂ ।</p><p class="sl">ಅಂಗುಷ್ಠಮಾತ್ರಂ ಮುನಯೋ ವದಂತಿ ಧ್ಯಾಯೇಚ್ಚ ವಿಷ್ಣುಂ ಪುರುಷಂ ಪುರಾಣಂ ॥</p><p class="sl">ಆತ್ಮನೇ ನಮಃ । ಅಂತರಾತ್ಮನೇ ನಮಃ । ಪರಮಾತ್ಮನೇ ನಮಃ । ಜ್ಞಾನಾತ್ಮನೇ ನಮಃ ॥</p><p class="up">ಆತ್ಮಪೂಜಾಂ ಸಮರ್ಪಯಾಮಿ ॥</p></section><h1 class=brk>ಧ್ಯಾನಾವಾಹನಾದಿ ಷೋಡಶೋಪಚಾರ ಪೂಜೆ</h1><h2>ಧ್ಯಾನ</h2><section class="box"><div class="dh" data-dev="main"><h3>ಶ್ರೀ ಸಿದ್ಧಿವಿನಾಯಕ ಧ್ಯಾನಂ :</h3><p class="sl">ಏಕದಂತಂ ಶೂರ್ಪಕರ್ಣಂ ಗಜವಕ್ತ್ರಂ ಚತುರ್ಭುಜಂ ।</p><p class="sl">ಪಾಶಾಂಕುಶಧರಂ ದೇವಂ ಧ್ಯಾಯೇತ್ ಸಿದ್ಧಿವಿನಾಯಕಂ ॥</p><p class="sl">ಗಜವದನಮಚಿಂತ್ಯಂ ತೀಕ್ಷ್ಣದಂಷ್ಟ್ರಂ ತ್ರಿಣೇತ್ರಂ ಬೃಹದುದರಮಶೇಷಂ ಭೂತಿರೂಪಂ ಪುರಾಣಂ ।</p><p class="sl">ಅಮರವರಸುಪೂಜ್ಯಂ ರಕ್ತವರ್ಣಂ ಸುರೇಶಂ ಪಶುಪತಿಸುತಮೀಶಂ ವಿಘ್ನರಾಜಂ ನಮಾಮಿ ॥</p></div><div class="dh" id="cuDhOut" hidden></div><p class="up"><span data-t="acc"></span> ಧ್ಯಾಯಾಮಿ ॥</p></section><section class="box"><p class="vin vp">ಸಹಸ್ರಶೀರ್ಷೇತಿ ಷೋಡಶರ್ಚಸ್ಯ ಸೂಕ್ತಸ್ಯ ನಾರಾಯಣಃ ಪುರುಷೋಽನುಷ್ಟುಪ್ ಅಂತ್ಯಾ ತ್ರಿಷ್ಟುಪ್ । ಪೂಜಾಯಾಂ ವಿನಿಯೋಗಃ ॥</p><p class="vin vs">ಹಿರಣ್ಯವರ್ಣಾಮಿತಿ ಪಂಚದಶರ್ಚಸ್ಯ ಸೂಕ್ತಸ್ಯ ಆನಂದ ಕರ್ದಮ ಚಿಕ್ಲೀತಾಃ ಇಂದಿರಾಸುತಾ ಋಷಯಃ ಶ್ರೀರ್ದೇವತಾ ಆದ್ಯಾಃ ತಿಸ್ರೋಽನುಷ್ಟುಭಃ ಚತುರ್ಥೀ ಬೃಹತೀ ಪಂಚಮೀ ಷಷ್ಠೀ ತ್ರಿಷ್ಟುಭೌ ತತೋಽಷ್ಟಾವನುಷ್ಟುಭಃ ಅಂತ್ಯಾ ಪ್ರಸ್ತಾರಪಂಕ್ತಿಃ । ಪೂಜಾಯಾಂ ವಿನಿಯೋಗಃ ॥</p></section><h2>೧. ಆವಾಹನ</h2><section class="box"><div class="vp"><div class="mn"><div>ಓಂ ಸ॒ಹಸ್ರ॑ಶೀರ್ಷಾ॒ ಪುರು॑ಷಃ ಸಹಸ್ರಾ॒ಕ್ಷಃ ಸ॒ಹಸ್ರ॑ಪಾತ್ ।</div><div>ಸ ಭೂಮಿಂ᳚ ವಿ॒ಶ್ವತೋ᳚ ವೃ॒ತ್ವಾಽತ್ಯ॑ತಿಷ್ಠದ್ದಶಾಂಗು॒ಲಮ್ ॥</div></div></div><div class="vs"><div class="mn"><div>ಓಂ ಹಿರ᳚ಣ್ಯವರ್ಣಾಂ॒ ಹರಿ॑ಣೀಂ ಸು॒ವರ್ಣ॑ರಜ॒ತಸ್ರ॑ಜಾಮ್ ।</div><div>ಚ॒ನ್ದ್ರಾಂ ಹಿ॒ರಣ್ಮ॑ಯೀಂ ಲ॒ಕ್ಷ್ಮೀಂ ಜಾತ॑ವೇದೋ ಮ॒ ಆವ॑ಹ ॥</div></div></div><p class="up"><span data-t="acc"></span> ಆವಾಹಯಾಮಿ ॥</p></section><h2>೨. ಆಸನ</h2><section class="box"><div class="vp"><div class="mn"><div>ಓಂ ಪುರು॑ಷ ಏ॒ವೇದಂ ಸರ್ವಂ॒ ಯದ್ಭೂ॒ತಂ ಯಚ್ಚ॒ ಭವ್ಯ᳚ಮ್ ।</div><div>ಉ॒ತಾಮೃ॑ತ॒ತ್ವಸ್ಯೇಶಾ᳚ನೋ॒ ಯದನ್ನೇ᳚ನಾತಿ॒ರೋಹ॑ತಿ ॥</div></div></div><div class="vs"><div class="mn"><div>ಓಂ ತಾಂ ಮ॒ ಆ ವ॑ಹ॒ ಜಾತವೇದೋ ಲ॒ಕ್ಷ್ಮೀಮನ॑ಪಗಾ॒ಮಿನೀ᳚ಮ್ ।</div><div>ಯಸ್ಯಾಂ॒ ಹಿರ᳚ಣ್ಯಂ ವಿ॒ನ್ದೇಯಂ॒ ಗಾಮಶ್ವಂ॒ ಪುರು॑ಷಾನ॒ಹಮ್ ॥</div></div></div><p class="up"><span data-t="namah"></span> ಆಸನಂ ಕಲ್ಪಯಾಮಿ ॥</p></section><h2>೩. ಪಾದ್ಯ</h2><section class="box"><div class="vp"><div class="mn"><div>ಓಂ ಏ॒ತಾವಾ᳚ನಸ್ಯ ಮಹಿ॒ಮಾಽತೋ॒ ಜ್ಯಾಯಾಁ᳚ಶ್ಚ॒ ಪೂರು॑ಷಃ ।</div><div>ಪಾದೋ᳚ಽಸ್ಯ॒ ವಿಶ್ವಾ᳚ ಭೂ॒ತಾನಿ॑ ತ್ರಿ॒ಪಾದ॑ಸ್ಯಾ॒ಮೃತಂ᳚ ದಿ॒ವಿ ॥</div></div></div><div class="vs"><div class="mn"><div>ಓಂ ಅ॒ಶ್ವ॒ಪೂ॒ರ್ವಾಂ ರ॑ಥಮ॒ಧ್ಯಾಂ ಹ॒ಸ್ತಿನಾ᳚ದ ಪ್ರ॒ಬೋಧಿ॑ನೀಮ್ ।</div><div>ಶ್ರಿಯಂ᳚ ದೇ॒ವೀಮುಪ॑ ಹ್ವಯೇ॒ ಶ್ರೀರ್ಮಾ᳚ ದೇ॒ವೀ ಜು॑ಷತಾಮ್ ॥</div></div></div><p class="up"><span data-t="namah"></span> ಪಾದಾರವಿಂದಯೋಃ ಪಾದ್ಯಂ ಪಾದ್ಯಂ ॥</p></section><h2>೪. ಅರ್ಘ್ಯ</h2><section class="box"><div class="vp"><div class="mn"><div>ಓಂ ತ್ರಿ॒ಪಾದೂ॒ರ್ಧ್ವ ಉದೈ॒ತ್ಪುರು॑ಷಃ॒ ಪಾದೋ᳚ಽಸ್ಯೇ॒ಹಾಭ॑ವ॒ತ್ಪುನಃ॑ ।</div><div>ತತೋ॒ ವಿಷ್ವ॒ಙ್ವ್ಯ॑ಕ್ರಾಮತ್ಸಾಶನಾನಶ॒ನೇ ಅ॒ಭಿ ॥</div></div></div><div class="vs"><div class="mn"><div>ಓಂ ಕಾಂ॒ ಸೋ॒ಸ್ಮಿ॒ತಾಂ ಹಿರ᳚ಣ್ಯಪ್ರಾ॒ಕಾರಾ᳚ ಮಾ॒ರ್ದ್ರಾಂ ಜ್ವಲ᳚ನ್ತೀಂ ತೃ॒ಪ್ತಾಂ ತ॒ರ್ಪಯ᳚ನ್ತೀಮ್ ।</div><div>ಪ॒ದ್ಮೇ॒ ಸ್ಥಿ॒ತಾಂ ಪ॒ದ್ಮವ᳚ರ್ಣಾಂ॒ ತಾಮಿ॒ಹೋಪ॑ ಹ್ವಯೇ॒ ಶ್ರಿಯ᳚ಮ್ ॥</div></div></div><p class="up"><span data-t="namah"></span> ಅರ್ಘ್ಯಂ ॥</p></section><h2>೫. ಆಚಮನ</h2><section class="box"><div class="vp"><div class="mn"><div>ಓಂ ತಸ್ಮಾ᳚ದ್ವಿ॒ರಾಳ॑ಜಾಯತ ವಿ॒ರಾಜೋ॒ ಅಧಿ॒ ಪೂರು॑ಷಃ ।</div><div>ಸ ಜಾ॒ತೋ ಅತ್ಯ॑ರಿಚ್ಯತ ಪ॒ಶ್ಚಾದ್ಭೂಮಿ॒ಮಥೋ᳚ ಪು॒ರಃ ॥</div></div></div><div class="vs"><div class="mn"><div>ಓಂ ಚ॒ನ್ದ್ರಾಂ ಪ್ರ॑ಭಾ॒ಸಾಂ ಯ॒ಶಸಾ॒ ಜ್ವಲ᳚ನ್ತೀಂ॒ ಶ್ರಿಯಂ᳚ ಲೋ॒ಕೇ ದೇ॒ವಜು॑ಷ್ಟಾಮುದಾ॒ರಾಮ್ ।</div><div>ತಾಂ ಪ॒ದ್ಮಿನೀ᳚ಮೀಂ॒ ಶರ॑ಣಮ॒ಹಂ ಪ್ರ ಪ॑ದ್ಯೇಽಲ॒ಕ್ಷ್ಮೀರ್ಮೇ᳚ ನಶ್ಯತಾಂ॒ ತ್ವಾಂ ವೃ॑ಣೇ ॥</div></div></div><p class="up"><span data-t="namah"></span> ಆಚಮನಂ ॥</p></section><h2>೬. ಸ್ನಾನ</h2><div class="pm"><p class="note">ಪಂಚಾಮೃತ ಅಭಿಷೇಕ (ಐಚ್ಛಿಕ)</p><section class="box"><p class="vin">ಆಪೋ ಹಿ ಷ್ಠೇತಿ ತ್ರಯಾಣಾಂ ಮಂತ್ರಾಣಾಂ ಸಿಂಧುದ್ವೀಪ ಆಪೋ ಗಾಯತ್ರೀ । ಮಲಾಪಕರ್ಷಣಾರ್ಥಂ ಸ್ನಪನೇ ವಿನಿಯೋಗಃ ॥</p><div class="mn"><div>ಓಂ ಆಪೋ॒ ಹಿ ಷ್ಠಾ ಮ॑ಯೋ॒ಭುವ॒ಸ್ತಾ ನ॑ ಊ॒ರ್ಜೇ ದ॑ಧಾತನ ।</div><div>ಮ॒ಹೇ ರಣಾ᳚ಯ॒ ಚಕ್ಷ॑ಸೇ ॥</div></div><div class="mn"><div>ಓಂ ಯೋ ವಃ॑ ಶಿ॒ವತ॑ಮೋ॒ ರಸ॒ಸ್ತಸ್ಯ॑ ಭಾಜಯತೇ॒ಹ ನಃ॑ ।</div><div>ಉ॒ಶ॒ತೀರಿ॑ವ ಮಾ॒ತರಃ॑ ॥</div></div><div class="mn"><div>ಓಂ ತಸ್ಮಾ॒ ಅರಂ᳚ ಗಮಾಮ ವೋ॒ ಯಸ್ಯ॒ ಕ್ಷಯಾ᳚ಯ॒ ಜಿನ್ವ॑ಥ ।</div><div>ಆಪೋ᳚ ಜ॒ನಯ॑ಥಾ ಚ ನಃ ॥</div></div><p class="up"><span data-t="namah"></span> ಮಲಾಪಕರ್ಷಣಸ್ನಾನಾಂತೇ ಪಂಚಾಮೃತೇನ ಸ್ನಪಯಿಷ್ಯೇ ॥</p></section><section class="box"><p class="vin">ಆಪ್ಯಾಯಸ್ವ ಇತಿ ಗೋತಮಃ ಸೋಮೋ ಗಾಯತ್ರೀ । ಕ್ಷೀರಸ್ನಪನೇ ವಿನಿಯೋಗಃ ॥</p><div class="mn"><div>ಓಂ ಆ ಪ್ಯಾ᳚ಯಸ್ವ॒ ಸಮೇ᳚ತು ತೇ ವಿ॒ಶ್ವತಃ॑ ಸೋಮ॒ ವೃಷ್ಣ್ಯ᳚ಮ್ ।</div><div>ಭವಾ॒ ವಾಜ॑ಸ್ಯ ಸಂಗ॒ಥೇ ॥</div></div></section><section class="box"><p class="vin">ದಧಿಕ್ರಾವ್ಣೋ ವಾಮದೇವೋ ದಧಿಕ್ರಾ ಅನುಷ್ಟುಪ್ । ದಧಿಸ್ನಪನೇ ವಿನಿಯೋಗಃ ॥</p><div class="mn"><div>ಓಂ ದ॒ಧಿ॒ಕ್ರಾವ್ಣೋ᳚ ಅಕಾರಿಷಂ ಜಿ॒ಷ್ಣೋರಶ್ವ॑ಸ್ಯ ವಾ॒ಜಿನಃ॑ ।</div><div>ಸು॒ರ॒ಭಿ ನೋ॒ ಮುಖಾ᳚ ಕರ॒ತ್ಪ್ರ ಣ॒ ಆಯೂಂ᳚ಷಿ ತಾರಿಷತ್ ॥</div></div></section><section class="box"><p class="vin">ಘೃತಂ ಮಿಮಿಕ್ಷೇತಿ ಗೃತ್ಸಮದಃ ಸ್ವಾಹಾಕೃತಯಃ ತ್ರಿಷ್ಟುಪ್ । ಘೃತಸ್ನಪನೇ ವಿನಿಯೋಗಃ ॥</p><div class="mn"><div>ಓಂ ಘೃ॒ತಂ ಮಿ॑ಮಿಕ್ಷೇ ಘೃ॒ತಮ॑ಸ್ಯ॒ ಯೋನಿ॑ರ್ಘೃ॒ತೇ ಶ್ರಿ॒ತೋ ಘೃ॒ತಮ್ವ॑ಸ್ಯ॒ ಧಾಮ॑ ।</div><div>ಅ॒ನು॒ಷ್ವ॒ಧಮಾ ವ॑ಹ ಮಾ॒ದಯ॑ಸ್ವ॒ ಸ್ವಾಹಾ᳚ಕೃತಂ ವೃಷಭ ವಕ್ಷಿ ಹ॒ವ್ಯಮ್ ॥</div></div></section><section class="box"><p class="vin">ಮಧುವಾತಾ ಇತ್ಯಸ್ಯ ಗೋತಮೋ ವಿಶ್ವೇದೇವಾಃ ಗಾಯತ್ರೀ । ಮಧುಸ್ನಪನೇ ವಿನಿಯೋಗಃ ॥</p><div class="mn"><div>ಓಂ ಮಧು॒ ವಾತಾ᳚ ಋತಾಯ॒ತೇ ಮಧು॑ ಕ್ಷರಂತಿ॒ ಸಿಂಧ॑ವಃ ।</div><div>ಮಾಧ್ವೀ᳚ರ್ನಃ ಸಂ॒ತ್ವೋಷ॑ಧೀಃ ॥</div></div><div class="mn"><div>ಮಧು॒ ನಕ್ತ॑ಮು॒ತೋಷಸೋ॒ ಮಧು॑ಮ॒ತ್ಪಾರ್ಥಿ॑ವಂ॒ ರಜಃ॑ ।</div><div>ಮಧು॒ ದ್ಯೌರ॑ಸ್ತು ನಃ ಪಿ॒ತಾ ॥</div></div><div class="mn"><div>ಮಧು॑ಮಾನ್ನೋ॒ ವನ॒ಸ್ಪತಿ॒ರ್ಮಧು॑ಮಾಁ ಅಸ್ತು॒ ಸೂರ್ಯಃ॑ ।</div><div>ಮಾಧ್ವೀ॒ರ್ಗಾವೋ᳚ ಭವಂತು ನಃ ॥</div></div></section><section class="box"><p class="vin">ಸ್ವಾದುಃ ಪವಸ್ವೇತ್ಯಸ್ಯ ಭಾರ್ಗವೋ ವೇನಃ ಪವಮಾನಸೋಮೋ ಜಗತೀ । ಶರ್ಕರಾಸ್ನಪನೇ ವಿನಿಯೋಗಃ ॥</p><div class="mn"><div>ಓಂ ಸ್ವಾ॒ದುಃ ಪ॑ವಸ್ವ ದಿ॒ವ್ಯಾಯ॒ ಜನ್ಮ॑ನೇ ಸ್ವಾ॒ದುರಿಂದ್ರಾ᳚ಯ ಸು॒ಹವೀ᳚ತುನಾಮ್ನೇ ।</div><div>ಸ್ವಾ॒ದುರ್ಮಿ॒ತ್ರಾಯ॒ ವರು॑ಣಾಯ ವಾ॒ಯವೇ॒ ಬೃಹ॒ಸ್ಪತ॑ಯೇ॒ ಮಧು॑ಮಾಁ॒ ಅದಾ᳚ಭ್ಯಃ ॥</div></div></section><section class="box"><p class="vin">ಯಾಃ ಫಲಿನೀಃ ಇತ್ಯಸ್ಯ ಆಥರ್ವಣೋ ಭಿಷಕ್ ಓಷಧಯೋಽನುಷ್ಟುಪ್ । ಫಲಸ್ನಪನೇ ವಿನಿಯೋಗಃ ॥</p><div class="mn"><div>ಓಂ ಯಾಃ ಫ॒ಲಿನೀ॒ರ್ಯಾ ಅ॑ಫ॒ಲಾ ಅ॑ಪು॒ಷ್ಪಾ ಯಾಶ್ಚ॑ ಪು॒ಷ್ಪಿಣೀಃ᳚ ।</div><div>ಬೃಹ॒ಸ್ಪತಿ॑ಪ್ರಸೂತಾ॒ಸ್ತಾ ನೋ᳚ ಮುಂಚಂ॒ತ್ವಂಹ॑ಸಃ ॥</div></div></section><section class="box"><p class="up"><span data-t="namah"></span> ಫಲಪಂಚಾಮೃತಸ್ನಾನಾಂತೇ ಶುದ್ಧೋದಕೇನ ಸ್ನಪಯಿಷ್ಯೇ ॥</p></section></div><section class="box"><div class="vp"><div class="mn"><div>ಓಂ ಯತ್ಪುರು॑ಷೇಣ ಹ॒ವಿಷಾ᳚ ದೇ॒ವಾ ಯ॒ಜ್ಞಮತ᳚ನ್ವತ ।</div><div>ವ॒ಸಂ॒ತೋ ಅ॑ಸ್ಯಾಸೀ॒ದಾಜ್ಯಂ᳚ ಗ್ರೀ॒ಷ್ಮ ಇ॒ಧ್ಮಃ ಶ॒ರದ್ಧ॒ವಿಃ ॥</div></div></div><div class="vs"><div class="mn"><div>ಓಂ ಆ॒ದಿ॒ತ್ಯವ᳚ರ್ಣೇ॒ ತಪ॒ಸೋಽಧಿ॑ ಜಾ॒ತೋ ವನ॒ಸ್ಪತಿ॒ಸ್ತವ॑ ವೃ॒ಕ್ಷೋಽಥ ಬಿ॒ಲ್ವಃ ।</div><div>ತಸ್ಯ॒ ಫಲಾ᳚ನಿ॒ ತಪ॒ಸಾ ನು॑ದನ್ತು ಮಾ॒ಯಾ ನ್ತ॑ರಾ॒ ಯಾಶ್ಚ॑ ಬಾ॒ಹ್ಯಾ ಅ॑ಲ॒ಕ್ಷ್ಮೀಃ ॥</div></div></div><p class="up"><span data-t="namah"></span> ಶುದ್ಧೋದಕ ಸ್ನಾನಂ ಸಮರ್ಪಯಾಮಿ । ಸ್ನಾನಾಂತೇ ಆಚಮನೀಯಂ ಸಮರ್ಪಯಾಮಿ ॥</p></section><h2>೭. ವಸ್ತ್ರ</h2><section class="box"><div class="vp"><div class="mn"><div>ಓಂ ತಂ ಯ॒ಜ್ಞಂ ಬ॒ರ್ಹಿಷಿ॒ ಪ್ರೌಕ್ಷ॒ನ್ಪುರು॑ಷಂ ಜಾ॒ತಮ॑ಗ್ರ॒ತಃ ।</div><div>ತೇನ॑ ದೇ॒ವಾ ಅ॑ಯಜಂತ ಸಾ॒ಧ್ಯಾ ಋಷ॑ಯಶ್ಚ॒ ಯೇ ॥</div></div></div><div class="vs"><div class="mn"><div>ಓಂ ಉಪೈ᳚ತು॒ ಮಾಂ ದೇ᳚ವಸ॒ಖಃ ಕೀ॒ರ್ತಿಶ್ಚ॒ ಮಣಿ॑ನಾ ಸ॒ಹ ।</div><div>ಪ್ರಾ॒ದು॒ರ್ಭೂ॒ತೋಽಸ್ಮಿ॑ ರಾಷ್ಟ್ರೇ॒ಽಸ್ಮಿನ್ ಕೀ॒ರ್ತಿಮೃ॑ದ್ಧಿಂ ದ॒ದಾತು॑ ಮೇ ॥</div></div></div><p class="up"><span data-t="namah"></span> ವಸ್ತ್ರಯುಗ್ಮಂ ಸಮರ್ಪಯಾಮಿ । ವಸ್ತ್ರಾಂತೇ ಆಚಮನಂ ಸಮರ್ಪಯಾಮಿ ॥</p></section><h2>೮. ಉಪವೀತ</h2><section class="box"><div class="vp"><div class="mn"><div>ಓಂ ತಸ್ಮಾ᳚ದ್ಯ॒ಜ್ಞಾತ್ಸ᳚ರ್ವ॒ಹುತಃ॒ ಸಂಭೃ॑ತಂ ಪೃಷದಾ॒ಜ್ಯಮ್ ।</div><div>ಪ॒ಶೂನ್ತಾಁಶ್ಚ॑ಕ್ರೇ ವಾಯ॒ವ್ಯಾ᳚ನಾರ॒ಣ್ಯಾನ್ಗ್ರಾ॒ಮ್ಯಾಶ್ಚ॒ ಯೇ ॥</div></div></div><div class="vs"><div class="mn"><div>ಓಂ ಕ್ಷುತ್ಪಿ॑ಪಾ॒ಸಾಮ॑ಲಾಂ ಜ್ಯೇ॒ಷ್ಠಾಮ॑ಲ॒ಕ್ಷ್ಮೀಂ ನಾ᳚ಶಯಾ॒ಮ್ಯಹ᳚ಮ್ ।</div><div>ಅಭೂ᳚ತಿ॒ಮಸ॑ಮೃದ್ಧಿಂ॒ ಚ ಸರ್ವಾಂ॒ ನಿರ್ಣು॑ದ ಮೇ॒ ಗೃಹಾ᳚ತ್ ॥</div></div></div><p class="up"><span data-t="namah"></span> ಉಪವೀತಂ ಸಮರ್ಪಯಾಮಿ । ಉಪವೀತಾಂತೇ ಆಚಮನಂ ಸಮರ್ಪಯಾಮಿ ॥</p></section><h2>೯. ಗಂಧ</h2><section class="box"><div class="vp"><div class="mn"><div>ಓಂ ತಸ್ಮಾ᳚ದ್ಯ॒ಜ್ಞಾತ್ಸ᳚ರ್ವ॒ಹುತ॒ ಋಚಃ॒ ಸಾಮಾ᳚ನಿ ಜಜ್ಞಿರೇ ।</div><div>ಛಂದಾಂ᳚ಸಿ ಜಜ್ಞಿರೇ॒ ತಸ್ಮಾ॒ದ್ಯಜು॒ಸ್ತಸ್ಮಾ᳚ದಜಾಯತ ॥</div></div></div><div class="vs"><div class="mn"><div>ಓಂ ಗಂಧ॑ದ್ವಾ॒ರಾಂ ದು॑ರಾಧ॒ರ್ಷಾಂ ನಿ॒ತ್ಯಪು॑ಷ್ಟಾಂ ಕರೀ॒ಷಿಣೀ᳚ಮ್ ।</div><div>ಈ॒ಶ್ವರೀಂ᳚ ಸರ್ವ॑ಭೂತಾ॒ನಾಂ ತಾಮಿ॒ಹೋಪ॑ ಹ್ವಯೇ॒ ಶ್ರಿಯ᳚ಮ್ ॥</div></div></div><p class="up"><span data-t="namah"></span> ಗಂಧಾನ್ ಸಮರ್ಪಯಾಮಿ ॥</p><p class="up"><span data-t="namah"></span> ಅಕ್ಷತಾನ್ ಸಮರ್ಪಯಾಮಿ ॥</p></section><h2>೧೦. ಪುಷ್ಪ ಮತ್ತು ನಾಮಪೂಜೆ</h2><section class="box"><div class="vp"><div class="mn"><div>ಓಂ ತಸ್ಮಾ॒ದಶ್ವಾ᳚ ಅಜಾಯಂತ॒ ಯೇ ಕೇ ಚೋ᳚ಭ॒ಯಾದ॑ತಃ ।</div><div>ಗಾವೋ᳚ ಹ ಜಜ್ಞಿರೇ॒ ತಸ್ಮಾ॒ತ್ತಸ್ಮಾ᳚ಜ್ಜಾ॒ತಾ ಅ॑ಜಾ॒ವಯಃ॑ ॥</div></div></div><div class="vs"><div class="mn"><div>ಓಂ ಮನ॑ಸಃ॒ ಕಾಮ॒ಮಾಕೂ᳚ತಿಂ ವಾ॒ಚಃ ಸ॒ತ್ಯಮ॑ಶೀಮಹಿ ।</div><div>ಪ॒ಶೂ॒ನಾಂ ರೂಪ॑ಮನ್ನ॒ಸ್ಯ ಮಯಿ॒ ಶ್ರೀಃ ಶ್ರ॑ಯತಾಂ॒ ಯಶಃ॑ ॥</div></div></div><p class="up"><span data-t="namah"></span> ಪುಷ್ಪಾಣಿ ಸಮರ್ಪಯಾಮಿ ॥</p></section><div class="nl" data-names="ganesha108"><h3 class="nh">ಶ್ರೀ ವಿನಾಯಕ ಅಷ್ಟೋತ್ತರಶತನಾಮಾವಳಿ</h3><ol class="names num"><li><span class="n">೧</span>ಓಂ ವಿನಾಯಕಾಯ ನಮಃ</li><li><span class="n">೨</span>ಓಂ ವಿಘ್ನರಾಜಾಯ ನಮಃ</li><li><span class="n">೩</span>ಓಂ ಗೌರೀಪುತ್ರಾಯ ನಮಃ</li><li><span class="n">೪</span>ಓಂ ಗಣೇಶ್ವರಾಯ ನಮಃ</li><li><span class="n">೫</span>ಓಂ ಸ್ಕಂದಾಗ್ರಜಾಯ ನಮಃ</li><li><span class="n">೬</span>ಓಂ ಅವ್ಯಯಾಯ ನಮಃ</li><li><span class="n">೭</span>ಓಂ ಪೂತಾಯ ನಮಃ</li><li><span class="n">೮</span>ಓಂ ದಕ್ಷಾಯ ನಮಃ</li><li><span class="n">೯</span>ಓಂ ಅಧ್ಯಕ್ಷಾಯ ನಮಃ</li><li><span class="n">೧೦</span>ಓಂ ದ್ವಿಜಪ್ರಿಯಾಯ ನಮಃ</li><li><span class="n">೧೧</span>ಓಂ ಅಗ್ನಿಗರ್ವಚ್ಛಿದೇ ನಮಃ</li><li><span class="n">೧೨</span>ಓಂ ಇಂದ್ರಶ್ರೀಪ್ರದಾಯ ನಮಃ</li><li><span class="n">೧೩</span>ಓಂ ವಾಣೀಪ್ರದಾಯ ನಮಃ</li><li><span class="n">೧೪</span>ಓಂ ಅವ್ಯಯಾಯ ನಮಃ</li><li><span class="n">೧೫</span>ಓಂ ಸರ್ವಸಿದ್ಧಿಪ್ರದಾಯ ನಮಃ</li><li><span class="n">೧೬</span>ಓಂ ಶರ್ವತನಯಾಯ ನಮಃ</li><li><span class="n">೧೭</span>ಓಂ ಶರ್ವರೀಪ್ರಿಯಾಯ ನಮಃ</li><li><span class="n">೧೮</span>ಓಂ ಸರ್ವಾತ್ಮಕಾಯ ನಮಃ</li><li><span class="n">೧೯</span>ಓಂ ಸೃಷ್ಟಿಕರ್ತ್ರೇ ನಮಃ</li><li><span class="n">೨೦</span>ಓಂ ದೇವಾಯ ನಮಃ</li><li><span class="n">೨೧</span>ಓಂ ಅನೇಕಾರ್ಚಿತಾಯ ನಮಃ</li><li><span class="n">೨೨</span>ಓಂ ಶಿವಾಯ ನಮಃ</li><li><span class="n">೨೩</span>ಓಂ ಶುದ್ಧಾಯ ನಮಃ</li><li><span class="n">೨೪</span>ಓಂ ಬುದ್ಧಿಪ್ರಿಯಾಯ ನಮಃ</li><li><span class="n">೨೫</span>ಓಂ ಶಾಂತಾಯ ನಮಃ</li><li><span class="n">೨೬</span>ಓಂ ಬ್ರಹ್ಮಚಾರಿಣೇ ನಮಃ</li><li><span class="n">೨೭</span>ಓಂ ಗಜಾನನಾಯ ನಮಃ</li><li><span class="n">೨೮</span>ಓಂ ದ್ವೈಮಾತುರಾಯ ನಮಃ</li><li><span class="n">೨೯</span>ಓಂ ಮುನಿಸ್ತುತ್ಯಾಯ ನಮಃ</li><li><span class="n">೩೦</span>ಓಂ ಭಕ್ತವಿಘ್ನವಿನಾಶನಾಯ ನಮಃ</li><li><span class="n">೩೧</span>ಓಂ ಏಕದಂತಾಯ ನಮಃ</li><li><span class="n">೩೨</span>ಓಂ ಚತುರ್ಬಾಹವೇ ನಮಃ</li><li><span class="n">೩೩</span>ಓಂ ಚತುರಾಯ ನಮಃ</li><li><span class="n">೩೪</span>ಓಂ ಶಕ್ತಿಸಂಯುತಾಯ ನಮಃ</li><li><span class="n">೩೫</span>ಓಂ ಲಂಬೋದರಾಯ ನಮಃ</li><li><span class="n">೩೬</span>ಓಂ ಶೂರ್ಪಕರ್ಣಾಯ ನಮಃ</li><li><span class="n">೩೭</span>ಓಂ ಹರಯೇ ನಮಃ</li><li><span class="n">೩೮</span>ಓಂ ಬ್ರಹ್ಮವಿದುತ್ತಮಾಯ ನಮಃ</li><li><span class="n">೩೯</span>ಓಂ ಕಾಲಾಯ ನಮಃ</li><li><span class="n">೪೦</span>ಓಂ ಗ್ರಹಪತಯೇ ನಮಃ</li><li><span class="n">೪೧</span>ಓಂ ಕಾಮಿನೇ ನಮಃ</li><li><span class="n">೪೨</span>ಓಂ ಸೋಮಸೂರ್ಯಾಗ್ನಿಲೋಚನಾಯ ನಮಃ</li><li><span class="n">೪೩</span>ಓಂ ಪಾಶಾಂಕುಶಧರಾಯ ನಮಃ</li><li><span class="n">೪೪</span>ಓಂ ಚಂಡಾಯ ನಮಃ</li><li><span class="n">೪೫</span>ಓಂ ಗುಣಾತೀತಾಯ ನಮಃ</li><li><span class="n">೪೬</span>ಓಂ ನಿರಂಜನಾಯ ನಮಃ</li><li><span class="n">೪೭</span>ಓಂ ಅಕಲ್ಮಷಾಯ ನಮಃ</li><li><span class="n">೪೮</span>ಓಂ ಸ್ವಯಂಸಿದ್ಧಾಯ ನಮಃ</li><li><span class="n">೪೯</span>ಓಂ ಸಿದ್ಧಾರ್ಚಿತಪದಾಂಬುಜಾಯ ನಮಃ</li><li><span class="n">೫೦</span>ಓಂ ಬೀಜಾಪೂರಫಲಾಸಕ್ತಾಯ ನಮಃ</li><li><span class="n">೫೧</span>ಓಂ ವರದಾಯ ನಮಃ</li><li><span class="n">೫೨</span>ಓಂ ಶಾಶ್ವತಾಯ ನಮಃ</li><li><span class="n">೫೩</span>ಓಂ ಕೃತಿನೇ ನಮಃ</li><li><span class="n">೫೪</span>ಓಂ ದ್ವಿಜಪ್ರಿಯಾಯ ನಮಃ</li><li><span class="n">೫೫</span>ಓಂ ವೀತಭಯಾಯ ನಮಃ</li><li><span class="n">೫೬</span>ಓಂ ಗದಿನೇ ನಮಃ</li><li><span class="n">೫೭</span>ಓಂ ಚಕ್ರಿಣೇ ನಮಃ</li><li><span class="n">೫೮</span>ಓಂ ಇಕ್ಷುಚಾಪಧೃತೇ ನಮಃ</li><li><span class="n">೫೯</span>ಓಂ ಶ್ರೀದಾಯ ನಮಃ</li><li><span class="n">೬೦</span>ಓಂ ಅಜಾಯ ನಮಃ</li><li><span class="n">೬೧</span>ಓಂ ಉತ್ಪಲಕರಾಯ ನಮಃ</li><li><span class="n">೬೨</span>ಓಂ ಶ್ರೀಪತಯೇ ನಮಃ</li><li><span class="n">೬೩</span>ಓಂ ಸ್ತುತಿಹರ್ಷಿತಾಯ ನಮಃ</li><li><span class="n">೬೪</span>ಓಂ ಕುಲಾದ್ರಿಭೇತ್ತ್ರೇ ನಮಃ</li><li><span class="n">೬೫</span>ಓಂ ಜಟಿಲಾಯ ನಮಃ</li><li><span class="n">೬೬</span>ಓಂ ಕಲಿಕಲ್ಮಷನಾಶನಾಯ ನಮಃ</li><li><span class="n">೬೭</span>ಓಂ ಚಂದ್ರಚೂಡಾಮಣಯೇ ನಮಃ</li><li><span class="n">೬೮</span>ಓಂ ಕಾಂತಾಯ ನಮಃ</li><li><span class="n">೬೯</span>ಓಂ ಪಾಪಹಾರಿಣೇ ನಮಃ</li><li><span class="n">೭೦</span>ಓಂ ಸಮಾಹಿತಾಯ ನಮಃ</li><li><span class="n">೭೧</span>ಓಂ ಆಶ್ರಿತಾಯ ನಮಃ</li><li><span class="n">೭೨</span>ಓಂ ಶ್ರೀಕರಾಯ ನಮಃ</li><li><span class="n">೭೩</span>ಓಂ ಸೌಮ್ಯಾಯ ನಮಃ</li><li><span class="n">೭೪</span>ಓಂ ಭಕ್ತವಾಂಛಿತದಾಯಕಾಯ ನಮಃ</li><li><span class="n">೭೫</span>ಓಂ ಶಾಂತಾಯ ನಮಃ</li><li><span class="n">೭೬</span>ಓಂ ಕೈವಲ್ಯಸುಖದಾಯ ನಮಃ</li><li><span class="n">೭೭</span>ಓಂ ಸಚ್ಚಿದಾನಂದವಿಗ್ರಹಾಯ ನಮಃ</li><li><span class="n">೭೮</span>ಓಂ ಜ್ಞಾನಿನೇ ನಮಃ</li><li><span class="n">೭೯</span>ಓಂ ದಯಾಯುತಾಯ ನಮಃ</li><li><span class="n">೮೦</span>ಓಂ ದಾಂತಾಯ ನಮಃ</li><li><span class="n">೮೧</span>ಓಂ ಬ್ರಹ್ಮದ್ವೇಷವಿವರ್ಜಿತಾಯ ನಮಃ</li><li><span class="n">೮೨</span>ಓಂ ಪ್ರಮತ್ತದೈತ್ಯಭಯದಾಯ ನಮಃ</li><li><span class="n">೮೩</span>ಓಂ ಶ್ರೀಕಂಠಾಯ ನಮಃ</li><li><span class="n">೮೪</span>ಓಂ ವಿಬುಧೇಶ್ವರಾಯ ನಮಃ</li><li><span class="n">೮೫</span>ಓಂ ರಮಾರ್ಚಿತಾಯ ನಮಃ</li><li><span class="n">೮೬</span>ಓಂ ವಿಧಯೇ ನಮಃ</li><li><span class="n">೮೭</span>ಓಂ ನಾಗರಾಜಯಜ್ಞೋಪವೀತವತೇ ನಮಃ</li><li><span class="n">೮೮</span>ಓಂ ಸ್ಥೂಲಕಂಠಾಯ ನಮಃ</li><li><span class="n">೮೯</span>ಓಂ ಸ್ವಯಂಕರ್ತ್ರೇ ನಮಃ</li><li><span class="n">೯೦</span>ಓಂ ಸಾಮಘೋಷಪ್ರಿಯಾಯ ನಮಃ</li><li><span class="n">೯೧</span>ಓಂ ಪರಸ್ಮೈ ನಮಃ</li><li><span class="n">೯೨</span>ಓಂ ಸ್ಥೂಲತುಂಡಾಯ ನಮಃ</li><li><span class="n">೯೩</span>ಓಂ ಅಗ್ರಣ್ಯೇ ನಮಃ</li><li><span class="n">೯೪</span>ಓಂ ಧೀರಾಯ ನಮಃ</li><li><span class="n">೯೫</span>ಓಂ ವಾಗೀಶಾಯ ನಮಃ</li><li><span class="n">೯೬</span>ಓಂ ಸಿದ್ಧಿದಾಯಕಾಯ ನಮಃ</li><li><span class="n">೯೭</span>ಓಂ ದೂರ್ವಾಬಿಲ್ವಪ್ರಿಯಾಯ ನಮಃ</li><li><span class="n">೯೮</span>ಓಂ ಅವ್ಯಕ್ತಮೂರ್ತಯೇ ನಮಃ</li><li><span class="n">೯೯</span>ಓಂ ಅದ್ಭುತಮೂರ್ತಿಮತೇ ನಮಃ</li><li><span class="n">೧೦೦</span>ಓಂ ಶೈಲೇಂದ್ರತನುಜೋತ್ಸಂಗಖೇಲನೋತ್ಸುಕಮಾನಸಾಯ ನಮಃ</li><li><span class="n">೧೦೧</span>ಓಂ ಸ್ವಲಾವಣ್ಯಸುಧಾಸಾರಜಿತಮನ್ಮಥವಿಗ್ರಹಾಯ ನಮಃ</li><li><span class="n">೧೦೨</span>ಓಂ ಸಮಸ್ತಜಗದಾಧಾರಾಯ ನಮಃ</li><li><span class="n">೧೦೩</span>ಓಂ ಮಾಯಿನೇ ನಮಃ</li><li><span class="n">೧೦೪</span>ಓಂ ಮೂಷಿಕವಾಹನಾಯ ನಮಃ</li><li><span class="n">೧೦೫</span>ಓಂ ಹೃಷ್ಟಾಯ ನಮಃ</li><li><span class="n">೧೦೬</span>ಓಂ ತುಷ್ಟಾಯ ನಮಃ</li><li><span class="n">೧೦೭</span>ಓಂ ಪ್ರಸನ್ನಾತ್ಮನೇ ನಮಃ</li><li><span class="n">೧೦೮</span>ಓಂ ಸರ್ವಸಿದ್ಧಿಪ್ರದಾಯಕಾಯ ನಮಃ</li></ol><section class="box"><p class="up">ಶ್ರೀ ಸಿದ್ಧಿವಿನಾಯಕಾಯ ನಮಃ ಅಷ್ಟೋತ್ತರಶತನಾಮಪೂಜಾಂ ಸಮರ್ಪಯಾಮಿ ॥</p></section></div><div class="nl" data-names="ganesha12"><h3 class="nh">ಶ್ರೀ ಗಣೇಶ ದ್ವಾದಶ ನಾಮಾನಿ</h3><ol class="names num"><li><span class="n">೧</span>ಓಂ ಸುಮುಖಾಯ ನಮಃ</li><li><span class="n">೨</span>ಓಂ ಏಕದಂತಾಯ ನಮಃ</li><li><span class="n">೩</span>ಓಂ ಕಪಿಲಾಯ ನಮಃ</li><li><span class="n">೪</span>ಓಂ ಗಜಕರ್ಣಕಾಯ ನಮಃ</li><li><span class="n">೫</span>ಓಂ ಲಂಬೋದರಾಯ ನಮಃ</li><li><span class="n">೬</span>ಓಂ ವಿಕಟಾಯ ನಮಃ</li><li><span class="n">೭</span>ಓಂ ವಿಘ್ನರಾಜಾಯ ನಮಃ</li><li><span class="n">೮</span>ಓಂ ಗಣಾಧಿಪಾಯ ನಮಃ</li><li><span class="n">೯</span>ಓಂ ಧೂಮ್ರಕೇತವೇ ನಮಃ</li><li><span class="n">೧೦</span>ಓಂ ಗಣಾಧ್ಯಕ್ಷಾಯ ನಮಃ</li><li><span class="n">೧೧</span>ಓಂ ಭಾಲಚಂದ್ರಾಯ ನಮಃ</li><li><span class="n">೧೨</span>ಓಂ ಗಜಾನನಾಯ ನಮಃ</li></ol><section class="box"><p class="up">ಶ್ರೀ ಸಿದ್ಧಿವಿನಾಯಕಾಯ ನಮಃ ದ್ವಾದಶನಾಮಪೂಜಾಂ ಸಮರ್ಪಯಾಮಿ ॥</p></section></div><div class="nl" data-names="custom" hidden><h3 class="nh">ನನ್ನ ನಾಮಗಳು</h3><ol class="names num" id="cuNamesOl"></ol><section class="box"><p class="up"><span data-t="namah"></span> ನಾಮಪೂಜಾಂ ಸಮರ್ಪಯಾಮಿ ॥</p></section></div><div id="patraSec"><h3 class="nh">ಏಕವಿಂಶತಿ ಪತ್ರ ಪೂಜಾ</h3><ol class="names num patra"><li><span class="n">೧</span>ಓಂ ಸುಮುಖಾಯ ನಮಃ — ಮಾಚೀಪತ್ರಂ ಪೂಜಯಾಮಿ</li><li><span class="n">೨</span>ಓಂ ಗಣಾಧಿಪಾಯ ನಮಃ — ಬೃಹತೀಪತ್ರಂ ಪೂಜಯಾಮಿ</li><li><span class="n">೩</span>ಓಂ ಉಮಾಪುತ್ರಾಯ ನಮಃ — ಬಿಲ್ವಪತ್ರಂ ಪೂಜಯಾಮಿ</li><li><span class="n">೪</span>ಓಂ ಗಜಾನನಾಯ ನಮಃ — ದೂರ್ವಾಯುಗ್ಮಂ ಪೂಜಯಾಮಿ</li><li><span class="n">೫</span>ಓಂ ಹರಸೂನವೇ ನಮಃ — ದತ್ತೂರಪತ್ರಂ ಪೂಜಯಾಮಿ</li><li><span class="n">೬</span>ಓಂ ಲಂಬೋದರಾಯ ನಮಃ — ಬದರೀಪತ್ರಂ ಪೂಜಯಾಮಿ</li><li><span class="n">೭</span>ಓಂ ಗುಹಾಗ್ರಜಾಯ ನಮಃ — ಅಪಾಮಾರ್ಗಪತ್ರಂ ಪೂಜಯಾಮಿ</li><li><span class="n">೮</span>ಓಂ ಗಜಕರ್ಣಾಯ ನಮಃ — ತುಲಸೀಪತ್ರಂ ಪೂಜಯಾಮಿ</li><li><span class="n">೯</span>ಓಂ ಏಕದಂತಾಯ ನಮಃ — ಚೂತಪತ್ರಂ ಪೂಜಯಾಮಿ</li><li><span class="n">೧೦</span>ಓಂ ವಿಕಟಾಯ ನಮಃ — ಕರವೀರಪತ್ರಂ ಪೂಜಯಾಮಿ</li><li><span class="n">೧೧</span>ಓಂ ಭಿನ್ನದಂತಾಯ ನಮಃ — ವಿಷ್ಣುಕ್ರಾಂತಪತ್ರಂ ಪೂಜಯಾಮಿ</li><li><span class="n">೧೨</span>ಓಂ ವಟವೇ ನಮಃ — ದಾಡಿಮೀಪತ್ರಂ ಪೂಜಯಾಮಿ</li><li><span class="n">೧೩</span>ಓಂ ಸರ್ವೇಶ್ವರಾಯ ನಮಃ — ದೇವದಾರುಪತ್ರಂ ಪೂಜಯಾಮಿ</li><li><span class="n">೧೪</span>ಓಂ ಫಾಲಚಂದ್ರಾಯ ನಮಃ — ಮರುವಕಪತ್ರಂ ಪೂಜಯಾಮಿ</li><li><span class="n">೧೫</span>ಓಂ ಹೇರಂಬಾಯ ನಮಃ — ಸಿಂಧುವಾರಪತ್ರಂ ಪೂಜಯಾಮಿ</li><li><span class="n">೧೬</span>ಓಂ ಶೂರ್ಪಕರ್ಣಾಯ ನಮಃ — ಜಾಜೀಪತ್ರಂ ಪೂಜಯಾಮಿ</li><li><span class="n">೧೭</span>ಓಂ ಸುರಾಗ್ರಜಾಯ ನಮಃ — ಗಂಡಕೀಪತ್ರಂ ಪೂಜಯಾಮಿ</li><li><span class="n">೧೮</span>ಓಂ ಇಭವಕ್ತ್ರಾಯ ನಮಃ — ಶಮೀಪತ್ರಂ ಪೂಜಯಾಮಿ</li><li><span class="n">೧೯</span>ಓಂ ವಿನಾಯಕಾಯ ನಮಃ — ಅಶ್ವತ್ಥಪತ್ರಂ ಪೂಜಯಾಮಿ</li><li><span class="n">೨೦</span>ಓಂ ಸುರಸೇವಿತಾಯ ನಮಃ — ಅರ್ಜುನಪತ್ರಂ ಪೂಜಯಾಮಿ</li><li><span class="n">೨೧</span>ಓಂ ಕಪಿಲಾಯ ನಮಃ — ಅರ್ಕಪತ್ರಂ ಪೂಜಯಾಮಿ</li></ol><section class="box"><p class="up"><span data-t="namah"></span> ಏಕವಿಂಶತಿ ಪತ್ರಪೂಜಾಂ ಸಮರ್ಪಯಾಮಿ ॥</p></section></div><h2>೧೧. ಧೂಪ</h2><section class="box"><div class="vp"><div class="mn"><div>ಓಂ ಯತ್ಪುರು॑ಷಂ॒ ವ್ಯದ॑ಧುಃ ಕತಿ॒ಧಾ ವ್ಯ॑ಕಲ್ಪಯನ್ ।</div><div>ಮುಖಂ॒ ಕಿಮ॑ಸ್ಯ॒ ಕೌ ಬಾ॒ಹೂ ಕಾ ಊ॒ರೂ ಪಾದಾ᳚ ಉಚ್ಯೇತೇ ॥</div></div></div><div class="vs"><div class="mn"><div>ಓಂ ಕರ್ದ॑ಮೇ॒ನ ಪ್ರ॑ಜಾ ಭೂ॒ತಾ ಮ॒ಯಿ ಸ᳚ಮ್ಭವ॒ ಕರ್ದ॑ಮ ।</div><div>ಶ್ರಿಯಂ᳚ ವಾ॒ಸಯ॑ ಮೇ ಕು॒ಲೇ ಮಾ॒ತರಂ᳚ ಪದ್ಮ॒ಮಾಲಿ॑ನೀಮ್ ॥</div></div></div><p class="sl">ವನಸ್ಪತಿ ರಸೋತ್ಪನ್ನೋ ಗಂಧಾಢ್ಯಃ ಸುಮನೋಹರಃ । ಆಘ್ರೇಯಃ ಸರ್ವದೇವಾನಾಂ ಧೂಪೋಽಯಂ ಪ್ರತಿಗೃಹ್ಯತಾಂ ॥</p><p class="up"><span data-t="namah"></span> ಧೂಪಂ ಆಘ್ರಾಪಯಾಮಿ ॥</p></section><h2>೧೨. ದೀಪ</h2><section class="box"><div class="vp"><div class="mn"><div>ಓಂ ಬ್ರಾ॒ಹ್ಮ॒ಣೋ᳚ಽಸ್ಯ॒ ಮುಖ॑ಮಾಸೀದ್ಬಾ॒ಹೂ ರಾ᳚ಜ॒ನ್ಯಃ॑ ಕೃ॒ತಃ ।</div><div>ಊ॒ರೂ ತದ॑ಸ್ಯ॒ ಯದ್ವೈಶ್ಯಃ॑ ಪ॒ದ್ಭ್ಯಾಂ ಶೂ॒ದ್ರೋ ಅ॑ಜಾಯತ ॥</div></div></div><div class="vs"><div class="mn"><div>ಓಂ ಆಪಃ॒ ಸೃಜ᳚ನ್ತು॒ ಸ್ನಿಗ್ಧಾ᳚ನಿ॒ ಚಿಕ್ಲೀ᳚ತ॒ ವಸ॑ ಮೇ ಗೃ॒ಹೇ ।</div><div>ನಿ ಚ॑ ದೇ॒ವೀಂ ಮಾ॒ತರಂ॒ ಶ್ರಿಯಂ᳚ ವಾ॒ಸಯ॑ ಮೇ ಕು॒ಲೇ ॥</div></div></div><p class="sl">ಸಾಜ್ಯಂ ತ್ರಿವರ್ತಿಸಂಯುಕ್ತಂ ವಹ್ನಿನಾ ಯೋಜಿತಂ ಮಯಾ । ಗೃಹಾಣ ಮಂಗಲಂ ದೀಪಂ ತ್ರೈಲೋಕ್ಯತಿಮಿರಾಪಹಂ ॥</p><p class="up"><span data-t="namah"></span> ದೀಪಂ ದರ್ಶಯಾಮಿ । ಧೂಪದೀಪಾಂತೇ ಆಚಮನೀಯಂ ಸಮರ್ಪಯಾಮಿ ॥</p></section><h2>೧೩. ನೈವೇದ್ಯ</h2><section class="box"><div class="vp"><div class="mn"><div>ಓಂ ಚಂ॒ದ್ರಮಾ॒ ಮನ॑ಸೋ ಜಾ॒ತಶ್ಚಕ್ಷೋಃ॒ ಸೂರ್ಯೋ᳚ ಅಜಾಯತ ।</div><div>ಮುಖಾ॒ದಿಂದ್ರ॑ಶ್ಚಾ॒ಗ್ನಿಶ್ಚ॑ ಪ್ರಾ॒ಣಾದ್ವಾ॒ಯುರ॑ಜಾಯತ ॥</div></div></div><div class="vs"><div class="mn"><div>ಓಂ ಆ॒ರ್ದ್ರಾಂ ಪು॒ಷ್ಕರಿ॑ಣೀಂ ಪು॒ಷ್ಟಿಂ ಸು॒ವರ್ಣಾ᳚ ಹೇಮ॒ಮಾಲಿ॑ನೀಮ್ ।</div><div>ಸೂ॒ರ್ಯಾಂ ಹಿ॒ರಣ್ಮ॑ಯೀಂ ಲಕ್ಷ್ಮೀಂ॒ ಜಾತ॑ವೇದೋ ಮ॒ ಆವಹ ॥</div></div></div><p class="vin">ನಿವೇದನಾರ್ಥೇ ಗಾಯತ್ರೀ ಮಂತ್ರಸ್ಯ ವಿಶ್ವಾಮಿತ್ರ ಋಷಿಃ ಸವಿತಾ ದೇವತಾ ಗಾಯತ್ರೀ ಛಂದಃ ನಿವೇದನೇ ವಿನಿಯೋಗಃ (ಗಾಯತ್ರಿಯನ್ನು ಪಠಿಸುವುದು)</p><p class="up"><span data-t="namah"></span> ಯಥಾಸಂಭವ ನೈವೇದ್ಯಂ ನಿರೀಕ್ಷಸ್ವ ॥</p><p class="sl">ಅಮೃತಮಸ್ತು । ಅಮೃತೋಪಸ್ತರಣಮಸಿ । ಪ್ರಾಣಾಯ ಸ್ವಾಹಾ । ಅಪಾನಾಯ ಸ್ವಾಹಾ । ವ್ಯಾನಾಯ ಸ್ವಾಹಾ । ಉದಾನಾಯ ಸ್ವಾಹಾ । ಸಮಾನಾಯ ಸ್ವಾಹಾ ॥</p><p class="up"><span data-t="namah"></span> ನೈವೇದ್ಯಂ ನಿವೇದಯಾಮಿ । ಮಧ್ಯೇ ಮಧ್ಯೇ ಸ್ವಾದೂದಕಂ ಸಮರ್ಪಯಾಮಿ । ಅಮೃತಾಪಿಧಾನಮಸಿ ಉತ್ತರಾಪೋಶನಾರ್ಥ ಜಲಂ ಸಮರ್ಪಯಾಮಿ । ಹಸ್ತಪ್ರಕ್ಷಾಳನಾರ್ಥ ಜಲಂ ಸಮರ್ಪಯಾಮಿ । ಗಂಡೂಷಾರ್ಥ ಜಲಂ ಸಮರ್ಪಯಾಮಿ । ಶುದ್ಧಾಚಮನಾರ್ಥ ಜಲಂ ಸಮರ್ಪಯಾಮಿ ॥</p><p class="sl">ಪೂಗೀಫಲಸಮಾಯುಕ್ತಂ ನಾಗವಲ್ಲೀದಲೈರ್ಯುತಂ । ಚೂರ್ಣ ಕರ್ಪೂರ ಸಂಯುಕ್ತಂ ತಾಂಬೂಲಂ ಪ್ರತಿಗೃಹ್ಯತಾಂ ॥</p><p class="up"><span data-t="namah"></span> ತಾಂಬೂಲಂ ನಿವೇದಯಾಮಿ ॥</p></section><h2>೧೪. ನೀರಾಜನ ಮತ್ತು ಮಂತ್ರಪುಷ್ಪ</h2><section class="box"><div class="vp"><div class="mn"><div>ಓಂ ನಾಭ್ಯಾ᳚ ಆಸೀದಂ॒ತರಿ॑ಕ್ಷಂ ಶೀ॒ರ್ಷ್ಣೋ ದ್ಯೌಃ ಸಮ॑ವರ್ತತ ।</div><div>ಪ॒ದ್ಭ್ಯಾಂ ಭೂಮಿ॒ರ್ದಿಶಃ॒ ಶ್ರೋತ್ರಾ॒ತ್ತಥಾ᳚ ಲೋ॒ಕಾಁ ಅ॑ಕಲ್ಪಯನ್ ॥</div></div></div><div class="vs"><div class="mn"><div>ಓಂ ಆ॒ರ್ದ್ರಾಂ ಯಃ॒ ಕರಿ॑ಣೀಂ ಯ॒ಷ್ಟಿಂ ಪಿ॒ಙ್ಗಲಾಂ᳚ ಪದ್ಮ॒ಮಾಲಿ॑ನೀಮ್ ।</div><div>ಚ॒ನ್ದ್ರಾಂ ಹಿ॒ರಣ್ಮ॑ಯೀಂ ಲ॒ಕ್ಷ್ಮೀಂ ಜಾತ॑ವೇದೋ ಮ॒ ಆವ॑ಹ ॥</div></div></div><p class="up"><span data-t="namah"></span> ಮಂಗಲನೀರಾಜನಂ ದರ್ಶಯಾಮಿ ॥</p><p class="sl">ವೇದಾದೌ ಸ್ವರಃ ಪ್ರೋಕ್ತೋ ವೇದಾಂತೇ ಚ ಪ್ರತಿಷ್ಠಿತಃ । ತಸ್ಯ ಪ್ರಕೃತಿಲೀನಸ್ಯ ಯಃ ಪರಃ ಸ ಮಹೇಶ್ವರಃ ॥</p><p class="up"><span data-t="namah"></span> ಮಂತ್ರಪುಷ್ಪಂ ಸಮರ್ಪಯಾಮಿ ॥</p></section><h2>೧೫. ಪ್ರದಕ್ಷಿಣ</h2><section class="box"><div class="vp"><div class="mn"><div>ಓಂ ಸ॒ಪ್ತಾಸ್ಯಾ᳚ಸನ್ಪರಿ॒ಧಯ॒ಸ್ತ್ರಿಃ ಸ॒ಪ್ತ ಸ॒ಮಿಧಃ॑ ಕೃ॒ತಾಃ ।</div><div>ದೇ॒ವಾ ಯದ್ಯ॒ಜ್ಞಂ ತ᳚ನ್ವಾ॒ನಾ ಅಬ॑ಧ್ನ॒ನ್ಪುರು॑ಷಂ ಪ॒ಶುಮ್ ॥</div></div></div><div class="vs"><div class="mn"><div>ಓಂ ತಾಂ ಮ॒ ಆವ॑ಹ ಜಾತವೇದೋ ಲ॒ಕ್ಷ್ಮೀಮನ॑ಪಗಾ॒ಮಿನೀ᳚ಮ್ ।</div><div>ಯಸ್ಯಾಂ॒ ಹಿರ᳚ಣ್ಯಂ॒ ಪ್ರಭೂ᳚ತಂ॒ ಗಾವೋ᳚ ದಾ॒ಸ್ಯೋಽಶ್ವಾ᳚ನ್‌ ವಿ॒ನ್ದೇಯಂ॒ ಪುರು॑ಷಾನ॒ಹಮ್ ॥</div></div></div><p class="sl">ಯಾನಿ ಕಾನಿ ಚ ಪಾಪಾನಿ ಜನ್ಮಾಂತರಕೃತಾನಿ ಚ । ತಾನಿ ತಾನಿ ವಿನಶ್ಯಂತಿ ಪ್ರದಕ್ಷಿಣಪದೇ ಪದೇ ॥</p><p class="up"><span data-t="namah"></span> ಪ್ರದಕ್ಷಿಣಂ ಕರೋಮಿ ॥</p></section><h2>೧೬. ನಮಸ್ಕಾರ</h2><section class="box"><div class="vp"><div class="mn"><div>ಓಂ ಯ॒ಜ್ಞೇನ॑ ಯ॒ಜ್ಞಮ॑ಯಜಂತ ದೇ॒ವಾಸ್ತಾನಿ॒ ಧರ್ಮಾ᳚ಣಿ ಪ್ರಥ॒ಮಾನ್ಯಾ᳚ಸನ್ ।</div><div>ತೇ ಹ॒ ನಾಕಂ᳚ ಮಹಿ॒ಮಾನಃ॑ ಸಚಂತ॒ ಯತ್ರ॒ ಪೂರ್ವೇ᳚ ಸಾ॒ಧ್ಯಾಃ ಸಂತಿ॑ ದೇ॒ವಾಃ ॥</div></div></div><div class="vs"><div class="mn"><div>ಓಂ ಯಃ ಶುಚಿಃ॒ ಪ್ರಯ॑ತೋ ಭೂ॒ತ್ವಾ ಜು॒ಹುಯಾ᳚ದಾಜ್ಯ॒ ಮನ್ವ॑ಹಮ್ ।</div><div>ಶ್ರಿಯಃ॑ ಪ॒ಞ್ಚದ॑ಶರ್ಚಂ॒ ಚ ಶ್ರೀ॒ಕಾಮಃ॑ ಸತ॒ತಂ ಜ॑ಪೇತ್ ॥</div></div></div><p class="sl">ನಮಃ ಸರ್ವಹಿತಾರ್ಥಾಯ ಜಗದಾಧಾರಹೇತವೇ । ಸಾಷ್ಟಾಂಗೋಽಯಂ ಪ್ರಣಾಮಸ್ತೇ ಪ್ರಯತ್ನೇನ ಮಯಾ ಕೃತಃ ॥</p><p class="up"><span data-t="namah"></span> ನಮಸ್ಕರೋಮಿ ॥</p></section><h2>ಪ್ರಾರ್ಥನೆ ಮತ್ತು ಸಮರ್ಪಣೆ</h2><section class="box"><p class="sl">ಅಪರಾಧ ಸಹಸ್ರಾಣಿ ಕ್ರಿಯಂತೇಽಹರ್ನಿಶಂ ಮಯಾ । ದಾಸೋಽಯಮಿತಿ ಮಾಂ ಮತ್ವಾ ರಕ್ಷ ಮಾಂ ಪರಮೇಶ್ವರ ॥</p><p class="up"><span data-t="namah"></span> ಮನೋರಥಾನ್ ಪ್ರಾರ್ಥಯಾಮಿ ॥</p><p class="sl">ಯಸ್ಯ ಸ್ಮೃತ್ಯಾ ಚ ನಾಮೋಕ್ತ್ಯಾ ತಪಃ ಪೂಜಾಕ್ರಿಯಾದಿಷು । ನ್ಯೂನಂ ಸಂಪೂರ್ಣತಾಂ ಯಾತಿ ಸದ್ಯೋ ವಂದೇ ತಮಚ್ಯುತಂ ॥</p><p class="sl">ಮಂತ್ರಹೀನಂ ಕ್ರಿಯಾಹೀನಂ ಭಕ್ತಿಹೀನಂ ಮಹೇಶ್ವರ । ಯತ್ಪೂಜಿತಂ ಮಯಾ ದೇವ ಪರಿಪೂರ್ಣಂ ತದಸ್ತು ತೇ ॥</p><p class="sl">ಅನೇನ ಮಯಾ ಕೃತ ಯಾವಚ್ಛಕ್ತಿ ಧ್ಯಾನಾವಾಹನಾದಿ ಪೂಜಾರಾಧನೇನ <span data-t="end"></span> ॥</p><p class="vin">ಪೂಜಾಕಾಲೇ ಮಧ್ಯೇ ಮಂತ್ರ ತಂತ್ರ ಸ್ವರ ವರ್ಣ ಲೋಪ ದೋಷ ಪ್ರಾಯಶ್ಚಿತ್ತಾರ್ಥಂ ನಾಮತ್ರಯ ಮಹಾಮಂತ್ರ ಜಪಂ ಕರಿಷ್ಯೇ —</p><p class="sl">ಶ್ರೀ ಅಚ್ಯುತಾಯ ನಮಃ । ಶ್ರೀ ಅನಂತಾಯ ನಮಃ । ಶ್ರೀ ಗೋವಿಂದಾಯ ನಮಃ ॥</p><p class="up">ಶ್ರೀ ಕೃಷ್ಣಾರ್ಪಣಮಸ್ತು ॥</p></section><p class="end">॥ ಶುಭಂ ॥</p><footer class="credit">ಋಗ್ವೇದ ಮಂತ್ರಗಳು ವೇದಾವಲೋಕನದ ದಾಕ್ಷಿಣಾತ್ಯ ಪಾಠದಿಂದ; ಶ್ರೀಸೂಕ್ತ ದಕ್ಷಿಣ ಭಾರತೀಯ ಪಾಠದಿಂದ. ಶ್ರೀಸೂಕ್ತದಿಂದ ಮಾಡುವಾಗ ಹದಿನಾರನೆಯ ಉಪಚಾರಕ್ಕೆ ಫಲಶ್ರುತಿಯ ಮೊದಲ ಋಕ್ (“ಯಃ ಶುಚಿಃ”). ನಾಮಾವಳಿಗಳ ಮೂಲಗಳು ಆ್ಯಪ್‌ನ DATA_SOURCES ಪಟ್ಟಿಯಲ್ಲಿ. ದಿನಾಂಕವನ್ನು ಸ್ಥಳೀಯ ಪಂಚಾಂಗದಲ್ಲಿ ನೋಡಿ ಖಚಿತಪಡಿಸಿಕೊಳ್ಳಿ.</footer>
+</main>
+<script>
+(function () {
+  const P = {"id": "ganesha-chaturthi", "dev": {"acc": "ಶ್ರೀ ಸಿದ್ಧಿವಿನಾಯಕಂ", "dat": "ಶ್ರೀ ಸಿದ್ಧಿವಿನಾಯಕಾಯ", "prit": "ಶ್ರೀ ಸಿದ್ಧಿವಿನಾಯಕಪ್ರೀತ್ಯರ್ಥಂ", "end": "ಭಗವಾನ್ ಸರ್ವಾತ್ಮಕಃ ಶ್ರೀ ಸಿದ್ಧಿವಿನಾಯಕಃ ಪ್ರೀಯತಾಂ"}, "names": ["ganesha108", "ganesha12"], "vid": "p"};
+  const DEV = { main: P.dev };
+  const KEY = 'vedalokana.kalpa.' + P.id;
+  let st = { dev: 'main', vid: P.vid, names: P.names[0], pm: false, patra: true };
+  try { st = Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
+  if (!DEV[st.dev] && st.dev !== 'custom') st.dev = 'main';
+  if (!['p', 's', 'ps'].includes(st.vid)) st.vid = P.vid;
+  if (!(P.names.includes(st.names) || (st.names === 'custom' && st.c && st.c.names && st.c.names.length))) st.names = P.names[0];
+  const VIDHS = { p: 'ಪುರುಷಸೂಕ್ತವಿಧಾನೇನ', s: 'ಶ್ರೀಸೂಕ್ತವಿಧಾನೇನ', ps: 'ಪುರುಷಸೂಕ್ತ ಶ್ರೀಸೂಕ್ತವಿಧಾನೇನ' };
+  let VIDH = VIDHS[st.vid];
+  const afterUse = () => { if (st.c && st.c.names.length) st.names = 'custom'; };
+
+  // ---- shared: custom devatā and today's pañcāṅga -------------------------------------
+  if (st.dev === 'custom' && !(st.c && st.c.raw)) st.dev = Object.keys(DEV)[0];
+  if (!(st.c && st.c.raw)) st.c = null;
+  const BL = '.............';
+  function CU() {
+    const c = st.c || {};
+    return { ab: '', pa: '', pan: '', acc: c.acc || BL, dat: c.dat || BL, prit: c.prit || BL, end: c.end || BL };
+  }
+  const knNum = (n) => String(n).replace(/\d/g, (d) => String.fromCharCode(0xCE6 + +d));
+  function cuShow() {
+    const cu = st.dev === 'custom'; const c = st.c || {}; const names = c.names || [];
+    document.getElementById('cuBox').hidden = !cu;
+    document.getElementById('cuSum').textContent = c.name || '';
+    const host = document.getElementById('cuDhOut');
+    if (host) {
+      const ls = (c.dh || '').split('\n').filter(Boolean);
+      host.hidden = !cu || !ls.length; host.textContent = '';
+      if (!host.hidden) ls.forEach((l) => { const p = document.createElement('p'); p.className = 'sl'; p.textContent = l; host.appendChild(p); });
+    }
+    const ol = document.getElementById('cuNamesOl');
+    if (ol) {
+      ol.textContent = '';
+      names.forEach((n, i) => { const li = document.createElement('li'); const sp = document.createElement('span'); sp.className = 'n'; sp.textContent = knNum(i + 1); li.append(sp, document.createTextNode('ಓಂ ' + n + ' ನಮಃ')); ol.appendChild(li); });
+    }
+    const ns = document.getElementById('nmSec');
+    if (ns) { ns.hidden = cu && !names.length; const set = ns.querySelector('.nameset'); if (set) set.hidden = cu; const cn = document.getElementById('cuNames'); if (cn) cn.hidden = !cu; }
+    const nb = document.getElementById('cuNameBtn'); if (nb) nb.hidden = !names.length;
+  }
+  let repaint = () => {};
+  function openEd() {
+    import('./editor.js').then((m) => m.openEditor({
+      initial: st.c && st.c.raw, showNames: true, vidhana: VIDH,
+      onUse(res) { st.c = res; st.dev = 'custom'; afterUse(); repaint(); },
+    })).catch(() => {});
+  }
+  function pickCustom() { if (st.c) { st.dev = 'custom'; afterUse(); repaint(); } else openEd(); }
+  function initCustom(paint) { repaint = paint; document.getElementById('cuEdit').addEventListener('click', openEd); }
+  const KN_NASAL = /ङ्(?=[कखगघ])|ञ्(?=[चछजझ])|ण्(?=[टठडढ])|न्(?=[तथदध])|म्(?=[पफबभ])/g;
+  function toKn(s) {
+    return Array.from(s.replace(KN_NASAL, 'ं')).map((ch) => {
+      const c = ch.codePointAt(0);
+      return (c >= 0x901 && c <= 0x94D) || (c >= 0x950 && c <= 0x954) || (c >= 0x960 && c <= 0x963) ? String.fromCodePoint(c + 0x380) : ch;
+    }).join('');
+  }
+  const locTithi = (t) => (t === 'प्रतिपत्' ? 'प्रतिपदि' : t.endsWith('ी') ? t.slice(0, -1) + '्यां' : t.endsWith('ा') ? t + 'यां' : t);
+  function initPanch() {
+    const pf = [...document.querySelectorAll('input.pf')];
+    const fit = (i) => { i.size = Math.max(7, Array.from(i.value).length + 1); };
+    pf.forEach((i) => { fit(i); i.addEventListener('input', () => fit(i)); });
+    const dEl = document.getElementById('pdate'), stat = document.getElementById('pstat');
+    const t = new Date(); dEl.value = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+    try { const qd = new URLSearchParams(location.search).get('d'); if (qd && /^\d{4}-\d{2}-\d{2}$/.test(qd)) dEl.value = qd; } catch (e) {}
+    const keepNote = stat.textContent;
+    document.getElementById('pclear').addEventListener('click', () => { pf.forEach((i) => { i.value = ''; fit(i); }); stat.textContent = keepNote; });
+    document.getElementById('pfill').addEventListener('click', async () => {
+      try {
+        let pl = { lat: 12.9716, lon: 77.5946, name: 'Bengaluru' };
+        try { const s = JSON.parse(localStorage.getItem('vedalokana.place') || 'null'); if (s && isFinite(s.lat) && isFinite(s.lon)) pl = { lat: s.lat, lon: s.lon, name: s.name || 'ಆಯ್ದ ಸ್ಥಳ' }; } catch (e) {}
+        const [y, m, d] = dEl.value.split('-').map(Number);
+        const mod = await import('../panchanga.js');
+        const p = mod.panchanga(new Date(y, m - 1, d, 12), pl.lat, pl.lon);
+        const V = { samv: p.samvatsara, ayana: p.ayana.replace(/ायन$|ायण$/, ''), rtu: p.rtu, masa: p.masa, paksha: p.paksha, tithi: locTithi(p.tithi), vara: p.vara.replace(/वासर$/, '') };
+        pf.forEach((i) => { i.value = toKn(V[i.dataset.f]); fit(i); });
+        stat.textContent = `${pl.name} · ${d}-${m}-${y} ಸೂರ್ಯೋದಯ ಕಾಲದ ಪಂಚಾಂಗ · ನಕ್ಷತ್ರ: ${toKn(p.nakshatra)}. ಲೆಕ್ಕಾಚಾರ ಅಂದಾಜು (ಲಾಹಿರಿ ಅಯನಾಂಶ); ಮುದ್ರಿತ ಪಂಚಾಂಗದೊಂದಿಗೆ ಹೋಲಿಸಿ ನೋಡಿ.`;
+      } catch (e) { stat.textContent = 'ಪಂಚಾಂಗ ಲೆಕ್ಕ ಮಾಡಲು ಆಗಲಿಲ್ಲ; ಖಾಲಿ ಜಾಗಗಳನ್ನು ನೀವೇ ತುಂಬಿ.'; }
+    });
+  }
+
+  function paint() {
+    VIDH = VIDHS[st.vid];
+    const d = st.dev === 'custom' ? CU() : DEV.main;
+    const T = { namah: `${d.dat} ನಮಃ`, acc: d.acc, prit: d.prit, end: d.end, vidh: VIDH };
+    document.querySelectorAll('[data-t]').forEach((e) => { e.textContent = T[e.dataset.t]; });
+    document.querySelectorAll('.dh[data-dev="main"]').forEach((e) => { e.hidden = st.dev !== 'main'; });
+    document.querySelectorAll('.nl').forEach((e) => { e.hidden = e.dataset.names !== st.names; });
+    document.body.classList.remove('vd-p', 'vd-s', 'vd-ps'); document.body.classList.add('vd-' + st.vid);
+    const ps = document.getElementById('patraSec'); if (ps) { ps.hidden = !st.patra; document.getElementById('patraOn').checked = st.patra; }
+    cuShow();
+    document.querySelectorAll('.pm').forEach((e) => { e.hidden = !st.pm; });
+    document.querySelectorAll('#devSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.dev === st.dev)));
+    document.querySelectorAll('#vidSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.vid === st.vid)));
+    document.querySelectorAll('#nameSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.names === st.names)));
+    document.getElementById('pmOn').checked = st.pm;
+    try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {}
+  }
+  document.querySelectorAll('#devSeg button').forEach((b) => b.addEventListener('click', () => {
+    if (b.dataset.dev === 'custom') { pickCustom(); return; }
+    st.dev = 'main'; if (st.names === 'custom') st.names = P.names[0]; paint();
+  }));
+  document.querySelectorAll('#vidSeg button').forEach((b) => b.addEventListener('click', () => { st.vid = b.dataset.vid; paint(); }));
+  document.querySelectorAll('#nameSeg button').forEach((b) => b.addEventListener('click', () => { st.names = b.dataset.names; paint(); }));
+  document.getElementById('pmOn').addEventListener('change', (e) => { st.pm = e.target.checked; paint(); });
+  const po = document.getElementById('patraOn'); if (po) po.addEventListener('change', (e) => { st.patra = e.target.checked; paint(); });
+  initCustom(paint); initPanch();
+  paint();
+  const go = () => (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => window.print());
+  document.getElementById('printBtn').addEventListener('click', go);
+  if (location.hash === '#print') { history.replaceState(null, '', location.pathname + location.search); window.addEventListener('load', () => setTimeout(go, 300)); }
+})();
+</script>
+</body>
+</html>
