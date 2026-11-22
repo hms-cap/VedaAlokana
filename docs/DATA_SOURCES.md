@@ -106,8 +106,11 @@ Not part of any text above; kept in `scripts/sources/sri-sukta.json` and shown a
   - Śrī Lalitā Aṣṭottaraśatanāmāvalī (“rajatācalaśṛṅgāgramadhyasthāyai…”), from shlokam.org with its typing errors corrected, cross-checked by a separate review against hindupad.com, drikpanchang.com, hariome.com, aanmeegam.org and pomantra.com. Where sources differ, #44 kalaśodbhavadurvāsaḥpūjitāyai and #46 cakrarājamahāyantra… follow the majority; #60 tāpānāṃ, #83 parīmukhya, #96 mukti kept.
   - Śrī Durgā Dvātriṃśannāmamālā (shlokam.org), the verses and the 32 names in the dative.
   - Śrī Mahālakṣmī Aṣṭottaraśatanāmāvalī (“prakṛtyai, vikṛtyai, vidyāyai…”), shlokam.org checked against hindutone.com. Variants resolved to the common reading: #29 kṣīrodasambhavāyai (hindutone has a corrupt “krodha”), #30 anugrahapradāyai, #89 nṛpaveśmagatānandāyai as one name with “devyai” added before sarvopadravavāriṇyai, to keep 108.
-  - Śrī Durgā Aṣṭottaraśatanāmāvalī (Viśvasāra Tantra, “satī sādhvī bhavaprītā…”, 108 with Anantā twice), from the stotra on shlokam.org and the namāvalī on hindutone.com and smartpuja.com; #16 manase follows the stotra (hindutone reads manorūpāyai). This is not the other common “durgāyai, śivāyai, mahālakṣmyai…” list.
+  - Śrī Durgā Aṣṭottaraśatanāmāvalī (Viśvasāra Tantra, “satī sādhvī bhavaprītā…”, 108 with Anantā twice), from the stotra on shlokam.org and the namāvalī on hindutone.com and smartpuja.com; #16 manase follows the stotra (hindutone reads manorūpāyai). The other common list (below) is offered separately.
+  - Śrī Durgā Aṣṭottaraśatanāmāvalī, the “durgāyai, śivāyai, mahālakṣmyai, mahāgauryai, caṇḍikāyai…” list (108; ends “…sarvābhīṣṭapradāyinyai”), compared from the Chinmaya Mission Columbus PDF and madhwasakha.com. Where they differ, madhwasakha is followed: #54 śāstryai (Chinmaya: śāstrāyai) and #89–92. “nirguṇāyai” occurs twice in the source lists and is kept to make 108.
 - Names are kept in Devanagari in the generator and converted to Kannada script (anusvāra for homorganic nasals).
+
+- Saṅkalpa blanks (saṃvatsara … vāsara) are inputs; “Pañcāṅga tumbi” fills them from the app's own panchanga.js (Lahiri ayanāṃśa, sunrise-based, saved place or Bengaluru) with locative tithi forms; it is an approximation to be checked against a printed pañcāṅga. The “other devatā” option derives the name forms for a- and ā-stems; all forms are editable.
 
 ## Daily mantra cards
 

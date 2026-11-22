@@ -306,6 +306,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.41.0', '2026-11-22', ['Devī book: the second Durgā Aṣṭottara (“durgāyai, śivāyai, mahālakṣmyai…”) as another nāma pūjā option.', 'Pūjā books: choose “Other devatā” and type any name; the name forms are filled in and can be edited, with an optional dhyāna śloka.', 'Pūjā books: the saṅkalpa blanks are now fields, with a button to fill the pañcāṅga of today (or any date).']],
   ['1.40.1', '2026-11-22', ['Śrī Sūkta Vidhāna Devī Pūjā: the Mahālakṣmī Aṣṭottaraśatanāmāvalī (108 names, used for Mahālakṣmī) and the Durgā Aṣṭottaraśatanāmāvalī (108 names, from the Viśvasāra Tantra stotra) added to the nāma pūjā choices, beside the Lalitā 108 and Durgā 32.']],
   ['1.40.0', '2026-11-22', ['Appendix: a fourth book, the Ṛgvedīya Śrī Sūkta Vidhāna Devī Pūjā. Sixteen upacāras on the sixteen Śrī Sūkta ṛks (from the app, with svaras) for Śrī Lalitā, Śrī Durgā or Śrī Mahālakṣmī, with the Lalitā Aṣṭottaraśatanāmāvalī (108 names) or the Durgā Dvātriṃśannāmamālā (32 names) for the nāma pūjā, and optional pañcāmṛta.']],
   ['1.39.1', '2026-11-21', ['Appendix, both Puruṣa Sūkta pūjās: twelve names for every pañcāyatana devatā, checked against published lists (Śiva now the Mahādevādi twelve; Durgā the first twelve of her Aṣṭottara, in place of nine Ambikā names), and the source-book credit removed.']],
