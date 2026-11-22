@@ -306,6 +306,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.45.0', '2026-11-22', ['Appendix books: a navigation bar at the bottom of every book (Home, Library, Pūjā Kalpa, Contents, Top) and a top bar that stays in view. Contents opens a list of the book’s sections with the current one marked; tap one to jump there.']],
   ['1.44.0', '2026-11-22', ['Pūjā Kalpa: five more pūjās with their next dates. Śrī Rāma Navamī (Rāma 108), Śrī Kṛṣṇa Janmāṣṭamī (Kṛṣṇa 108), Svarṇa Gaurī Vrata (Gaurī 108), Ananta Caturdaśī (Viṣṇu 108 and the fourteen granthi pūjā) and Sarasvatī Pūjā on Mūla nakṣatra (Sarasvatī 108 with the pāvakā naḥ sarasvatī ṛks).']],
   ['1.43.0', '2026-11-22', ['Appendix: a new book, Ṛgvedīya Pūjā Kalpa. It lists the year’s festival pūjās with their next dates for your place, and opens each as a printable pūjā with its devatā, dhyāna ślokas, nāmāvali and special items: Varamahālakṣmī, Gaṇeśa Caturthī (with the 21 patra pūjā), Navarātri Lalitā, Durgāṣṭamī, Dīpāvalī Lakṣmī and Mahāśivarātri (with bilvārpaṇa).', 'Each pūjā can follow the Puruṣa Sūkta, the Śrī Sūkta or both, and keeps the pañcāṅga fill, pañcāmṛta option and devatā editor.']],
   ['1.42.0', '2026-11-22', ['Appendix: each book now has an Open button beside Print / PDF.', 'Pūjā books: a new devatā editor for “Other devatā”. Type the name in Roman, IAST, Devanagari or Kannada and review the Kannada, then check or edit the four case forms, add an optional dhyāna śloka and an optional list of names (with select all / unselect all). My devatās are saved on this device.']],
