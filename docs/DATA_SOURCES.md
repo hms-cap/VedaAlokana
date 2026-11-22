@@ -112,6 +112,17 @@ Not part of any text above; kept in `scripts/sources/sri-sukta.json` and shown a
 
 - Saṅkalpa blanks (saṃvatsara … vāsara) are inputs; “Pañcāṅga tumbi” fills them from the app's own panchanga.js (Lahiri ayanāṃśa, sunrise-based, saved place or Bengaluru) with locative tithi forms; it is an approximation to be checked against a printed pañcāṅga. The “Other devatā” editor (web/appendix/editor.js) reads Roman (casual ITRANS-style), IAST, Devanagari or Kannada through the app's own translit.js and lipi.js, derives the name forms for a- and ā-stems, and keeps everything editable; saved devatās live in localStorage on the device.
 
+## Appendix: Ṛgvedīya Pūjā Kalpa
+
+- Generated pages: `web/appendix/puja-kalpa.html` (the year list) and one `web/appendix/kalpa-<id>.html` per pūjā. The ṣoḍaśopacāra frame, Ṛgvedic mantras and Śrī Sūkta are the same as in the other pūjā books; the vidhāna (Puruṣa Sūkta, Śrī Sūkta or both) is chosen on the page.
+- Devatā mantras from the app's Dākṣiṇātya Ṛgveda text: 7.59.12 (tryambakam) and 1.114.1 (imā rudrāya) for Śiva, 1.99.1 (jātavedase) for Durgā.
+- Dhyāna ślokas: Siddhivināyaka (“ekadantaṃ śūrpakarṇaṃ…”) and the common Gaṇapati, Śiva and Durgā dhyānas used in the Puruṣa Sūkta book; Lalitā and Mahālakṣmī from the Devī book.
+- Śrī Vināyaka aṣṭottaraśatanāmāvalī: the list read in Kannada and Telugu Vināyaka vrata kalpas (“vināyakāya, vighnarājāya, gaurīputrāya…”), compared from Hindupedia's “Vigneswara Ashtotharam” (P. R. Ramachander) and devotional-hints.blogspot.com, which give the same order; spellings normalised (agnigarvacchide, śarvatanayāya, dvaimāturāya, mūṣikavāhanāya). shlokam.org has a different arrangement of the same names, not used.
+- Ekaviṃśati patra pūjā: the Karnataka/Andhra order (sumukhāya – mācī … kapilāya – arka), from hindupad.com. The Kāñci Kāmakoṭi Pīṭha lists another assignment of names to leaves.
+- Śrī Śiva aṣṭottaraśatanāmāvalī: shlokam.org, checked against hindupad.com (same names; the stotra order is kept for 97–102).
+- Lakṣmī, Lalitā and Durgā lists: as in the Devī book. Bilvārpaṇa: “tridalaṃ triguṇākāraṃ…”, common usage.
+- Next dates are computed in the page with `panchanga.js` for the saved place (Bengaluru by default): the tithi at sunrise, or at madhyāhna (Gaṇeśa Caturthī), pradoṣa (Dīpāvalī Lakṣmī pūjā) or niśītha (Mahāśivarātri); Varamahālakṣmī is the last Friday of Śrāvaṇa śukla pakṣa. For 2027 all six agreed with the dates listed by hindupad.com. They remain approximate; a printed pañcāṅga decides.
+
 ## Daily mantra cards
 
 365 mantras, one a day through the year (`scripts/daily/*.mjs`, built by `scripts/build-daily.mjs` into `web/data/daily/`): 197 from the Ṛgveda, 33 from the Atharvaveda, 53 from the Yajurveda (Vājasaneyi, Taittirīya Saṃhitā and Āraṇyaka), 2 from the Sāmaveda, 63 from the Upaniṣads and 17 from the Śrī Sūkta, Gaṇeśa Atharvaśīrṣa, Medhā Sūkta and Pavamāna Pariśiṣṭa as given in Aithal's Saswara Ṛgveda.
