@@ -306,6 +306,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.46.3', '2026-11-23', ['Pūjā books and Pūjā Kalpa: a closing maṅgalāśāsana (“svasti prajābhyaḥ…”), and the Gaṇapati pradakṣiṇa śloka reads “…medinīvijayāya te”.']],
   ['1.46.2', '2026-11-23', ['Pūjā Kalpa: the prāṇapratiṣṭhā for a devī closes with “devi sarvajaganmātaḥ yāvatpūjāvasānakam…”.']],
   ['1.46.1', '2026-11-23', ['Puruṣa Sūkta pūjā books: the Durgā dvādaśa nāmas are now the twelve of the Purāṇokta booklet (durgāyai, śāntyai, caṇḍikāyai…).']],
   ['1.46.0', '2026-11-23', ['Pūjā books and Pūjā Kalpa: a Mahāgaṇapati pūjā before the main pūjā (on by default), a Purāṇokta vidhāna with the ślokas of the Purāṇokta Saṅkṣepa Devapūjā booklet (feminine forms for a devī), and prāṇapratiṣṭhā (short or full) on the Pūjā Kalpa pages.', 'New Appendix book: Purāṇokta Saṅkṣepa Devapūjā (Umā-Maheśvara pañcāyatana).']],

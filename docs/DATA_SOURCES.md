@@ -142,6 +142,8 @@ Not part of any text above; kept in `scripts/sources/sri-sukta.json` and shown a
   - Misprints were corrected with the owner (dharaṇī, praṇāmo'ṣṭāṅga, śrīkaṇṭhāya, hṛṣīkeśāya, āyuṣyaṃ bhava varcasvi, gṛhāṇeśa, -yai endings, and readings in the Umā-Maheśvara and Gaṇapati dhyānas). “sasurasiddhanutāṃ” in the Durgā dhyāna restores the metre.
   - For a devī the address words are made feminine (deveśi, parameśvari, jaganmātaḥ…); the āvāhana becomes “āgaccha varade devi…” and the upavīta śloka is dropped. Both choices were approved by the owner.
   - The Śivāṣṭottara abhiṣeka note (“rudradaṣṭe phala ide”, Skanda Purāṇa) is shown at snāna for Mahāśivarātri and the Purāṇokta book.
+- In the Gaṇapati pradakṣiṇa śloka, Devatārcanam's “…medinīdvijayāya te” is read “…medinīvijayāya te”, with the owner's agreement. The same half-line occurs in the svasti verses, and “dvi” looks like an echo of “saptadvīpa”; the metre is the same either way. The Devatārcanam book itself is left as printed.
+- Maṅgalāśāsana at the end of every pūjā page: “svasti prajābhyaḥ…, kāle varṣatu parjanyaḥ…, saptadvīpasamudrādi…”, as given by the owner.
 - `web/appendix/puranokta-puja.html` (“ಪುರಾಣೋಕ್ತ ಸಂಕ್ಷೇಪ ದೇವಪೂಜಾ”): the booklet's Umā-Maheśvara pañcāyatana pūjā, with Purāṇokta mantras by default.
   - It uses the booklet's five dhyānas and five dvādaśa-nāma lists; each list ends with the devatā's own name.
   - The Puruṣa Sūkta option and the custom devatā are as in the other books.
