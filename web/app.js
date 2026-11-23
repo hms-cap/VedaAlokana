@@ -306,6 +306,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.46.1', '2026-11-23', ['Puruṣa Sūkta pūjā books: the Durgā dvādaśa nāmas are now the twelve of the Purāṇokta booklet (durgāyai, śāntyai, caṇḍikāyai…).']],
   ['1.46.0', '2026-11-23', ['Pūjā books and Pūjā Kalpa: a Mahāgaṇapati pūjā before the main pūjā (on by default), a Purāṇokta vidhāna with the ślokas of the Purāṇokta Saṅkṣepa Devapūjā booklet (feminine forms for a devī), and prāṇapratiṣṭhā (short or full) on the Pūjā Kalpa pages.', 'New Appendix book: Purāṇokta Saṅkṣepa Devapūjā (Umā-Maheśvara pañcāyatana).']],
   ['1.45.1', '2026-11-22', ['Home: an Appendix button below My sūktas opens the Appendix books, including the Pūjā Kalpa, in the Library.']],
   ['1.45.0', '2026-11-22', ['Appendix books: a navigation bar at the bottom of every book (Home, Library, Pūjā Kalpa, Contents, Top) and a top bar that stays in view. Contents opens a list of the book’s sections with the current one marked; tap one to jump there.']],
