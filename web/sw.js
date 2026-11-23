@@ -20,6 +20,7 @@ const SHELL_FILES = [
   'appendix/purusha-sukta-puja.html',
   'appendix/purusha-sri-sukta-puja.html',
   'appendix/sri-sukta-devi-puja.html',
+  'appendix/puranokta-puja.html',
   'appendix/puja-kalpa.html',
   'appendix/kalpa-varamahalakshmi.html',
   'appendix/kalpa-ganesha-chaturthi.html',

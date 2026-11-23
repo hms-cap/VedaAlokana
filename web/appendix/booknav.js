@@ -83,7 +83,7 @@ ${heads.length > 1 ? `<button type="button" id="bnToc" aria-expanded="false" ari
     head.appendChild(x);
     const ol = document.createElement('ol'); const cur = current(); let curA = null;
     heads.forEach((h) => {
-      if (h.closest('[hidden]')) return;
+      if (h.closest('[hidden]') || !h.getClientRects().length) return;
       const li = document.createElement('li'); li.className = h.tagName === 'H1' ? 'l1' : 'l2';
       const a = document.createElement('a'); a.href = '#' + h.id; a.textContent = label(h);
       if (h === cur) { a.setAttribute('aria-current', 'true'); curA = a; }
