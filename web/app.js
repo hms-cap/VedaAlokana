@@ -306,6 +306,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.46.6', '2026-11-23', ['Mahāgaṇapati pūjā: the closing “vakratuṇḍa mahākāya…” now reads “nirvighnaṃ kuru me deva”.']],
   ['1.46.5', '2026-11-23', ['Purāṇokta pūjās open with “vakratuṇḍa mahākāya…” as the Gaṇapati smaraṇa.']],
   ['1.46.4', '2026-11-23', ['Pūjā books and Pūjā Kalpa: every pūjā again opens with the Gaṇapati smaraṇa (the ṛk “gaṇānāṃ tvā” for Vedic, “śuklāmbaradharaṃ” for Purāṇokta), even with the Mahāgaṇapati pūjā on, preceded by “śrī gurubhyo namaḥ, hariḥ om”.']],
   ['1.46.3', '2026-11-23', ['Pūjā books and Pūjā Kalpa: a closing maṅgalāśāsana (“svasti prajābhyaḥ…”), and the Gaṇapati pradakṣiṇa śloka reads “…medinīvijayāya te”.']],
