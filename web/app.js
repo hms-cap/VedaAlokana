@@ -306,6 +306,7 @@ function wireInstall() {
   };
 }
 const CHANGES = [
+  ['1.46.0', '2026-11-23', ['Pūjā books and Pūjā Kalpa: a Mahāgaṇapati pūjā before the main pūjā (on by default), a Purāṇokta vidhāna with the ślokas of the Purāṇokta Saṅkṣepa Devapūjā booklet (feminine forms for a devī), and prāṇapratiṣṭhā (short or full) on the Pūjā Kalpa pages.', 'New Appendix book: Purāṇokta Saṅkṣepa Devapūjā (Umā-Maheśvara pañcāyatana).']],
   ['1.45.1', '2026-11-22', ['Home: an Appendix button below My sūktas opens the Appendix books, including the Pūjā Kalpa, in the Library.']],
   ['1.45.0', '2026-11-22', ['Appendix books: a navigation bar at the bottom of every book (Home, Library, Pūjā Kalpa, Contents, Top) and a top bar that stays in view. Contents opens a list of the book’s sections with the current one marked; tap one to jump there.']],
   ['1.44.0', '2026-11-22', ['Pūjā Kalpa: five more pūjās with their next dates. Śrī Rāma Navamī (Rāma 108), Śrī Kṛṣṇa Janmāṣṭamī (Kṛṣṇa 108), Svarṇa Gaurī Vrata (Gaurī 108), Ananta Caturdaśī (Viṣṇu 108 and the fourteen granthi pūjā) and Sarasvatī Pūjā on Mūla nakṣatra (Sarasvatī 108 with the pāvakā naḥ sarasvatī ṛks).']],
@@ -2787,6 +2788,7 @@ const APPENDIX = [{ href: 'appendix/devatarchanam.html', name: 'Ṛgvedīya Deva
   { href: 'appendix/purusha-sukta-puja.html', name: 'Ṛgvedīya Puruṣa Sūkta Pūjā', kn: 'ಋಗ್ವೇದೀಯ ಪುರುಷಸೂಕ್ತ ಪೂಜಾ', note: 'A shorter pūjā with the sixteen upacāras on the Puruṣa Sūkta: pañcāyatana or one chosen devatā, pañcāmṛta optional.' },
   { href: 'appendix/purusha-sri-sukta-puja.html', name: 'Ṛgvedīya Puruṣa Sūkta and Śrī Sūkta Pūjā', kn: 'ಋಗ್ವೇದೀಯ ಪುರುಷಸೂಕ್ತ ಶ್ರೀಸೂಕ್ತ ಪೂಜಾ', note: 'The same shorter pūjā with a Śrī Sūkta ṛk beside each Puruṣa Sūkta ṛk: pañcāyatana or one chosen devatā, pañcāmṛta optional.' },
   { href: 'appendix/sri-sukta-devi-puja.html', name: 'Ṛgvedīya Śrī Sūkta Vidhāna Devī Pūjā', kn: 'ಋಗ್ವೇದೀಯ ಶ್ರೀಸೂಕ್ತ ವಿಧಾನ ದೇವೀ ಪೂಜಾ', note: 'Sixteen upacāras on the sixteen Śrī Sūkta ṛks for Śrī Lalitā, Durgā or Mahālakṣmī, with the Lalitā 108 names or the Durgā 32 names; pañcāmṛta optional.' },
+  { href: 'appendix/puranokta-puja.html', name: 'Purāṇokta Saṅkṣepa Devapūjā', kn: 'ಪುರಾಣೋಕ್ತ ಸಂಕ್ಷೇಪ ದೇವಪೂಜಾ', note: 'A short pūjā with Purāṇic ślokas for each upacāra: Umā-Maheśvara pañcāyatana or one devatā, Mahāgaṇapati pūjā first.' },
   { href: 'appendix/puja-kalpa.html', name: 'Ṛgvedīya Pūjā Kalpa', kn: 'ಋಗ್ವೇದೀಯ ಪೂಜಾ ಕಲ್ಪ', note: 'Festival pūjās of the year (Smārta): Rāma Navamī, Varamahālakṣmī, Kṛṣṇa Janmāṣṭamī, Svarṇa Gaurī, Gaṇeśa Caturthī, Ananta Caturdaśī, Navarātri Lalitā, Sarasvatī, Durgāṣṭamī, Dīpāvalī Lakṣmī and Mahāśivarātri, each with its dhyāna, nāmāvali and next date; sixteen upacāras on Puruṣa Sūkta, Śrī Sūkta or both.' }];
 async function viewLibrary(params) {
   setTitle('Library');
